@@ -190,7 +190,7 @@ function ListaLicitacoes() {
       status: (a, b) => texto(a.status).localeCompare(texto(b.status), "pt-BR"),
       uf: (a, b) => texto(a.uf).localeCompare(texto(b.uf)),
     };
-    return [...lista].sort(ordenadores[ordenar] ?? ordenadores.sessao);
+    return [...lista].sort(ordenadores[ordenar] ?? ordenadores["sessao"]);
   }, [
     licitacoes,
     busca,

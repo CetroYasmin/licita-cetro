@@ -23,16 +23,17 @@ function levenshtein(a: string, b: string): number {
   const n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
-  let anterior = Array.from({ length: n + 1 }, (_, i) => i);
+  let anterior: number[] = Array.from({ length: n + 1 }, (_, i) => i);
   for (let i = 1; i <= m; i++) {
-    const atual = [i];
+    const atual: number[] = new Array(n + 1).fill(0);
+    atual[0] = i;
     for (let j = 1; j <= n; j++) {
       const custo = a[i - 1] === b[j - 1] ? 0 : 1;
-      atual[j] = Math.min(atual[j - 1] + 1, anterior[j] + 1, anterior[j - 1] + custo);
+      atual[j] = Math.min((atual[j - 1] ?? 0) + 1, (anterior[j] ?? 0) + 1, (anterior[j - 1] ?? 0) + custo);
     }
     anterior = atual;
   }
-  return anterior[n];
+  return anterior[n] ?? 0;
 }
 
 export function similaridade(a: string, b: string): number {
