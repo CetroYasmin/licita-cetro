@@ -183,7 +183,7 @@ function ListaLicitacoes() {
             <Download className="mr-2 h-4 w-4" /> Exportar
           </Button>
           <Button asChild size="sm">
-            <Link to="/importar">Importar</Link>
+            <Link to="/pesquisa">Pesquisar</Link>
           </Button>
         </>
       }
