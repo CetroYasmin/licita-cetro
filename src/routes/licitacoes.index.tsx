@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Star, Trash2, Download } from "lucide-react";
+import { Star, Trash2, Download, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +40,7 @@ import {
   moeda,
 } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
+import { combina } from "@/lib/busca";
 
 export const Route = createFileRoute("/licitacoes/")({
   head: () => ({
@@ -253,7 +254,28 @@ function ListaLicitacoes() {
           <div className="space-y-1 md:col-span-2 xl:col-span-2">
             <Label>Busca por número, órgão, objeto ou etiqueta</Label>
             <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="ex.: pavimentação" />
+            <p className="text-[11px] text-muted-foreground">
+              Busca tolerante a acentos e erros; separe alternativas por vírgula e use aspas para
+              frases exatas.
+            </p>
           </div>
+          <Campo label="Ordenar por">
+            <Select value={ordenar} onValueChange={setOrdenar}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sessao">Data da sessão (mais próxima)</SelectItem>
+                <SelectItem value="publicacao">Publicação (mais recente)</SelectItem>
+                <SelectItem value="atualizacao">Última atualização</SelectItem>
+                <SelectItem value="valor_desc">Maior valor estimado</SelectItem>
+                <SelectItem value="valor_asc">Menor valor estimado</SelectItem>
+                <SelectItem value="proposta_desc">Maior proposta nossa</SelectItem>
+                <SelectItem value="orgao">Órgão (A–Z)</SelectItem>
+                <SelectItem value="numero">Número</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="uf">Estado (A–Z)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Campo>
           <Campo label="Status">
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -333,6 +355,10 @@ function ListaLicitacoes() {
               />
               Favoritas
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={ocultarVistas} onCheckedChange={(v) => setOcultarVistas(Boolean(v))} />
+              Ocultar vistas
+            </label>
           </div>
         </div>
 
@@ -364,6 +390,11 @@ function ListaLicitacoes() {
                       {(l.tags ?? []).map((t: string) => (
                         <Badge key={t} variant="outline">#{t}</Badge>
                       ))}
+                      {vistaPor(l.id).length > 0 && (
+                        <Badge variant="outline" className="border-secondary/40 text-secondary">
+                          Vista por {vistaPor(l.id).join(", ")}
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.objeto}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
@@ -380,6 +411,18 @@ function ListaLicitacoes() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={euVi(l.id) ? "Desmarcar como vista" : "Marcar como vista"}
+                      onClick={() => marcarVista.mutate({ id: l.id, remover: euVi(l.id) })}
+                    >
+                      {euVi(l.id) ? (
+                        <EyeOff className="h-4 w-4 text-secondary" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
