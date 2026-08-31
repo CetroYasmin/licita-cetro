@@ -76,6 +76,7 @@ export type Database = {
           lida: boolean
           mensagem: string
           origem: string
+          papel: string
         }
         Insert: {
           autor: string
@@ -87,6 +88,7 @@ export type Database = {
           lida?: boolean
           mensagem: string
           origem?: string
+          papel?: string
         }
         Update: {
           autor?: string
@@ -98,6 +100,7 @@ export type Database = {
           lida?: boolean
           mensagem?: string
           origem?: string
+          papel?: string
         }
         Relationships: [
           {
@@ -767,6 +770,51 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      visualizacoes: {
+        Row: {
+          created_at: string
+          equipe_id: string
+          fonte_id: string | null
+          id: string
+          licitacao_id: string | null
+          user_id: string
+          user_nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          equipe_id: string
+          fonte_id?: string | null
+          id?: string
+          licitacao_id?: string | null
+          user_id: string
+          user_nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          equipe_id?: string
+          fonte_id?: string | null
+          id?: string
+          licitacao_id?: string | null
+          user_id?: string
+          user_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visualizacoes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visualizacoes_licitacao_id_fkey"
+            columns: ["licitacao_id"]
+            isOneToOne: false
+            referencedRelation: "licitacoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
