@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { relevancia } from "@/lib/busca";
 
 const BASE = "https://pncp.gov.br/api/consulta/v1";
 
@@ -15,6 +16,9 @@ const MODALIDADE_CODIGOS: Record<string, number> = {
   "Pré-qualificação": 11,
   Leilão: 1,
 };
+
+/** Todas as modalidades relevantes do PNCP, em ordem de volume. */
+const MODALIDADES_PADRAO = [6, 8, 4, 9, 7, 5, 12, 13, 11, 3, 1, 2];
 
 const PADRAO_OBRAS =
   /(obra|obras|constru|reforma|pavimenta|engenharia|edifica|drenagem|saneamento|terraplan|recapea|ampliação|reformas|infraestrutura|ponte|calçamen|urbaniza|revitaliza)/i;
@@ -55,119 +59,242 @@ export type LicitacaoPncp = {
   situacao: string | null;
   ano: number;
   sequencial: number;
+  relevancia: number;
 };
+
+/** Portais/sistemas de origem reconhecidos (usado também como filtro na pesquisa). */
+export const PORTAIS = [
+  "Compras.gov.br (ComprasNet)",
+  "Licitações-e (Banco do Brasil)",
+  "BLL Compras",
+  "BNC — Bolsa Nacional de Compras",
+  "BBMNET Licitações",
+  "Portal de Compras Públicas",
+  "Licitanet",
+  "Licitar Digital",
+  "Gestão de Compras (M2A Tecnologia)",
+  "S2GPR (Governo do Ceará)",
+  "BEC/SP",
+  "Compras RS",
+  "Central de Compras PB",
+  "ComprasBR",
+  "Publinexo",
+  "Effecti",
+  "Compras Públicas (outros)",
+  "PNCP",
+  "Não informado",
+] as const;
 
 function nomePortal(link?: string | null): string {
   if (!link) return "Não informado";
   const l = link.toLowerCase();
-  if (l.includes("comprasnet") || l.includes("gov.br/compras")) return "Compras.gov.br (ComprasNet)";
-  if (l.includes("licitanet")) return "LicitaNet";
-  if (l.includes("bll")) return "BLL Compras";
-  if (l.includes("bnc")) return "BNC — Bolsa Nacional de Compras";
+  if (l.includes("comprasnet") || l.includes("gov.br/compras") || l.includes("cnetmobile") || l.includes("compras.gov.br"))
+    return "Compras.gov.br (ComprasNet)";
+  if (l.includes("licitacoes-e") || l.includes("licitacoes-e.com.br") || l.includes("bb.com.br"))
+    return "Licitações-e (Banco do Brasil)";
+  if (l.includes("bllcompras") || l.includes("bll.org.br") || l.includes("bllcompras.com")) return "BLL Compras";
+  if (l.includes("bnc.org.br") || l.includes("bncompras") || /\bbnc\b/.test(l)) return "BNC — Bolsa Nacional de Compras";
+  if (l.includes("bbmnet") || l.includes("bbmnetlicitacoes")) return "BBMNET Licitações";
   if (l.includes("portaldecompraspublicas")) return "Portal de Compras Públicas";
-  if (l.includes("licitacoes-e") || l.includes("bb.com.br")) return "Licitações-e (Banco do Brasil)";
+  if (l.includes("licitanet")) return "Licitanet";
+  if (l.includes("licitardigital")) return "Licitar Digital";
+  if (l.includes("m2atecnologia") || l.includes("gestaodecompras") || l.includes("gestao-de-compras"))
+    return "Gestão de Compras (M2A Tecnologia)";
+  if (l.includes("s2gpr") || l.includes("seplag.ce.gov.br") || l.includes("licitacoes.ce.gov.br"))
+    return "S2GPR (Governo do Ceará)";
   if (l.includes("bec.sp.gov.br")) return "BEC/SP";
   if (l.includes("compras.rs") || l.includes("cel.rs")) return "Compras RS";
-  if (l.includes("publinexo")) return "Publinexo";
+  if (l.includes("centraldecompras.pb.gov.br")) return "Central de Compras PB";
   if (l.includes("comprasbr")) return "ComprasBR";
-  if (l.includes("licitardigital")) return "Licitar Digital";
+  if (l.includes("publinexo")) return "Publinexo";
+  if (l.includes("effecti")) return "Effecti";
   if (l.includes("pncp.gov.br")) return "PNCP";
   try {
-    return new URL(link).hostname.replace("www.", "");
+    return `${new URL(link.startsWith("http") ? link : `https://${link}`).hostname.replace("www.", "")}`;
   } catch {
     return "Não informado";
   }
 }
 
+function mapear(c: any): LicitacaoPncp {
+  const objeto = String(c.objetoCompra ?? "");
+  const orgaoUnidade = c.unidadeOrgao ?? {};
+  return {
+    fonte_id: String(
+      c.numeroControlePNCP ?? `${c.orgaoEntidade?.cnpj}-${c.anoCompra}-${c.sequencialCompra}`,
+    ),
+    numero: String(c.numeroCompra ?? c.numeroControlePNCP ?? "—"),
+    modalidade: String(c.modalidadeNome ?? "—"),
+    orgao: String(c.orgaoEntidade?.razaoSocial ?? orgaoUnidade.nomeUnidade ?? "—"),
+    orgao_cnpj: String(c.orgaoEntidade?.cnpj ?? ""),
+    objeto,
+    natureza: classificarNatureza(objeto),
+    data_publicacao: c.dataPublicacaoPncp ?? null,
+    data_abertura: c.dataAberturaProposta ?? null,
+    data_sessao: c.dataAberturaProposta ?? null,
+    encerramento_proposta: c.dataEncerramentoProposta ?? null,
+    plataforma: String(c.modoDisputaNome ?? "—"),
+    portal: nomePortal(c.linkSistemaOrigem),
+    site_url: c.linkSistemaOrigem ?? null,
+    processo_administrativo: c.processo ?? null,
+    valor_estimado: c.valorTotalEstimado != null ? Number(c.valorTotalEstimado) : null,
+    cidade: orgaoUnidade.municipioNome ?? null,
+    uf: orgaoUnidade.ufSigla ?? null,
+    situacao: c.situacaoCompraNome ?? null,
+    ano: Number(c.anoCompra ?? new Date().getFullYear()),
+    sequencial: Number(c.sequencialCompra ?? 0),
+    relevancia: 0,
+  };
+}
+
+async function buscarPagina(
+  caminho: string,
+  params: URLSearchParams,
+): Promise<{ lista: any[]; totalPaginas: number } | null> {
+  try {
+    const res = await fetch(`${BASE}${caminho}?${params.toString()}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (res.status === 204) return { lista: [], totalPaginas: 0 };
+    if (!res.ok) return null;
+    const payload = (await res.json()) as { data?: unknown[]; totalPaginas?: number };
+    return { lista: (payload?.data ?? []) as any[], totalPaginas: Number(payload?.totalPaginas ?? 1) };
+  } catch {
+    return null;
+  }
+}
+
+const ORDENACOES = {
+  relevancia: (a: LicitacaoPncp, b: LicitacaoPncp) => b.relevancia - a.relevancia,
+  sessao: (a: LicitacaoPncp, b: LicitacaoPncp) =>
+    (a.data_abertura ?? "9999").localeCompare(b.data_abertura ?? "9999"),
+  publicacao: (a: LicitacaoPncp, b: LicitacaoPncp) =>
+    (b.data_publicacao ?? "").localeCompare(a.data_publicacao ?? ""),
+  encerramento: (a: LicitacaoPncp, b: LicitacaoPncp) =>
+    (a.encerramento_proposta ?? "9999").localeCompare(b.encerramento_proposta ?? "9999"),
+  valor_desc: (a: LicitacaoPncp, b: LicitacaoPncp) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0),
+  valor_asc: (a: LicitacaoPncp, b: LicitacaoPncp) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0),
+  orgao: (a: LicitacaoPncp, b: LicitacaoPncp) => a.orgao.localeCompare(b.orgao, "pt-BR"),
+  uf: (a: LicitacaoPncp, b: LicitacaoPncp) => (a.uf ?? "").localeCompare(b.uf ?? ""),
+} as const;
+
+export type Ordenacao = keyof typeof ORDENACOES;
+
 export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        palavraChave: z.string().optional().default(""),
-        uf: z.string().optional().default(""),
+        objeto: z.string().optional().default(""),
+        ufs: z.array(z.string()).optional().default([]),
         modalidade: z.string().optional().default(""),
         natureza: z.string().optional().default(""),
+        portal: z.string().optional().default(""),
         valorMinimo: z.number().optional(),
         valorMaximo: z.number().optional(),
-        paginas: z.number().min(1).max(5).optional().default(2),
+        incluirEncerradas: z.boolean().optional().default(false),
+        profundidade: z.string().optional().default("ampla"),
+        ordenar: z.string().optional().default("relevancia"),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
     const codigos = data.modalidade
       ? [MODALIDADE_CODIGOS[data.modalidade] ?? 6]
-      : [6, 4, 8, 9, 7, 5];
-    const dataFinal = yyyymmdd(new Date(Date.now() + 1000 * 60 * 60 * 24 * 120));
-    const resultados: LicitacaoPncp[] = [];
-    const erros: string[] = [];
+      : MODALIDADES_PADRAO;
 
+    const maxPaginasPorConsulta =
+      data.profundidade === "rapida" ? 4 : data.profundidade === "total" ? 40 : 14;
+    const limiteRequisicoes = data.profundidade === "rapida" ? 40 : data.profundidade === "total" ? 400 : 160;
+
+    const dataFinal = yyyymmdd(new Date(Date.now() + 1000 * 60 * 60 * 24 * 365));
+    const hoje = yyyymmdd(new Date());
+    const dataInicial = yyyymmdd(new Date(Date.now() - 1000 * 60 * 60 * 24 * 90));
+
+    const erros: string[] = [];
+    const encontradas = new Map<string, LicitacaoPncp>();
+    let requisicoes = 0;
+
+    // Quando o usuário escolhe estados, consultamos cada UF (o PNCP filtra por uma UF por chamada).
+    const ufs = data.ufs.length > 0 ? data.ufs : [""];
+
+    const consultas: Array<{ caminho: string; base: URLSearchParams }> = [];
     for (const codigo of codigos) {
-      for (let pagina = 1; pagina <= data.paginas; pagina++) {
-        const params = new URLSearchParams({
+      for (const uf of ufs) {
+        const base = new URLSearchParams({
           dataFinal,
           codigoModalidadeContratacao: String(codigo),
-          pagina: String(pagina),
           tamanhoPagina: "50",
         });
-        if (data.uf) params.set("uf", data.uf);
-        let payload: { data?: unknown[]; totalPaginas?: number } | null = null;
-        try {
-          const res = await fetch(`${BASE}/contratacoes/proposta?${params.toString()}`, {
-            headers: { Accept: "application/json" },
+        if (uf) base.set("uf", uf);
+        consultas.push({ caminho: "/contratacoes/proposta", base });
+
+        if (data.incluirEncerradas) {
+          const pub = new URLSearchParams({
+            dataInicial,
+            dataFinal: hoje,
+            codigoModalidadeContratacao: String(codigo),
+            tamanhoPagina: "50",
           });
-          if (res.status === 204) break;
-          if (!res.ok) {
-            erros.push(`PNCP ${res.status} (modalidade ${codigo})`);
-            break;
-          }
-          payload = (await res.json()) as { data?: unknown[]; totalPaginas?: number };
-        } catch (e) {
-          erros.push(`Falha de conexão com o PNCP: ${String(e)}`);
-          break;
+          if (uf) pub.set("uf", uf);
+          consultas.push({ caminho: "/contratacoes/publicacao", base: pub });
         }
-        const lista = (payload?.data ?? []) as any[];
-        for (const c of lista) {
-          const objeto = String(c.objetoCompra ?? "");
-          const natureza = classificarNatureza(objeto);
-          const orgaoUnidade = c.unidadeOrgao ?? {};
-          resultados.push({
-            fonte_id: String(c.numeroControlePNCP ?? `${c.orgaoEntidade?.cnpj}-${c.anoCompra}-${c.sequencialCompra}`),
-            numero: String(c.numeroCompra ?? c.numeroControlePNCP ?? "—"),
-            modalidade: String(c.modalidadeNome ?? "—"),
-            orgao: String(c.orgaoEntidade?.razaoSocial ?? orgaoUnidade.nomeUnidade ?? "—"),
-            orgao_cnpj: String(c.orgaoEntidade?.cnpj ?? ""),
-            objeto,
-            natureza,
-            data_publicacao: c.dataPublicacaoPncp ?? null,
-            data_abertura: c.dataAberturaProposta ?? null,
-            data_sessao: c.dataAberturaProposta ?? null,
-            encerramento_proposta: c.dataEncerramentoProposta ?? null,
-            plataforma: String(c.modoDisputaNome ?? "—"),
-            portal: nomePortal(c.linkSistemaOrigem),
-            site_url: c.linkSistemaOrigem ?? null,
-            processo_administrativo: c.processo ?? null,
-            valor_estimado: c.valorTotalEstimado != null ? Number(c.valorTotalEstimado) : null,
-            cidade: orgaoUnidade.municipioNome ?? null,
-            uf: orgaoUnidade.ufSigla ?? null,
-            situacao: c.situacaoCompraNome ?? null,
-            ano: Number(c.anoCompra ?? new Date().getFullYear()),
-            sequencial: Number(c.sequencialCompra ?? 0),
-          });
-        }
-        if (payload?.totalPaginas != null && pagina >= payload.totalPaginas) break;
       }
     }
 
-    const termo = data.palavraChave.trim().toLowerCase();
-    const filtradas = resultados.filter((l) => {
-      if (termo && !`${l.objeto} ${l.orgao} ${l.numero}`.toLowerCase().includes(termo)) return false;
-      if (data.natureza && l.natureza !== data.natureza) return false;
-      if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return false;
-      if (data.valorMaximo != null && (l.valor_estimado ?? 0) > data.valorMaximo) return false;
-      return true;
-    });
+    const registrar = (bruto: any) => {
+      const l = mapear(bruto);
+      const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""} ${l.processo_administrativo ?? ""}`;
+      const pontos = relevancia(texto, data.objeto);
+      if (data.objeto.trim() && pontos < 0.6) return;
+      if (data.natureza && l.natureza !== data.natureza) return;
+      if (data.portal && l.portal !== data.portal) return;
+      if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return;
+      if (data.valorMaximo != null && (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo) return;
+      l.relevancia = pontos;
+      if (!encontradas.has(l.fonte_id)) encontradas.set(l.fonte_id, l);
+    };
 
-    return { licitacoes: filtradas.slice(0, 200), total: filtradas.length, erros };
+    for (const consulta of consultas) {
+      if (requisicoes >= limiteRequisicoes) break;
+      const primeira = new URLSearchParams(consulta.base);
+      primeira.set("pagina", "1");
+      requisicoes++;
+      const inicial = await buscarPagina(consulta.caminho, primeira);
+      if (!inicial) {
+        erros.push("Alguns portais não responderam à consulta e foram ignorados.");
+        continue;
+      }
+      inicial.lista.forEach(registrar);
+
+      const totalPaginas = Math.min(inicial.totalPaginas, maxPaginasPorConsulta);
+      const paginas: number[] = [];
+      for (let p = 2; p <= totalPaginas; p++) paginas.push(p);
+
+      // Páginas em paralelo, em blocos, para cobrir muito mais resultados sem travar.
+      for (let i = 0; i < paginas.length; i += 6) {
+        if (requisicoes >= limiteRequisicoes) break;
+        const bloco = paginas.slice(i, i + 6);
+        requisicoes += bloco.length;
+        const respostas = await Promise.all(
+          bloco.map((p) => {
+            const params = new URLSearchParams(consulta.base);
+            params.set("pagina", String(p));
+            return buscarPagina(consulta.caminho, params);
+          }),
+        );
+        respostas.forEach((r) => r?.lista.forEach(registrar));
+      }
+    }
+
+    const ordenador = ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
+    const lista = [...encontradas.values()].sort(ordenador);
+
+    return {
+      licitacoes: lista.slice(0, 500),
+      total: lista.length,
+      consultasFeitas: requisicoes,
+      erros: [...new Set(erros)],
+    };
   });
 
 export const buscarItensPncp = createServerFn({ method: "POST" })
