@@ -182,9 +182,7 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
       );
       if (!res.ok) return { itens: [] as any[] };
       const payload = (await res.json()) as unknown;
-      const lista = (Array.isArray(payload) ? payload : ((payload as any)?.data ?? [])) as Array<
-        Record<string, any>
-      >;
+      const lista = (Array.isArray(payload) ? payload : ((payload as any)?.data ?? [])) as any[];
       return {
         itens: lista.map((i) => ({
           numero_item: String(i.numeroItem ?? ""),

@@ -88,7 +88,7 @@ function Importar() {
       const { data: lic, error } = await supabase
         .from("licitacoes")
         .insert({
-          equipe_id: equipeId,
+          equipe_id: equipeId!,
           created_by: user?.id ?? null,
           numero: l.numero,
           modalidade: l.modalidade,
@@ -122,7 +122,7 @@ function Importar() {
         await supabase.from("licitacao_itens").insert(
           itens.map((i: any) => ({
             licitacao_id: lic.id,
-            equipe_id: equipeId,
+            equipe_id: equipeId!,
             numero_item: i.numero_item,
             lote: i.lote,
             descricao: i.descricao,
@@ -179,13 +179,13 @@ function Importar() {
       if (prazos.length > 0) {
         await supabase
           .from("prazos")
-          .insert(prazos.map((p) => ({ ...p, licitacao_id: lic.id, equipe_id: equipeId })));
+          .insert(prazos.map((p) => ({ ...p, licitacao_id: lic.id, equipe_id: equipeId! })));
       }
 
       if (l.site_url) {
         await supabase.from("documentos").insert({
           licitacao_id: lic.id,
-          equipe_id: equipeId,
+          equipe_id: equipeId!,
           tipo: "edital",
           nome: "Edital / processo no portal de origem",
           url: l.site_url,

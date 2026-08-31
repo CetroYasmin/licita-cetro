@@ -434,7 +434,7 @@ function Detalhes() {
               onEnviar={async (valor, minha, empresa) => {
                 await supabase.from("lances").insert({
                   licitacao_id: id,
-                  equipe_id: equipeId,
+                  equipe_id: equipeId!,
                   empresa,
                   valor,
                   minha_empresa: minha,
@@ -494,7 +494,7 @@ function Detalhes() {
             onEnviar={async (c) => {
               await supabase
                 .from("concorrentes")
-                .insert({ ...c, licitacao_id: id, equipe_id: equipeId });
+                .insert({ ...c, licitacao_id: id, equipe_id: equipeId! });
               await registrarMovimentacao(
                 ctx,
                 id,
@@ -679,7 +679,7 @@ function Detalhes() {
         <TabsContent value="documentos" className="mt-4 space-y-4">
           <FormularioDocumento
             onEnviar={async (doc) => {
-              await supabase.from("documentos").insert({ ...doc, licitacao_id: id, equipe_id: equipeId });
+              await supabase.from("documentos").insert({ ...doc, licitacao_id: id, equipe_id: equipeId! });
               await registrarMovimentacao(
                 ctx,
                 id,
@@ -736,7 +736,7 @@ function Detalhes() {
         <TabsContent value="prazos" className="mt-4 space-y-4">
           <FormularioPrazo
             onEnviar={async (p) => {
-              await supabase.from("prazos").insert({ ...p, licitacao_id: id, equipe_id: equipeId });
+              await supabase.from("prazos").insert({ ...p, licitacao_id: id, equipe_id: equipeId! });
               recarregar();
             }}
           />
@@ -772,7 +772,7 @@ function Detalhes() {
             onEnviar={async (t) => {
               await supabase
                 .from("tarefas")
-                .insert({ ...t, licitacao_id: id, equipe_id: equipeId, created_by: user?.id });
+                .insert({ ...t, licitacao_id: id, equipe_id: equipeId!, created_by: user?.id });
               recarregar();
             }}
           />
@@ -849,7 +849,7 @@ function Detalhes() {
                 if (!mensagem) return;
                 await supabase.from("chat_mensagens").insert({
                   licitacao_id: id,
-                  equipe_id: equipeId,
+                  equipe_id: equipeId!,
                   autor: autor || (ctx.autorNome ?? "Equipe"),
                   origem: autor ? "portal" : "equipe",
                   mensagem,

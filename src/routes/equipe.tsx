@@ -49,9 +49,9 @@ function Equipe() {
       campos,
     }: {
       id: string;
-      campos: Record<string, unknown>;
+      campos: Record<string, any>;
     }) => {
-      const { error } = await supabase.from("profiles").update(campos).eq("id", id);
+      const { error } = await supabase.from("profiles").update(campos as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
