@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgendaRouteImport } from './routes/agenda'
+import { Route as AlertasRouteImport } from './routes/alertas'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ChatsRouteImport } from './routes/chats'
+import { Route as EquipeRouteImport } from './routes/equipe'
+import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
+import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgendaRoute = AgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertasRoute = AlertasRouteImport.update({
+  id: '/alertas',
+  path: '/alertas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatsRoute = ChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipeRoute = EquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImportarRoute = ImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicitacoesIndexRoute = LicitacoesIndexRouteImport.update({
+  id: '/licitacoes/',
+  path: '/licitacoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicitacoesIdRoute = LicitacoesIdRouteImport.update({
+  id: '/licitacoes/$id',
+  path: '/licitacoes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
+  '/alertas': typeof AlertasRoute
+  '/auth': typeof AuthRoute
+  '/chats': typeof ChatsRoute
+  '/equipe': typeof EquipeRoute
+  '/importar': typeof ImportarRoute
+  '/relatorios': typeof RelatoriosRoute
+  '/licitacoes/$id': typeof LicitacoesIdRoute
+  '/licitacoes/': typeof LicitacoesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
+  '/alertas': typeof AlertasRoute
+  '/auth': typeof AuthRoute
+  '/chats': typeof ChatsRoute
+  '/equipe': typeof EquipeRoute
+  '/importar': typeof ImportarRoute
+  '/relatorios': typeof RelatoriosRoute
+  '/licitacoes/$id': typeof LicitacoesIdRoute
+  '/licitacoes': typeof LicitacoesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agenda': typeof AgendaRoute
+  '/alertas': typeof AlertasRoute
+  '/auth': typeof AuthRoute
+  '/chats': typeof ChatsRoute
+  '/equipe': typeof EquipeRoute
+  '/importar': typeof ImportarRoute
+  '/relatorios': typeof RelatoriosRoute
+  '/licitacoes/$id': typeof LicitacoesIdRoute
+  '/licitacoes/': typeof LicitacoesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/agenda'
+    | '/alertas'
+    | '/auth'
+    | '/chats'
+    | '/equipe'
+    | '/importar'
+    | '/relatorios'
+    | '/licitacoes/$id'
+    | '/licitacoes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/agenda'
+    | '/alertas'
+    | '/auth'
+    | '/chats'
+    | '/equipe'
+    | '/importar'
+    | '/relatorios'
+    | '/licitacoes/$id'
+    | '/licitacoes'
+  id:
+    | '__root__'
+    | '/'
+    | '/agenda'
+    | '/alertas'
+    | '/auth'
+    | '/chats'
+    | '/equipe'
+    | '/importar'
+    | '/relatorios'
+    | '/licitacoes/$id'
+    | '/licitacoes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgendaRoute: typeof AgendaRoute
+  AlertasRoute: typeof AlertasRoute
+  AuthRoute: typeof AuthRoute
+  ChatsRoute: typeof ChatsRoute
+  EquipeRoute: typeof EquipeRoute
+  ImportarRoute: typeof ImportarRoute
+  RelatoriosRoute: typeof RelatoriosRoute
+  LicitacoesIdRoute: typeof LicitacoesIdRoute
+  LicitacoesIndexRoute: typeof LicitacoesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agenda': {
+      id: '/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AgendaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alertas': {
+      id: '/alertas'
+      path: '/alertas'
+      fullPath: '/alertas'
+      preLoaderRoute: typeof AlertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chats': {
+      id: '/chats'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof ChatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipe': {
+      id: '/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof EquipeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/importar': {
+      id: '/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof ImportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/licitacoes/': {
+      id: '/licitacoes/'
+      path: '/licitacoes'
+      fullPath: '/licitacoes/'
+      preLoaderRoute: typeof LicitacoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/licitacoes/$id': {
+      id: '/licitacoes/$id'
+      path: '/licitacoes/$id'
+      fullPath: '/licitacoes/$id'
+      preLoaderRoute: typeof LicitacoesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgendaRoute: AgendaRoute,
+  AlertasRoute: AlertasRoute,
+  AuthRoute: AuthRoute,
+  ChatsRoute: ChatsRoute,
+  EquipeRoute: EquipeRoute,
+  ImportarRoute: ImportarRoute,
+  RelatoriosRoute: RelatoriosRoute,
+  LicitacoesIdRoute: LicitacoesIdRoute,
+  LicitacoesIndexRoute: LicitacoesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
