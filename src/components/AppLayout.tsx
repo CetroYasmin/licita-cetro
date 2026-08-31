@@ -119,7 +119,7 @@ export function AppLayout({
             <p className="text-[11px] text-sidebar-foreground/70">Acompanhamento de editais</p>
           </div>
         </div>
-        <nav className="space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {NAV.map((item) => {
             const ativo = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return (
