@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Star, Trash2, Download, Eye, EyeOff } from "lucide-react";
+import { Star, Trash2, Download, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -411,6 +411,13 @@ function ListaLicitacoes() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    {l.site_url && (
+                      <Button variant="secondary" size="sm" asChild>
+                        <a href={l.site_url} target="_blank" rel="noreferrer">
+                          <ExternalLink className="mr-1 h-3.5 w-3.5" /> Site da licitação
+                        </a>
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
