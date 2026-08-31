@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Star, Trash2, Download } from "lucide-react";
+import { Star, Trash2, Download, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +40,7 @@ import {
   moeda,
 } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
+import { combina } from "@/lib/busca";
 
 export const Route = createFileRoute("/licitacoes/")({
   head: () => ({
@@ -61,7 +62,7 @@ export const Route = createFileRoute("/licitacoes/")({
 });
 
 function ListaLicitacoes() {
-  const { equipeId } = useAuth();
+  const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("todos");
@@ -74,12 +75,28 @@ function ListaLicitacoes() {
   const [dataDe, setDataDe] = useState("");
   const [somenteParticipando, setSomenteParticipando] = useState(false);
   const [somenteFavoritos, setSomenteFavoritos] = useState(false);
+  const [ordenar, setOrdenar] = useState("sessao");
+  const [ocultarVistas, setOcultarVistas] = useState(false);
 
   const { data: pastas } = useQuery({
     queryKey: ["pastas", equipeId],
     enabled: Boolean(equipeId),
     queryFn: async () => (await supabase.from("pastas").select("id,nome").order("nome")).data ?? [],
   });
+
+  const { data: vistas } = useQuery({
+    queryKey: ["visualizacoes-licitacoes", equipeId],
+    enabled: Boolean(equipeId),
+    queryFn: async () =>
+      (
+        await supabase
+          .from("visualizacoes")
+          .select("licitacao_id,user_id,user_nome")
+          .not("licitacao_id", "is", null)
+          .limit(5000)
+      ).data ?? [],
+  });
+
 
   const { data: licitacoes, isLoading } = useQuery({
     queryKey: ["licitacoes", equipeId],
@@ -113,16 +130,38 @@ function ListaLicitacoes() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["licitacoes"] }),
   });
 
+  const marcarVista = useMutation({
+    mutationFn: async ({ id, remover }: { id: string; remover: boolean }) => {
+      if (!equipeId || !user) throw new Error("sem equipe");
+      if (remover) {
+        const { error } = await supabase
+          .from("visualizacoes")
+          .delete()
+          .eq("licitacao_id", id)
+          .eq("user_id", user.id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("visualizacoes").insert({
+        equipe_id: equipeId,
+        user_id: user.id,
+        user_nome: perfil?.nome ?? perfil?.email ?? "membro",
+        licitacao_id: id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["visualizacoes-licitacoes"] }),
+    onError: () => toast.error("Não foi possível registrar a visualização."),
+  });
+
+  const vistaPor = (id: string) =>
+    (vistas ?? []).filter((v: any) => v.licitacao_id === id).map((v: any) => v.user_nome ?? "membro");
+  const euVi = (id: string) => (vistas ?? []).some((v: any) => v.licitacao_id === id && v.user_id === user?.id);
+
   const filtradas = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
-    return (licitacoes ?? []).filter((l: any) => {
-      if (
-        termo &&
-        !`${l.numero} ${l.orgao ?? ""} ${l.objeto ?? ""} ${l.processo_administrativo ?? ""} ${(l.tags ?? []).join(" ")}`
-          .toLowerCase()
-          .includes(termo)
-      )
-        return false;
+    const lista = (licitacoes ?? []).filter((l: any) => {
+      const texto = `${l.numero} ${l.orgao ?? ""} ${l.objeto ?? ""} ${l.processo_administrativo ?? ""} ${(l.tags ?? []).join(" ")}`;
+      if (!combina(texto, busca)) return false;
       if (status !== "todos" && l.status !== status) return false;
       if (modalidade !== "todas" && l.modalidade !== modalidade) return false;
       if (uf !== "todas" && l.uf !== uf) return false;
@@ -133,11 +172,33 @@ function ListaLicitacoes() {
       if (dataDe && (!l.data_sessao || new Date(l.data_sessao) < new Date(dataDe))) return false;
       if (somenteParticipando && l.valor_ofertado == null) return false;
       if (somenteFavoritos && !l.favorito) return false;
+      if (ocultarVistas && (vistas ?? []).some((v: any) => v.licitacao_id === l.id && v.user_id === user?.id))
+        return false;
       return true;
     });
+
+    const texto = (v?: string | null) => v ?? "";
+    const ordenadores: Record<string, (a: any, b: any) => number> = {
+      sessao: (a, b) => texto(a.data_sessao ?? "9999").localeCompare(texto(b.data_sessao ?? "9999")),
+      publicacao: (a, b) => texto(b.data_publicacao).localeCompare(texto(a.data_publicacao)),
+      atualizacao: (a, b) => texto(b.ultima_atualizacao).localeCompare(texto(a.ultima_atualizacao)),
+      valor_desc: (a, b) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0),
+      valor_asc: (a, b) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0),
+      proposta_desc: (a, b) => (b.valor_ofertado ?? 0) - (a.valor_ofertado ?? 0),
+      orgao: (a, b) => texto(a.orgao).localeCompare(texto(b.orgao), "pt-BR"),
+      numero: (a, b) => texto(a.numero).localeCompare(texto(b.numero), "pt-BR"),
+      status: (a, b) => texto(a.status).localeCompare(texto(b.status), "pt-BR"),
+      uf: (a, b) => texto(a.uf).localeCompare(texto(b.uf)),
+    };
+    return [...lista].sort(ordenadores[ordenar] ?? ordenadores["sessao"]);
   }, [
     licitacoes,
     busca,
+    ordenar,
+    ocultarVistas,
+    vistas,
+    user,
+
     status,
     modalidade,
     uf,
@@ -183,7 +244,7 @@ function ListaLicitacoes() {
             <Download className="mr-2 h-4 w-4" /> Exportar
           </Button>
           <Button asChild size="sm">
-            <Link to="/importar">Importar</Link>
+            <Link to="/pesquisa">Pesquisar</Link>
           </Button>
         </>
       }
@@ -193,7 +254,28 @@ function ListaLicitacoes() {
           <div className="space-y-1 md:col-span-2 xl:col-span-2">
             <Label>Busca por número, órgão, objeto ou etiqueta</Label>
             <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="ex.: pavimentação" />
+            <p className="text-[11px] text-muted-foreground">
+              Busca tolerante a acentos e erros; separe alternativas por vírgula e use aspas para
+              frases exatas.
+            </p>
           </div>
+          <Campo label="Ordenar por">
+            <Select value={ordenar} onValueChange={setOrdenar}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sessao">Data da sessão (mais próxima)</SelectItem>
+                <SelectItem value="publicacao">Publicação (mais recente)</SelectItem>
+                <SelectItem value="atualizacao">Última atualização</SelectItem>
+                <SelectItem value="valor_desc">Maior valor estimado</SelectItem>
+                <SelectItem value="valor_asc">Menor valor estimado</SelectItem>
+                <SelectItem value="proposta_desc">Maior proposta nossa</SelectItem>
+                <SelectItem value="orgao">Órgão (A–Z)</SelectItem>
+                <SelectItem value="numero">Número</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="uf">Estado (A–Z)</SelectItem>
+              </SelectContent>
+            </Select>
+          </Campo>
           <Campo label="Status">
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -273,6 +355,10 @@ function ListaLicitacoes() {
               />
               Favoritas
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={ocultarVistas} onCheckedChange={(v) => setOcultarVistas(Boolean(v))} />
+              Ocultar vistas
+            </label>
           </div>
         </div>
 
@@ -304,6 +390,11 @@ function ListaLicitacoes() {
                       {(l.tags ?? []).map((t: string) => (
                         <Badge key={t} variant="outline">#{t}</Badge>
                       ))}
+                      {vistaPor(l.id).length > 0 && (
+                        <Badge variant="outline" className="border-secondary/40 text-secondary">
+                          Vista por {vistaPor(l.id).join(", ")}
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.objeto}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
@@ -320,6 +411,18 @@ function ListaLicitacoes() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={euVi(l.id) ? "Desmarcar como vista" : "Marcar como vista"}
+                      onClick={() => marcarVista.mutate({ id: l.id, remover: euVi(l.id) })}
+                    >
+                      {euVi(l.id) ? (
+                        <EyeOff className="h-4 w-4 text-secondary" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

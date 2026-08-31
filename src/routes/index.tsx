@@ -123,7 +123,7 @@ function Dashboard() {
       descricao="Resumo do acompanhamento das licitações da sua equipe"
       acoes={
         <Button asChild size="sm">
-          <Link to="/importar">Importar licitações</Link>
+          <Link to="/pesquisa">Pesquisar licitações</Link>
         </Button>
       }
     >

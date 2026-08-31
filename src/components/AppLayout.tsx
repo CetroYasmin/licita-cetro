@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Gavel,
-  Download,
+  Search,
   CalendarDays,
   Bell,
   MessageSquare,
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/licitacoes", label: "Licitações", icon: Gavel },
-  { to: "/importar", label: "Importação", icon: Download },
+  { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/chats", label: "Chats", icon: MessageSquare },
   { to: "/alertas", label: "Alertas", icon: Bell },

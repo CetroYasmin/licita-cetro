@@ -53,7 +53,7 @@ function Chats() {
   return (
     <AppLayout
       titulo="Monitoramento de chats"
-      descricao="Mensagens das sessões de disputa, atualizadas automaticamente"
+      descricao="Reprodução dos chats originais das sessões — pregoeiro, sistema e licitantes"
     >
       <div className="space-y-4">
         {[...grupos.entries()].map(([id, msgs]) => {
@@ -77,7 +77,7 @@ function Chats() {
                   <li key={m.id} className="p-3 text-sm">
                     <span className="font-medium">{m.autor}</span>{" "}
                     <span className="text-xs text-muted-foreground">
-                      ({m.origem}) · {dataHora(m.enviada_em)}
+({m.papel ?? m.origem}) · {dataHora(m.enviada_em)}
                     </span>
                     <p className="mt-1">{m.mensagem}</p>
                   </li>
@@ -88,8 +88,8 @@ function Chats() {
         })}
         {grupos.size === 0 && (
           <div className="surface-panel p-10 text-center text-sm text-muted-foreground">
-            Nenhuma mensagem de chat registrada. Registre as mensagens da sessão na aba “Chat da
-            licitação”.
+            Nenhuma mensagem reproduzida ainda. Cole o chat original da sessão na aba “Chat da
+            licitação” de cada licitação para acompanhar tudo aqui.
           </div>
         )}
       </div>

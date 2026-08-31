@@ -15,7 +15,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChatsRouteImport } from './routes/chats'
 import { Route as EquipeRouteImport } from './routes/equipe'
-import { Route as ImportarRouteImport } from './routes/importar'
+import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
@@ -50,9 +50,9 @@ const EquipeRoute = EquipeRouteImport.update({
   path: '/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ImportarRoute = ImportarRouteImport.update({
-  id: '/importar',
-  path: '/importar',
+const PesquisaRoute = PesquisaRouteImport.update({
+  id: '/pesquisa',
+  path: '/pesquisa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -78,7 +78,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/chats': typeof ChatsRoute
   '/equipe': typeof EquipeRoute
-  '/importar': typeof ImportarRoute
+  '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
@@ -90,7 +90,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/chats': typeof ChatsRoute
   '/equipe': typeof EquipeRoute
-  '/importar': typeof ImportarRoute
+  '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes': typeof LicitacoesIndexRoute
@@ -103,7 +103,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/chats': typeof ChatsRoute
   '/equipe': typeof EquipeRoute
-  '/importar': typeof ImportarRoute
+  '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
@@ -117,7 +117,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chats'
     | '/equipe'
-    | '/importar'
+    | '/pesquisa'
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
@@ -129,7 +129,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chats'
     | '/equipe'
-    | '/importar'
+    | '/pesquisa'
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes'
@@ -141,7 +141,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/chats'
     | '/equipe'
-    | '/importar'
+    | '/pesquisa'
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
@@ -154,7 +154,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ChatsRoute: typeof ChatsRoute
   EquipeRoute: typeof EquipeRoute
-  ImportarRoute: typeof ImportarRoute
+  PesquisaRoute: typeof PesquisaRoute
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
@@ -204,11 +204,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/importar': {
-      id: '/importar'
-      path: '/importar'
-      fullPath: '/importar'
-      preLoaderRoute: typeof ImportarRouteImport
+    '/pesquisa': {
+      id: '/pesquisa'
+      path: '/pesquisa'
+      fullPath: '/pesquisa'
+      preLoaderRoute: typeof PesquisaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -242,7 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ChatsRoute: ChatsRoute,
   EquipeRoute: EquipeRoute,
-  ImportarRoute: ImportarRoute,
+  PesquisaRoute: PesquisaRoute,
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
