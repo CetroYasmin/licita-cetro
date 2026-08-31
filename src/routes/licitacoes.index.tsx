@@ -61,7 +61,7 @@ export const Route = createFileRoute("/licitacoes/")({
 });
 
 function ListaLicitacoes() {
-  const { equipeId } = useAuth();
+  const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("todos");
@@ -74,12 +74,28 @@ function ListaLicitacoes() {
   const [dataDe, setDataDe] = useState("");
   const [somenteParticipando, setSomenteParticipando] = useState(false);
   const [somenteFavoritos, setSomenteFavoritos] = useState(false);
+  const [ordenar, setOrdenar] = useState("sessao");
+  const [ocultarVistas, setOcultarVistas] = useState(false);
 
   const { data: pastas } = useQuery({
     queryKey: ["pastas", equipeId],
     enabled: Boolean(equipeId),
     queryFn: async () => (await supabase.from("pastas").select("id,nome").order("nome")).data ?? [],
   });
+
+  const { data: vistas } = useQuery({
+    queryKey: ["visualizacoes-licitacoes", equipeId],
+    enabled: Boolean(equipeId),
+    queryFn: async () =>
+      (
+        await supabase
+          .from("visualizacoes")
+          .select("licitacao_id,user_id,user_nome")
+          .not("licitacao_id", "is", null)
+          .limit(5000)
+      ).data ?? [],
+  });
+
 
   const { data: licitacoes, isLoading } = useQuery({
     queryKey: ["licitacoes", equipeId],
