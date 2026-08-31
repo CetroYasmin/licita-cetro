@@ -125,7 +125,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
           erros.push(`Falha de conexão com o PNCP: ${String(e)}`);
           break;
         }
-        const lista = (payload?.data ?? []) as Array<Record<string, any>>;
+        const lista = (payload?.data ?? []) as any[];
         for (const c of lista) {
           const objeto = String(c.objetoCompra ?? "");
           const natureza = classificarNatureza(objeto);
