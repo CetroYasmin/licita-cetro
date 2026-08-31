@@ -772,7 +772,7 @@ function Detalhes() {
             onEnviar={async (t) => {
               await supabase
                 .from("tarefas")
-                .insert({ ...t, licitacao_id: id, equipe_id: equipeId!, created_by: user?.id });
+                .insert({ ...t, licitacao_id: id, equipe_id: equipeId!, created_by: user?.id ?? null });
               recarregar();
             }}
           />
