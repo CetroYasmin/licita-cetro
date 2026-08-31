@@ -37,7 +37,7 @@ function Equipe() {
     queryFn: async () => {
       const [membros, pendentes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at"),
-        supabase.from("profiles").select("*").eq("perfil_status", "pendente").order("created_at"),
+        supabase.from("profiles").select("*").eq("status", "pendente").order("created_at"),
       ]);
       return { membros: membros.data ?? [], pendentes: pendentes.data ?? [] };
     },
@@ -85,7 +85,7 @@ function Equipe() {
               <div>
                 <p className="text-sm font-medium">{p.nome ?? p.email}</p>
                 <p className="text-xs text-muted-foreground">
-                  {p.email} · {p.empresa ?? "empresa não informada"} · solicitado{" "}
+                  {p.email} · {p.empresa_nome ?? "empresa não informada"} · solicitado{" "}
                   {dataHora(p.created_at)}
                 </p>
               </div>
@@ -96,7 +96,7 @@ function Equipe() {
                     onClick={() =>
                       alterar.mutate({
                         id: p.id,
-                        campos: { perfil_status: "aprovado", equipe_id: equipeId },
+                        campos: { status: "aprovado", equipe_id: equipeId },
                       })
                     }
                   >
@@ -105,7 +105,7 @@ function Equipe() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => alterar.mutate({ id: p.id, campos: { perfil_status: "bloqueado" } })}
+                    onClick={() => alterar.mutate({ id: p.id, campos: { status: "bloqueado" } })}
                   >
                     Recusar
                   </Button>
@@ -127,25 +127,25 @@ function Equipe() {
               <div>
                 <p className="text-sm font-medium">{m.nome ?? m.email}</p>
                 <p className="text-xs text-muted-foreground">
-                  {m.email} · {m.cargo ?? "sem cargo"} · {m.empresa ?? ""}
+                  {m.email} · {m.empresa_nome ?? ""}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline">{m.perfil_status}</Badge>
-                {isAdmin && m.perfil_status === "aprovado" && (
+                <Badge variant="outline">{m.status}</Badge>
+                {isAdmin && m.status === "aprovado" && (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => alterar.mutate({ id: m.id, campos: { perfil_status: "bloqueado" } })}
+                    onClick={() => alterar.mutate({ id: m.id, campos: { status: "bloqueado" } })}
                   >
                     Bloquear
                   </Button>
                 )}
-                {isAdmin && m.perfil_status === "bloqueado" && (
+                {isAdmin && m.status === "bloqueado" && (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => alterar.mutate({ id: m.id, campos: { perfil_status: "aprovado" } })}
+                    onClick={() => alterar.mutate({ id: m.id, campos: { status: "aprovado" } })}
                   >
                     Reativar
                   </Button>

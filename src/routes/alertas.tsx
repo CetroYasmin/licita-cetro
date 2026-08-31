@@ -42,7 +42,7 @@ function Alertas() {
         .select("*,licitacoes(numero,orgao)")
         .order("created_at", { ascending: false })
         .limit(200);
-      if (filtro === "nao_lidos") q = q.eq("lido", false);
+      if (filtro === "nao_lidos") q = q.eq("lida", false);
       const { data } = await q;
       return data ?? [];
     },
@@ -50,8 +50,8 @@ function Alertas() {
 
   const marcar = useMutation({
     mutationFn: async (id?: string) => {
-      const q = supabase.from("alertas").update({ lido: true });
-      const { error } = id ? await q.eq("id", id) : await q.eq("lido", false);
+      const q = supabase.from("alertas").update({ lida: true });
+      const { error } = id ? await q.eq("id", id) : await q.eq("lida", false);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -89,13 +89,13 @@ function Alertas() {
         {alertas.map((a: any) => (
           <div key={a.id} className="flex flex-wrap items-start gap-3 p-4">
             <BellRing
-              className={`mt-0.5 h-4 w-4 shrink-0 ${a.lido ? "text-muted-foreground" : "text-primary"}`}
+              className={`mt-0.5 h-4 w-4 shrink-0 ${a.lida ? "text-muted-foreground" : "text-primary"}`}
             />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{a.titulo}</span>
                 <Badge variant="outline">{a.tipo}</Badge>
-                {!a.lido && <Badge>novo</Badge>}
+                {!a.lida && <Badge>novo</Badge>}
               </div>
               {a.mensagem && <p className="mt-1 text-sm text-muted-foreground">{a.mensagem}</p>}
               <p className="mt-1 text-xs text-muted-foreground">
@@ -109,9 +109,9 @@ function Alertas() {
                   <Link to="/licitacoes/$id" params={{ id: a.licitacao_id }}>Abrir</Link>
                 </Button>
               )}
-              {!a.lido && (
+              {!a.lida && (
                 <Button variant="ghost" size="sm" onClick={() => marcar.mutate(a.id)}>
-                  Marcar lido
+                  Marcar lida
                 </Button>
               )}
             </div>
@@ -119,7 +119,7 @@ function Alertas() {
         ))}
         {alertas.length === 0 && (
           <p className="p-10 text-center text-sm text-muted-foreground">
-            Nenhum alerta {filtro === "nao_lidos" ? "não lido" : "registrado"}.
+            Nenhum alerta {filtro === "nao_lidos" ? "não lida" : "registrado"}.
           </p>
         )}
       </div>

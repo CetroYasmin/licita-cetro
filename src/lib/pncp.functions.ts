@@ -180,7 +180,7 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
         `${BASE}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}/itens?pagina=1&tamanhoPagina=200`,
         { headers: { Accept: "application/json" } },
       );
-      if (!res.ok) return { itens: [] as Array<Record<string, unknown>> };
+      if (!res.ok) return { itens: [] as any[] };
       const payload = (await res.json()) as unknown;
       const lista = (Array.isArray(payload) ? payload : ((payload as any)?.data ?? [])) as Array<
         Record<string, any>
@@ -197,6 +197,6 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
         })),
       };
     } catch {
-      return { itens: [] as Array<Record<string, unknown>> };
+      return { itens: [] as any[] };
     }
   });

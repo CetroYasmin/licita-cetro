@@ -41,7 +41,7 @@ export async function registrarAlerta(
 
 export function baixarCsv(nome: string, linhas: Record<string, unknown>[]) {
   if (linhas.length === 0) return;
-  const colunas = Object.keys(linhas[0]);
+  const colunas = Object.keys(linhas[0] ?? {});
   const escapar = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const csv = [
     colunas.join(";"),
