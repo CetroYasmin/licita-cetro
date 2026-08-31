@@ -192,7 +192,7 @@ function Detalhes() {
         novo.situacao,
         (v) => String(v),
       );
-      if (novo.site_url && novo.site_url !== licAtual.site_url) campos.site_url = novo.site_url;
+      if (novo.site_url && novo.site_url !== licAtual.site_url) campos["site_url"] = novo.site_url;
 
       if (mudancas.length === 0) {
         await supabase
@@ -203,10 +203,10 @@ function Detalhes() {
       }
 
       const situacao = String(novo.situacao ?? "").toLowerCase();
-      if (situacao.includes("suspens")) campos.status = "suspensa";
+      if (situacao.includes("suspens")) campos["status"] = "suspensa";
       if (novo.data_sessao && novo.data_sessao !== licAtual.data_sessao) {
-        campos.proximo_evento = "Sessão remarcada/prorrogada";
-        campos.proximo_evento_data = novo.data_sessao;
+        campos["proximo_evento"] = "Sessão remarcada/prorrogada";
+        campos["proximo_evento_data"] = novo.data_sessao;
       }
 
       const { error } = await supabase
