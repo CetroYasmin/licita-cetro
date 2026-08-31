@@ -113,16 +113,38 @@ function ListaLicitacoes() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["licitacoes"] }),
   });
 
+  const marcarVista = useMutation({
+    mutationFn: async ({ id, remover }: { id: string; remover: boolean }) => {
+      if (!equipeId || !user) throw new Error("sem equipe");
+      if (remover) {
+        const { error } = await supabase
+          .from("visualizacoes")
+          .delete()
+          .eq("licitacao_id", id)
+          .eq("user_id", user.id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("visualizacoes").insert({
+        equipe_id: equipeId,
+        user_id: user.id,
+        user_nome: perfil?.nome ?? perfil?.email ?? "membro",
+        licitacao_id: id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["visualizacoes-licitacoes"] }),
+    onError: () => toast.error("Não foi possível registrar a visualização."),
+  });
+
+  const vistaPor = (id: string) =>
+    (vistas ?? []).filter((v: any) => v.licitacao_id === id).map((v: any) => v.user_nome ?? "membro");
+  const euVi = (id: string) => (vistas ?? []).some((v: any) => v.licitacao_id === id && v.user_id === user?.id);
+
   const filtradas = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
-    return (licitacoes ?? []).filter((l: any) => {
-      if (
-        termo &&
-        !`${l.numero} ${l.orgao ?? ""} ${l.objeto ?? ""} ${l.processo_administrativo ?? ""} ${(l.tags ?? []).join(" ")}`
-          .toLowerCase()
-          .includes(termo)
-      )
-        return false;
+    const lista = (licitacoes ?? []).filter((l: any) => {
+      const texto = `${l.numero} ${l.orgao ?? ""} ${l.objeto ?? ""} ${l.processo_administrativo ?? ""} ${(l.tags ?? []).join(" ")}`;
+      if (!combina(texto, busca)) return false;
       if (status !== "todos" && l.status !== status) return false;
       if (modalidade !== "todas" && l.modalidade !== modalidade) return false;
       if (uf !== "todas" && l.uf !== uf) return false;
@@ -133,11 +155,33 @@ function ListaLicitacoes() {
       if (dataDe && (!l.data_sessao || new Date(l.data_sessao) < new Date(dataDe))) return false;
       if (somenteParticipando && l.valor_ofertado == null) return false;
       if (somenteFavoritos && !l.favorito) return false;
+      if (ocultarVistas && (vistas ?? []).some((v: any) => v.licitacao_id === l.id && v.user_id === user?.id))
+        return false;
       return true;
     });
+
+    const texto = (v?: string | null) => v ?? "";
+    const ordenadores: Record<string, (a: any, b: any) => number> = {
+      sessao: (a, b) => texto(a.data_sessao ?? "9999").localeCompare(texto(b.data_sessao ?? "9999")),
+      publicacao: (a, b) => texto(b.data_publicacao).localeCompare(texto(a.data_publicacao)),
+      atualizacao: (a, b) => texto(b.ultima_atualizacao).localeCompare(texto(a.ultima_atualizacao)),
+      valor_desc: (a, b) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0),
+      valor_asc: (a, b) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0),
+      proposta_desc: (a, b) => (b.valor_ofertado ?? 0) - (a.valor_ofertado ?? 0),
+      orgao: (a, b) => texto(a.orgao).localeCompare(texto(b.orgao), "pt-BR"),
+      numero: (a, b) => texto(a.numero).localeCompare(texto(b.numero), "pt-BR"),
+      status: (a, b) => texto(a.status).localeCompare(texto(b.status), "pt-BR"),
+      uf: (a, b) => texto(a.uf).localeCompare(texto(b.uf)),
+    };
+    return [...lista].sort(ordenadores[ordenar] ?? ordenadores.sessao);
   }, [
     licitacoes,
     busca,
+    ordenar,
+    ocultarVistas,
+    vistas,
+    user,
+
     status,
     modalidade,
     uf,
