@@ -67,7 +67,7 @@ function Equipe() {
   return (
     <AppLayout
       titulo="Equipe"
-      descricao={`Equipe ${perfil?.equipe_nome ?? ""} · aprovação manual de novos usuários`}
+      descricao={`Equipe ${perfil?.empresa_nome ?? ""} · aprovação manual de novos usuários`}
     >
       {!isAdmin && (
         <p className="surface-panel mb-4 p-4 text-sm text-muted-foreground">
