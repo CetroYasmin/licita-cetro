@@ -809,61 +809,165 @@ function Detalhes() {
 
         {/* CHAT */}
         <TabsContent value="chat" className="mt-4">
-          <div className="surface-panel flex h-[560px] flex-col">
-            <div className="border-b p-4">
-              <h3 className="text-sm font-semibold">Chat da licitação</h3>
-              <p className="text-xs text-muted-foreground">
-                Reproduz as mensagens da sessão no portal (pregoeiro, licitantes) e as anotações da
-                equipe.
-              </p>
-            </div>
-            <div className="flex-1 space-y-3 overflow-y-auto p-4">
-              {(data?.chat ?? []).map((m: any) => (
-                <div
-                  key={m.id}
-                  className={`max-w-[80%] rounded-lg p-3 text-sm ${
-                    m.origem === "equipe" ? "ml-auto bg-secondary/10" : "bg-muted"
-                  }`}
-                >
-                  <p className="text-xs font-semibold">
-                    {m.autor} <span className="font-normal text-muted-foreground">· {m.origem}</span>
+          <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+            <div className="surface-panel flex h-[560px] flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
+                <div>
+                  <h3 className="text-sm font-semibold">Chat original da licitação</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Reprodução das mensagens da sessão no portal — pregoeiro, sistema e licitantes.
                   </p>
-                  <p className="mt-1">{m.mensagem}</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{dataHora(m.enviada_em)}</p>
                 </div>
-              ))}
-              {(data?.chat ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma mensagem registrada nesta sessão.
-                </p>
-              )}
+                {data?.lic?.site_url && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={data.lic.site_url} target="_blank" rel="noreferrer">
+                      Abrir chat no portal
+                    </a>
+                  </Button>
+                )}
+              </div>
+              <div className="flex-1 space-y-3 overflow-y-auto p-4">
+                {(data?.chat ?? []).map((m: any) => {
+                  const papel = m.papel ?? (m.origem === "equipe" ? "equipe" : "licitante");
+                  const estilo =
+                    papel === "pregoeiro"
+                      ? "bg-secondary/10 border-secondary/30"
+                      : papel === "sistema"
+                        ? "bg-muted border-border italic"
+                        : papel === "equipe"
+                          ? "ml-auto bg-primary/10 border-primary/30"
+                          : "bg-card border-border";
+                  return (
+                    <div key={m.id} className={`max-w-[85%] rounded-lg border p-3 text-sm ${estilo}`}>
+                      <p className="text-xs font-semibold">
+                        {m.autor}{" "}
+                        <span className="font-normal uppercase tracking-wide text-muted-foreground">
+                          · {papel}
+                        </span>
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap">{m.mensagem}</p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">{dataHora(m.enviada_em)}</p>
+                    </div>
+                  );
+                })}
+                {(data?.chat ?? []).length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma mensagem reproduzida ainda. Cole a ata/chat do portal ao lado para
+                    reproduzir a conversa aqui.
+                  </p>
+                )}
+              </div>
+              <form
+                className="flex flex-wrap gap-2 border-t p-3"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const fd = new FormData(form);
+                  const mensagem = String(fd.get("mensagem") ?? "").trim();
+                  const autor = String(fd.get("autor") ?? "").trim();
+                  const papel = String(fd.get("papel") ?? "licitante");
+                  if (!mensagem) return;
+                  await supabase.from("chat_mensagens").insert({
+                    licitacao_id: id,
+                    equipe_id: equipeId!,
+                    autor: autor || (papel === "equipe" ? (ctx.autorNome ?? "Equipe") : "Portal"),
+                    origem: papel === "equipe" ? "equipe" : "portal",
+                    papel,
+                    mensagem,
+                  });
+                  form.reset();
+                  recarregar();
+                }}
+              >
+                <Input name="autor" placeholder="Autor no portal" className="w-40" />
+                <select
+                  name="papel"
+                  defaultValue="licitante"
+                  className="h-9 rounded-md border bg-background px-2 text-sm"
+                >
+                  <option value="pregoeiro">Pregoeiro</option>
+                  <option value="licitante">Licitante</option>
+                  <option value="sistema">Sistema</option>
+                  <option value="equipe">Nota interna</option>
+                </select>
+                <Input name="mensagem" placeholder="Mensagem reproduzida do chat…" className="min-w-40 flex-1" />
+                <Button type="submit">Registrar</Button>
+              </form>
             </div>
-            <form
-              className="flex gap-2 border-t p-3"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const form = e.currentTarget;
-                const fd = new FormData(form);
-                const mensagem = String(fd.get("mensagem") ?? "").trim();
-                const autor = String(fd.get("autor") ?? "").trim();
-                if (!mensagem) return;
-                await supabase.from("chat_mensagens").insert({
-                  licitacao_id: id,
-                  equipe_id: equipeId!,
-                  autor: autor || (ctx.autorNome ?? "Equipe"),
-                  origem: autor ? "portal" : "equipe",
-                  mensagem,
-                });
-                form.reset();
-                recarregar();
-              }}
-            >
-              <Input name="autor" placeholder="Autor no portal (opcional)" className="w-56" />
-              <Input name="mensagem" placeholder="Registrar mensagem do chat…" className="flex-1" />
-              <Button type="submit">Registrar</Button>
-            </form>
+
+            <div className="surface-panel p-4">
+              <h3 className="text-sm font-semibold">Importar chat do portal</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Copie o chat/ata da sessão no portal e cole abaixo. Cada linha é reproduzida como
+                mensagem; formatos aceitos: <code>[10:32] Pregoeiro: texto</code> ou{" "}
+                <code>10:32 - Licitante 12: texto</code>.
+              </p>
+              <form
+                className="mt-3 space-y-3"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const bruto = String(new FormData(form).get("transcricao") ?? "");
+                  const base = data?.lic?.data_sessao
+                    ? new Date(data.lic.data_sessao)
+                    : new Date();
+                  const linhas = bruto
+                    .split("\n")
+                    .map((l) => l.trim())
+                    .filter(Boolean);
+                  const registros = linhas.map((linha) => {
+                    const hora = linha.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+                    const semHora = linha.replace(/^[\[\(]?\s*\d{1,2}:\d{2}(?::\d{2})?\s*[\]\)]?\s*[-–]?\s*/, "");
+                    const divisor = semHora.indexOf(":");
+                    const autor = divisor > 0 && divisor < 60 ? semHora.slice(0, divisor).trim() : "Portal";
+                    const mensagem = divisor > 0 && divisor < 60 ? semHora.slice(divisor + 1).trim() : semHora;
+                    const autorNorm = autor.toLowerCase();
+                    const papel = /pregoeir|agente de contrata|presidente|comiss/.test(autorNorm)
+                      ? "pregoeiro"
+                      : /sistema|portal|automat/.test(autorNorm)
+                        ? "sistema"
+                        : "licitante";
+                    const enviada = new Date(base);
+                    if (hora) {
+                      enviada.setHours(Number(hora[1]), Number(hora[2]), Number(hora[3] ?? 0), 0);
+                    }
+                    return {
+                      licitacao_id: id,
+                      equipe_id: equipeId!,
+                      autor,
+                      papel,
+                      origem: "portal",
+                      mensagem,
+                      enviada_em: enviada.toISOString(),
+                    };
+                  });
+                  if (registros.length === 0) {
+                    toast.error("Cole ao menos uma linha do chat do portal.");
+                    return;
+                  }
+                  const { error } = await supabase.from("chat_mensagens").insert(registros);
+                  if (error) {
+                    toast.error("Não foi possível importar o chat.");
+                    return;
+                  }
+                  toast.success(`${registros.length} mensagem(ns) reproduzida(s) do portal.`);
+                  form.reset();
+                  recarregar();
+                }}
+              >
+                <Textarea
+                  name="transcricao"
+                  rows={14}
+                  placeholder={"[09:02] Sistema: Sessão pública aberta\n[09:05] Pregoeiro: Boa tarde, senhores licitantes\n[09:07] Licitante 3: Solicito esclarecimento do item 4"}
+                />
+                <Button type="submit" className="w-full">
+                  Reproduzir chat na plataforma
+                </Button>
+              </form>
+            </div>
           </div>
         </TabsContent>
+
       </Tabs>
     </AppLayout>
   );
