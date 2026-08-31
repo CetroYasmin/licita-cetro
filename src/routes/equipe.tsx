@@ -35,11 +35,16 @@ function Equipe() {
     queryKey: ["equipe"],
     enabled: Boolean(equipeId),
     queryFn: async () => {
-      const [membros, pendentes] = await Promise.all([
+      const [membros, pendentes, roles] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at"),
         supabase.from("profiles").select("*").eq("status", "pendente").order("created_at"),
+        supabase.from("user_roles").select("user_id,role"),
       ]);
-      return { membros: membros.data ?? [], pendentes: pendentes.data ?? [] };
+      return {
+        membros: membros.data ?? [],
+        pendentes: pendentes.data ?? [],
+        roles: roles.data ?? [],
+      };
     },
   });
 
@@ -60,6 +65,32 @@ function Equipe() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const papel = useMutation({
+    mutationFn: async ({ id, tornarAdmin }: { id: string; tornarAdmin: boolean }) => {
+      if (tornarAdmin) {
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: id, role: "admin" });
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", id)
+        .eq("role", "admin");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Permissão de administrador atualizada.");
+      void qc.invalidateQueries({ queryKey: ["equipe"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const roles = (data?.roles ?? []) as any[];
+  const ehAdmin = (id: string) => roles.some((r) => r.user_id === id && r.role === "admin");
 
   const membros = (data?.membros ?? []) as any[];
   const pendentes = (data?.pendentes ?? []) as any[];
@@ -130,8 +161,18 @@ function Equipe() {
                   {m.email} · {m.empresa_nome ?? ""}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{m.status}</Badge>
+                {ehAdmin(m.id) && <Badge variant="secondary">administrador</Badge>}
+                {isAdmin && m.status === "aprovado" && m.id !== perfil?.id && (
+                  <Button
+                    size="sm"
+                    variant={ehAdmin(m.id) ? "outline" : "default"}
+                    onClick={() => papel.mutate({ id: m.id, tornarAdmin: !ehAdmin(m.id) })}
+                  >
+                    {ehAdmin(m.id) ? "Remover admin" : "Tornar administrador"}
+                  </Button>
+                )}
                 {isAdmin && m.status === "aprovado" && (
                   <Button
                     size="sm"
