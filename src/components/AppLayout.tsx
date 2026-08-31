@@ -145,7 +145,7 @@ export function AppLayout({
             );
           })}
         </nav>
-        <div className="absolute inset-x-0 bottom-0 border-t border-sidebar-border p-3">
+        <div className="border-t border-sidebar-border p-3">
           <p className="truncate px-2 text-xs text-sidebar-foreground/70">{perfil?.email}</p>
           <p className="truncate px-2 text-xs text-sidebar-foreground/50">
             {perfil?.empresa_nome ?? "Empresa não informada"}
