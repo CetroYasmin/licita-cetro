@@ -6,6 +6,7 @@ import {
   Search,
   CalendarDays,
   Bell,
+  Mailbox,
   MessageSquare,
   BarChart3,
   Users,
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/chats", label: "Chats", icon: MessageSquare },
+  { to: "/boletins", label: "Boletins", icon: Mailbox },
   { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/equipe", label: "Equipe", icon: Users },
@@ -103,10 +105,10 @@ export function AppLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="min-h-screen bg-background lg:pl-64">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 shrink-0 bg-sidebar text-sidebar-foreground transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform lg:translate-x-0",
           aberto ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -119,7 +121,7 @@ export function AppLayout({
             <p className="text-[11px] text-sidebar-foreground/70">Acompanhamento de editais</p>
           </div>
         </div>
-        <nav className="space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {NAV.map((item) => {
             const ativo = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return (
@@ -145,7 +147,7 @@ export function AppLayout({
             );
           })}
         </nav>
-        <div className="absolute inset-x-0 bottom-0 border-t border-sidebar-border p-3">
+        <div className="border-t border-sidebar-border p-3">
           <p className="truncate px-2 text-xs text-sidebar-foreground/70">{perfil?.email}</p>
           <p className="truncate px-2 text-xs text-sidebar-foreground/50">
             {perfil?.empresa_nome ?? "Empresa não informada"}
@@ -161,7 +163,16 @@ export function AppLayout({
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      {aberto && (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          className="fixed inset-0 z-30 bg-foreground/40 lg:hidden"
+          onClick={() => setAberto(false)}
+        />
+      )}
+
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-3 border-b bg-card px-4 py-3 lg:px-8">
           <Button
             variant="ghost"

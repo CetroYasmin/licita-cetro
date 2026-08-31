@@ -325,3 +325,37 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
       return { itens: [] as any[] };
     }
   });
+
+/**
+ * Reconsulta uma contratação específica no PNCP para detectar mudanças de
+ * datas (prorrogação), situação (suspensa/revogada) e valores.
+ */
+export const sincronizarLicitacaoPncp = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z.object({ cnpj: z.string(), ano: z.number(), sequencial: z.number() }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const res = await fetch(
+        `${BASE}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}`,
+        { headers: { Accept: "application/json" } },
+      );
+      if (!res.ok) return { ok: false as const, licitacao: null };
+      const payload = (await res.json()) as unknown;
+      const bruto = (Array.isArray(payload) ? payload[0] : ((payload as any)?.data ?? payload)) as any;
+      if (!bruto) return { ok: false as const, licitacao: null };
+      return { ok: true as const, licitacao: mapear(bruto) };
+    } catch {
+      return { ok: false as const, licitacao: null };
+    }
+  });
+
+/** Extrai cnpj/ano/sequencial do numeroControlePNCP (ex.: 12345678000199-1-000123/2026). */
+export function partesDoFonteId(fonteId?: string | null) {
+  if (!fonteId) return null;
+  const m = /^(\d{14})-\d+-(\d+)\/(\d{4})$/.exec(fonteId.trim());
+  if (m) return { cnpj: m[1]!, sequencial: Number(m[2]), ano: Number(m[3]) };
+  const alt = /^(\d{14})-(\d{4})-(\d+)$/.exec(fonteId.trim());
+  if (alt) return { cnpj: alt[1]!, ano: Number(alt[2]), sequencial: Number(alt[3]) };
+  return null;
+}

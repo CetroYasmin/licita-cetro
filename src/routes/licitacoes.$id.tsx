@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -40,6 +40,7 @@ import {
   numero as fNumero,
 } from "@/lib/formato";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
+import { partesDoFonteId, sincronizarLicitacaoPncp } from "@/lib/pncp.functions";
 
 export const Route = createFileRoute("/licitacoes/$id")({
   head: () => ({
@@ -147,7 +148,100 @@ function Detalhes() {
     },
   });
 
-  const lic = data?.lic;
+  const licAtual = data?.lic;
+
+  const sincronizar = useMutation({
+    mutationFn: async () => {
+      const partes = partesDoFonteId(licAtual?.fonte_id);
+      if (!partes) throw new Error("Esta licitação não tem origem no PNCP para reconsulta.");
+      const res = await sincronizarLicitacaoPncp({ data: partes });
+      if (!res.ok || !res.licitacao) throw new Error("Não foi possível consultar o PNCP agora.");
+      const novo = res.licitacao;
+      const mudancas: string[] = [];
+      const campos: Record<string, unknown> = {};
+
+      const comparar = (
+        rotulo: string,
+        coluna: string,
+        antes: unknown,
+        depois: unknown,
+        formatar: (v: any) => string,
+      ) => {
+        const a = antes ? String(antes).slice(0, 16) : "";
+        const b = depois ? String(depois).slice(0, 16) : "";
+        if (b && a !== b) {
+          mudancas.push(`${rotulo}: ${antes ? formatar(antes) : "—"} → ${formatar(depois)}`);
+          campos[coluna] = depois;
+        }
+      };
+
+      comparar("Data de abertura", "data_abertura", licAtual.data_abertura, novo.data_abertura, fData);
+      comparar("Data da sessão", "data_sessao", licAtual.data_sessao, novo.data_sessao, dataHora);
+      comparar("Publicação", "data_publicacao", licAtual.data_publicacao, novo.data_publicacao, fData);
+      comparar(
+        "Valor estimado",
+        "valor_estimado",
+        licAtual.valor_estimado,
+        novo.valor_estimado,
+        (v) => moeda(Number(v)),
+      );
+      comparar(
+        "Situação no portal",
+        "situacao_proposta",
+        licAtual.situacao_proposta,
+        novo.situacao,
+        (v) => String(v),
+      );
+      if (novo.site_url && novo.site_url !== licAtual.site_url) campos["site_url"] = novo.site_url;
+
+      if (mudancas.length === 0) {
+        await supabase
+          .from("licitacoes")
+          .update({ ultima_atualizacao: new Date().toISOString() })
+          .eq("id", id);
+        return { mudancas };
+      }
+
+      const situacao = String(novo.situacao ?? "").toLowerCase();
+      if (situacao.includes("suspens")) campos["status"] = "suspensa";
+      if (novo.data_sessao && novo.data_sessao !== licAtual.data_sessao) {
+        campos["proximo_evento"] = "Sessão remarcada/prorrogada";
+        campos["proximo_evento_data"] = novo.data_sessao;
+      }
+
+      const { error } = await supabase
+        .from("licitacoes")
+        .update({ ...campos, ultima_atualizacao: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+
+      await registrarMovimentacao(
+        ctx,
+        id,
+        "atualização do portal",
+        `Alterações detectadas no PNCP — ${mudancas.join(" | ")}`,
+      );
+      await registrarAlerta(
+        ctx,
+        id,
+        "prazo alterado",
+        `Datas/situação alteradas na licitação ${licAtual.numero}`,
+        mudancas.join(" | "),
+      );
+      return { mudancas };
+    },
+    onSuccess: (r) => {
+      if (r && r.mudancas.length > 0) {
+        toast.success(`Atualizada: ${r.mudancas.length} alteração(ões) registrada(s).`);
+      } else {
+        toast.info("Nenhuma alteração encontrada no portal de origem.");
+      }
+      recarregar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const lic = licAtual;
 
   if (isLoading || !lic) {
     return (
@@ -172,6 +266,27 @@ function Detalhes() {
       descricao={`${lic.orgao ?? "—"} · última atualização ${dataHora(lic.ultima_atualizacao)}`}
       acoes={
         <>
+          {lic.site_url && (
+            <Button size="sm" asChild>
+              <a href={lic.site_url} target="_blank" rel="noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Acessar site da licitação
+              </a>
+            </Button>
+          )}
+          {lic.fonte_id && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={sincronizar.isPending}
+              onClick={() => sincronizar.mutate()}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${sincronizar.isPending ? "animate-spin" : ""}`}
+              />
+              Verificar atualizações
+            </Button>
+          )}
           <Button variant="ghost" size="sm" asChild>
             <Link to="/licitacoes">
               <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
