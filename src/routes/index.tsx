@@ -104,7 +104,7 @@ function CardIndicador({
     if (comLink.length === 1) {
       return (
         <a
-          href={comLink[0].site_url!}
+          href={comLink[0]?.site_url ?? "#"}
           target="_blank"
           rel="noreferrer"
           className="surface-panel block p-5 transition-colors hover:bg-muted/60"
