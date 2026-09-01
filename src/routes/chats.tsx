@@ -236,7 +236,7 @@ x-captura-token: <chave da equipe>
                   <li key={m.id} className="p-3 text-sm">
                     <span className="font-medium">{m.autor}</span>{" "}
                     <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] ${PAPEL_COR[m.papel] ?? PAPEL_COR.licitante}`}
+                      className={`rounded px-1.5 py-0.5 text-[10px] ${PAPEL_COR[m.papel] ?? PAPEL_COR["licitante"]}`}
                     >
                       {m.papel ?? m.origem}
                     </span>{" "}
