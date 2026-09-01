@@ -243,15 +243,15 @@ function Dashboard() {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {cards.map((c) => (
-              <div key={c.label} className="surface-panel p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {c.label}
-                  </p>
-                  <c.icon className={`h-4 w-4 ${c.cor}`} />
-                </div>
-                <p className="mt-3 font-display text-2xl font-semibold">{c.valor}</p>
-              </div>
+              <CardIndicador
+                key={c.label}
+                label={c.label}
+                valor={c.valor}
+                icon={c.icon}
+                cor={c.cor}
+                to={"to" in c ? (c.to as string) : undefined}
+                portais={"portais" in c ? (c.portais as Lic[]) : undefined}
+              />
             ))}
           </div>
 
