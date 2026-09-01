@@ -153,7 +153,7 @@ function Dashboard() {
         supabase
           .from("licitacoes")
           .select(
-            "id,numero,orgao,objeto,status,data_sessao,valor_estimado,valor_ofertado,posicao_empresa,proximo_evento,proximo_evento_data",
+            "id,numero,orgao,objeto,status,data_sessao,valor_estimado,valor_ofertado,posicao_empresa,proximo_evento,proximo_evento_data,portal,site_url",
           )
           .order("data_sessao", { ascending: true }),
         supabase
