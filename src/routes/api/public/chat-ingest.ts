@@ -195,15 +195,29 @@ export const Route = createFileRoute("/api/public/chat-ingest")({
             )
             .limit(2);
           if (!achadas || achadas.length === 0) {
-            return json(
-              {
-                erro: "Nenhuma licitação da equipe corresponde à referência informada",
-                referencia: ref,
-              },
-              404,
-            );
+            // Cria um registro mínimo para não perder mensagens de uma sessão ainda não cadastrada.
+            const { data: nova, error: erroNova } = await supabaseAdmin
+              .from("licitacoes")
+              .insert({
+                equipe_id: chave.equipe_id,
+                numero: ref,
+                portal: data.portal ?? "portal",
+                plataforma: data.portal ?? null,
+                status: "em_disputa",
+                fonte: "captura",
+                fonte_id: ref,
+                objeto: "Sessão capturada pelo chat (cadastro automático)",
+              })
+              .select("id")
+              .single();
+            if (erroNova || !nova) {
+              return json({ erro: erroNova?.message ?? "Falha ao criar licitação" }, 500);
+            }
+            licitacaoId = nova.id;
+          } else {
+            licitacaoId = achadas[0]!.id;
           }
-          licitacaoId = achadas[0]!.id;
+
         } else {
           return json({ erro: "Informe licitacao_id ou referencia" }, 400);
         }
