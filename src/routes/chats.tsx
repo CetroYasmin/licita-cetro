@@ -158,8 +158,22 @@ function Chats() {
 {`POST ${endpoint || "/api/public/chat-ingest"}
 x-captura-token: <chave da equipe>
 
+// 1) Formato nativo do Compras.gov.br: repasse a resposta de /mensagens como veio
+[
+  { "chaveCompra": { "numero": 118, "ano": 2026, "numeroUasg": 981547 },
+    "identificadorItem": "2",
+    "chaveMensagemNaOrigem": "4b5c382e-a581-49d6-a320-2b1c533a2ccd",
+    "texto": "O item 2 teve a convocação para envio de anexos encerrada...",
+    "categoria": "13", "dataHora": "2026-09-01 11:19:10.361",
+    "tipoRemetente": "1" }
+]
+// tipoRemetente 3 = pregoeiro · 0 e 1 = sistema · demais = licitante
+// dataHora é lida como horário de Brasília (-03:00)
+// Se a chaveCompra não vier, mande ?referencia=118/2026 na URL
+
+// 2) Formato genérico (qualquer portal)
 {
-  "referencia": "90012/2026",        // nº do pregão, id da compra ou URL da sessão
+  "referencia": "118/2026",          // nº do pregão, id da compra ou URL da sessão
   "portal": "Compras.gov.br",
   "mensagens": [
     { "externo_id": "1821", "autor": "Pregoeiro", "papel": "pregoeiro",
@@ -167,6 +181,7 @@ x-captura-token: <chave da equipe>
   ]
 }`}
             </pre>
+
 
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
