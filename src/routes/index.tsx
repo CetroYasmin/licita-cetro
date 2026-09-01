@@ -195,9 +195,27 @@ function Dashboard() {
     .reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
   const cards = [
-    { label: "Em acompanhamento", valor: acompanhando.length, icon: Gavel, cor: "text-secondary" },
-    { label: "Sessões hoje", valor: sessoesHoje.length, icon: CalendarClock, cor: "text-warning" },
-    { label: "Em disputa", valor: emDisputa.length, icon: Flame, cor: "text-primary" },
+    {
+      label: "Em acompanhamento",
+      valor: acompanhando.length,
+      icon: Gavel,
+      cor: "text-secondary",
+      to: "/licitacoes",
+    },
+    {
+      label: "Sessões hoje",
+      valor: sessoesHoje.length,
+      icon: CalendarClock,
+      cor: "text-warning",
+      portais: sessoesHoje,
+    },
+    {
+      label: "Em disputa",
+      valor: emDisputa.length,
+      icon: Flame,
+      cor: "text-primary",
+      portais: emDisputa,
+    },
     { label: "Licitações vencidas", valor: vencidas.length, icon: Trophy, cor: "text-success" },
     { label: "Licitações perdidas", valor: perdidas.length, icon: XCircle, cor: "text-destructive" },
     { label: "Valor total em disputa", valor: moeda(valorEmDisputa), icon: Wallet, cor: "text-secondary" },
