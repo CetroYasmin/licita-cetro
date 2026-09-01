@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS chat_mensagens_licitacao_externo_uidx ON public.chat_mensagens (licitacao_id, externo_id) WHERE externo_id IS NOT NULL;

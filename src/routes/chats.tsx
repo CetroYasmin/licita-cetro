@@ -38,6 +38,59 @@ const PAPEL_COR: Record<string, string> = {
   licitante: "bg-accent text-accent-foreground",
 };
 
+/** Snippet colável no console da página da sessão: espelha /mensagens para o app. */
+function scriptCaptura(endpoint: string, token: string) {
+  return `(function(){
+  var ENDPOINT=${JSON.stringify(endpoint || "/api/public/chat-ingest")};
+  var TOKEN=${JSON.stringify(token)};
+  var vistos=new Set();
+  function enviar(corpo){
+    try{
+      var lista=Array.isArray(corpo)?corpo:(corpo&&corpo.mensagens)||null;
+      if(!lista||!lista.length||!lista[0]||!lista[0].texto)return;
+      var novas=lista.filter(function(m){
+        var k=m.chaveMensagemNaOrigem||(m.dataHora+"|"+m.texto);
+        if(vistos.has(k))return false; vistos.add(k); return true;
+      });
+      if(!novas.length)return;
+      fetch(ENDPOINT,{method:"POST",headers:{"content-type":"application/json","x-captura-token":TOKEN},body:JSON.stringify(novas)})
+        .then(function(r){return r.json()})
+        .then(function(r){console.log("[captura]",r)})
+        .catch(function(e){console.warn("[captura] falhou",e)});
+    }catch(e){console.warn("[captura]",e)}
+  }
+  var fetchOriginal=window.fetch;
+  window.fetch=function(){
+    var args=arguments;
+    return fetchOriginal.apply(this,args).then(function(resp){
+      try{
+        var u=(typeof args[0]==="string"?args[0]:(args[0]&&args[0].url))||"";
+        if(/mensagens/i.test(u))resp.clone().json().then(enviar).catch(function(){});
+      }catch(e){}
+      return resp;
+    });
+  };
+  var abrir=XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open=function(m,u){
+    this.addEventListener("load",function(){
+      try{ if(/mensagens/i.test(String(u)))enviar(JSON.parse(this.responseText)); }catch(e){}
+    });
+    return abrir.apply(this,arguments);
+  };
+  var WS=window.WebSocket;
+  window.WebSocket=function(url,protos){
+    var s=protos?new WS(url,protos):new WS(url);
+    s.addEventListener("message",function(ev){
+      try{ enviar(JSON.parse(ev.data)); }catch(e){}
+    });
+    return s;
+  };
+  window.WebSocket.prototype=WS.prototype;
+  console.log("[captura] ativa — mantenha esta aba aberta na sessão");
+})();`;
+}
+
+
 function Chats() {
   const { equipeId, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -181,6 +234,33 @@ x-captura-token: <chave da equipe>
   ]
 }`}
             </pre>
+
+            <div className="rounded border border-dashed p-3">
+              <p className="text-xs font-semibold">Script de captura (colar no console do portal)</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abra a sessão do pregão já logada, pressione F12 → Console, cole o script da chave
+                desejada e deixe a aba aberta. Ele intercepta as respostas de <code>/mensagens</code>{" "}
+                e reenvia para o app. Atenção: não cole texto de documentação no console — só este
+                script.
+              </p>
+              {(chaves ?? []).length === 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Crie uma chave abaixo para gerar o script.
+                </p>
+              )}
+              {(chaves ?? []).map((c: any) => (
+                <Button
+                  key={c.id}
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 mr-2"
+                  onClick={() => void copiar(scriptCaptura(endpoint, c.token), "Script")}
+                >
+                  <Copy className="mr-2 h-3 w-3" /> Copiar script — {c.nome}
+                </Button>
+              ))}
+            </div>
+
 
 
             <div className="flex items-center justify-between gap-2">
