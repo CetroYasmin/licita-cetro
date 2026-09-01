@@ -89,13 +89,33 @@ function autorCompras(papel: (typeof PAPEIS)[number]): string {
   return "Licitante";
 }
 
-/** "2026-09-01 11:19:10.361" (horário de Brasília) -> ISO com offset -03:00 */
-function dataCompras(valor?: string): string | undefined {
+/**
+ * Converte qualquer data recebida do portal para ISO.
+ * Aceita "2026-09-01 11:19:10.361" (horário de Brasília), "01/09/2026 11:19[:00]"
+ * e ISO com offset. Quando não dá para entender, devolve undefined (usa-se "agora"),
+ * porque um texto solto quebraria a gravação no banco.
+ */
+function paraIso(valor?: string): string | undefined {
   if (!valor) return undefined;
-  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(\.\d+)?$/.exec(valor.trim());
-  if (!m) return valor;
-  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}${m[7] ?? ""}-03:00`;
+  const v = valor.trim();
+
+  const iso = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/.exec(v);
+  if (iso) {
+    const offset = iso[8] ?? "-03:00";
+    return `${iso[1]}-${iso[2]}-${iso[3]}T${iso[4]}:${iso[5]}:${iso[6] ?? "00"}${iso[7] ?? ""}${offset === "Z" ? "Z" : offset}`;
+  }
+
+  const br = /^(\d{2})\/(\d{2})\/(\d{4})[ T,]+(\d{2}):(\d{2})(?::(\d{2}))?/.exec(v);
+  if (br) {
+    return `${br[3]}-${br[2]}-${br[1]}T${br[4]}:${br[5]}:${br[6] ?? "00"}-03:00`;
+  }
+
+  const t = Date.parse(v);
+  return Number.isNaN(t) ? undefined : new Date(t).toISOString();
 }
+
+const dataCompras = paraIso;
+
 
 type Canonico = z.infer<typeof schema>;
 
@@ -229,7 +249,7 @@ export const Route = createFileRoute("/api/public/chat-ingest")({
           papel: m.papel ?? inferirPapel(m.autor, m.mensagem),
           origem: data.portal ?? "portal",
           mensagem: m.mensagem,
-          enviada_em: m.enviada_em ?? new Date().toISOString(),
+          enviada_em: paraIso(m.enviada_em) ?? new Date().toISOString(),
           externo_id: m.externo_id ?? null,
           referencia_externa: data.referencia ?? null,
         }));
