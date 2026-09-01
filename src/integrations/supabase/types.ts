@@ -65,42 +65,86 @@ export type Database = {
           },
         ]
       }
+      captura_tokens: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          equipe_id: string
+          id: string
+          nome: string
+          token: string
+          ultimo_uso_em: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          equipe_id: string
+          id?: string
+          nome?: string
+          token?: string
+          ultimo_uso_em?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          nome?: string
+          token?: string
+          ultimo_uso_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captura_tokens_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_mensagens: {
         Row: {
           autor: string
           created_at: string
           enviada_em: string
           equipe_id: string
+          externo_id: string | null
           id: string
           licitacao_id: string
           lida: boolean
           mensagem: string
           origem: string
           papel: string
+          referencia_externa: string | null
         }
         Insert: {
           autor: string
           created_at?: string
           enviada_em?: string
           equipe_id: string
+          externo_id?: string | null
           id?: string
           licitacao_id: string
           lida?: boolean
           mensagem: string
           origem?: string
           papel?: string
+          referencia_externa?: string | null
         }
         Update: {
           autor?: string
           created_at?: string
           enviada_em?: string
           equipe_id?: string
+          externo_id?: string | null
           id?: string
           licitacao_id?: string
           lida?: boolean
           mensagem?: string
           origem?: string
           papel?: string
+          referencia_externa?: string | null
         }
         Relationships: [
           {
