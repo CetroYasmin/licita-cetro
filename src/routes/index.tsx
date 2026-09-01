@@ -9,7 +9,14 @@ import {
   Wallet,
   TrendingUp,
   Bell,
+  ExternalLink,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -48,7 +55,92 @@ type Lic = {
   posicao_empresa: number | null;
   proximo_evento: string | null;
   proximo_evento_data: string | null;
+  portal: string | null;
+  site_url: string | null;
 };
+
+function CardIndicador({
+  label,
+  valor,
+  icon: Icon,
+  cor,
+  to,
+  portais,
+}: {
+  label: string;
+  valor: string | number;
+  icon: typeof Gavel;
+  cor: string;
+  to?: string;
+  portais?: Lic[];
+}) {
+  const conteudo = (
+    <>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <Icon className={`h-4 w-4 ${cor}`} />
+      </div>
+      <p className="mt-3 font-display text-2xl font-semibold">{valor}</p>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className="surface-panel block p-5 transition-colors hover:bg-muted/60">
+        {conteudo}
+      </Link>
+    );
+  }
+
+  if (portais) {
+    const comLink = portais.filter((l) => l.site_url);
+    if (comLink.length === 0) {
+      return (
+        <Link to="/licitacoes" className="surface-panel block p-5 transition-colors hover:bg-muted/60">
+          {conteudo}
+        </Link>
+      );
+    }
+    if (comLink.length === 1) {
+      return (
+        <a
+          href={comLink[0]?.site_url ?? "#"}
+          target="_blank"
+          rel="noreferrer"
+          className="surface-panel block p-5 transition-colors hover:bg-muted/60"
+        >
+          {conteudo}
+          <p className="mt-2 inline-flex items-center gap-1 text-xs text-secondary">
+            Abrir {comLink[0]?.portal ?? "portal"} <ExternalLink className="h-3 w-3" />
+          </p>
+        </a>
+      );
+    }
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger className="surface-panel block w-full p-5 text-left transition-colors hover:bg-muted/60">
+          {conteudo}
+          <p className="mt-2 inline-flex items-center gap-1 text-xs text-secondary">
+            Escolher portal <ExternalLink className="h-3 w-3" />
+          </p>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-w-sm">
+          {comLink.map((l) => (
+            <DropdownMenuItem key={l.id} asChild>
+              <a href={l.site_url!} target="_blank" rel="noreferrer">
+                <span className="truncate">
+                  {l.numero} · {l.portal ?? "portal"}
+                </span>
+              </a>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return <div className="surface-panel p-5">{conteudo}</div>;
+}
 
 function Dashboard() {
   const { equipeId } = useAuth();
@@ -61,7 +153,7 @@ function Dashboard() {
         supabase
           .from("licitacoes")
           .select(
-            "id,numero,orgao,objeto,status,data_sessao,valor_estimado,valor_ofertado,posicao_empresa,proximo_evento,proximo_evento_data",
+            "id,numero,orgao,objeto,status,data_sessao,valor_estimado,valor_ofertado,posicao_empresa,proximo_evento,proximo_evento_data,portal,site_url",
           )
           .order("data_sessao", { ascending: true }),
         supabase
@@ -103,9 +195,27 @@ function Dashboard() {
     .reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
   const cards = [
-    { label: "Em acompanhamento", valor: acompanhando.length, icon: Gavel, cor: "text-secondary" },
-    { label: "Sessões hoje", valor: sessoesHoje.length, icon: CalendarClock, cor: "text-warning" },
-    { label: "Em disputa", valor: emDisputa.length, icon: Flame, cor: "text-primary" },
+    {
+      label: "Em acompanhamento",
+      valor: acompanhando.length,
+      icon: Gavel,
+      cor: "text-secondary",
+      to: "/licitacoes",
+    },
+    {
+      label: "Sessões hoje",
+      valor: sessoesHoje.length,
+      icon: CalendarClock,
+      cor: "text-warning",
+      portais: sessoesHoje,
+    },
+    {
+      label: "Em disputa",
+      valor: emDisputa.length,
+      icon: Flame,
+      cor: "text-primary",
+      portais: emDisputa,
+    },
     { label: "Licitações vencidas", valor: vencidas.length, icon: Trophy, cor: "text-success" },
     { label: "Licitações perdidas", valor: perdidas.length, icon: XCircle, cor: "text-destructive" },
     { label: "Valor total em disputa", valor: moeda(valorEmDisputa), icon: Wallet, cor: "text-secondary" },
@@ -133,15 +243,15 @@ function Dashboard() {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {cards.map((c) => (
-              <div key={c.label} className="surface-panel p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {c.label}
-                  </p>
-                  <c.icon className={`h-4 w-4 ${c.cor}`} />
-                </div>
-                <p className="mt-3 font-display text-2xl font-semibold">{c.valor}</p>
-              </div>
+              <CardIndicador
+                key={c.label}
+                label={c.label}
+                valor={c.valor}
+                icon={c.icon}
+                cor={c.cor}
+                {...("to" in c ? { to: c.to as string } : {})}
+                {...("portais" in c ? { portais: c.portais as Lic[] } : {})}
+              />
             ))}
           </div>
 
