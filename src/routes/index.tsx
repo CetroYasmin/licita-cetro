@@ -48,7 +48,92 @@ type Lic = {
   posicao_empresa: number | null;
   proximo_evento: string | null;
   proximo_evento_data: string | null;
+  portal: string | null;
+  site_url: string | null;
 };
+
+function CardIndicador({
+  label,
+  valor,
+  icon: Icon,
+  cor,
+  to,
+  portais,
+}: {
+  label: string;
+  valor: string | number;
+  icon: typeof Gavel;
+  cor: string;
+  to?: string;
+  portais?: Lic[];
+}) {
+  const conteudo = (
+    <>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <Icon className={`h-4 w-4 ${cor}`} />
+      </div>
+      <p className="mt-3 font-display text-2xl font-semibold">{valor}</p>
+    </>
+  );
+
+  if (to) {
+    return (
+      <Link to={to} className="surface-panel block p-5 transition-colors hover:bg-muted/60">
+        {conteudo}
+      </Link>
+    );
+  }
+
+  if (portais) {
+    const comLink = portais.filter((l) => l.site_url);
+    if (comLink.length === 0) {
+      return (
+        <Link to="/licitacoes" className="surface-panel block p-5 transition-colors hover:bg-muted/60">
+          {conteudo}
+        </Link>
+      );
+    }
+    if (comLink.length === 1) {
+      return (
+        <a
+          href={comLink[0].site_url!}
+          target="_blank"
+          rel="noreferrer"
+          className="surface-panel block p-5 transition-colors hover:bg-muted/60"
+        >
+          {conteudo}
+          <p className="mt-2 inline-flex items-center gap-1 text-xs text-secondary">
+            Abrir {comLink[0].portal ?? "portal"} <ExternalLink className="h-3 w-3" />
+          </p>
+        </a>
+      );
+    }
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger className="surface-panel block w-full p-5 text-left transition-colors hover:bg-muted/60">
+          {conteudo}
+          <p className="mt-2 inline-flex items-center gap-1 text-xs text-secondary">
+            Escolher portal <ExternalLink className="h-3 w-3" />
+          </p>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-w-sm">
+          {comLink.map((l) => (
+            <DropdownMenuItem key={l.id} asChild>
+              <a href={l.site_url!} target="_blank" rel="noreferrer">
+                <span className="truncate">
+                  {l.numero} · {l.portal ?? "portal"}
+                </span>
+              </a>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return <div className="surface-panel p-5">{conteudo}</div>;
+}
 
 function Dashboard() {
   const { equipeId } = useAuth();
