@@ -106,7 +106,7 @@ function normalizarCompras(corpo: unknown): Canonico | null {
   const chave = itens.find((m) => m.chaveCompra)?.chaveCompra;
   const referencia =
     chave?.numero != null && chave?.ano != null
-      ? `${String(chave.numero).padStart(5, "0")}/${chave.ano}`
+      ? `${chave.numero}/${chave.ano}`
       : chave?.numeroUasg != null
         ? String(chave.numeroUasg)
         : undefined;
