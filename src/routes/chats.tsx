@@ -182,6 +182,33 @@ x-captura-token: <chave da equipe>
 }`}
             </pre>
 
+            <div className="rounded border border-dashed p-3">
+              <p className="text-xs font-semibold">Script de captura (colar no console do portal)</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abra a sessão do pregão já logada, pressione F12 → Console, cole o script da chave
+                desejada e deixe a aba aberta. Ele intercepta as respostas de <code>/mensagens</code>{" "}
+                e reenvia para o app. Atenção: não cole texto de documentação no console — só este
+                script.
+              </p>
+              {(chaves ?? []).length === 0 && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Crie uma chave abaixo para gerar o script.
+                </p>
+              )}
+              {(chaves ?? []).map((c: any) => (
+                <Button
+                  key={c.id}
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 mr-2"
+                  onClick={() => void copiar(scriptCaptura(endpoint, c.token), "Script")}
+                >
+                  <Copy className="mr-2 h-3 w-3" /> Copiar script — {c.nome}
+                </Button>
+              ))}
+            </div>
+
+
 
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-muted-foreground">
