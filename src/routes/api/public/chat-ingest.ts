@@ -44,6 +44,90 @@ function inferirPapel(autor: string, mensagem: string): (typeof PAPEIS)[number] 
   return "licitante";
 }
 
+/* ---------- Formato nativo do Compras.gov.br (ComprasNet /mensagens) ---------- */
+
+const comprasMsg = z.object({
+  chaveCompra: z
+    .object({
+      numero: z.union([z.number(), z.string()]).optional(),
+      ano: z.union([z.number(), z.string()]).optional(),
+      numeroUasg: z.union([z.number(), z.string()]).optional(),
+      idUasgIdentificacao: z.union([z.number(), z.string()]).optional(),
+      idModalidade: z.union([z.number(), z.string()]).optional(),
+    })
+    .optional(),
+  identificadorItem: z.string().optional(),
+  chaveMensagemNaOrigem: z.string().max(200).optional(),
+  texto: z.string().min(1),
+  categoria: z.string().optional(),
+  dataHora: z.string().optional(),
+  tipoRemetente: z.string().optional(),
+  identificadorRemetente: z.string().optional(),
+  identificadorDestinatario: z.string().optional(),
+});
+
+const comprasSchema = z.union([
+  z.array(comprasMsg).min(1).max(300),
+  z.object({ mensagens: z.array(comprasMsg).min(1).max(300) }),
+]);
+
+/**
+ * tipoRemetente do ComprasNet:
+ * 0 e 1 = mensagens automáticas do sistema/convocações
+ * 3 = pregoeiro / agente de contratação
+ * demais = licitante
+ */
+function papelCompras(tipo?: string): (typeof PAPEIS)[number] {
+  if (tipo === "3") return "pregoeiro";
+  if (tipo === "0" || tipo === "1") return "sistema";
+  return "licitante";
+}
+
+function autorCompras(papel: (typeof PAPEIS)[number]): string {
+  if (papel === "pregoeiro") return "Pregoeiro";
+  if (papel === "sistema") return "Sistema";
+  return "Licitante";
+}
+
+/** "2026-09-01 11:19:10.361" (horário de Brasília) -> ISO com offset -03:00 */
+function dataCompras(valor?: string): string | undefined {
+  if (!valor) return undefined;
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(\.\d+)?$/.exec(valor.trim());
+  if (!m) return valor;
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}${m[7] ?? ""}-03:00`;
+}
+
+type Canonico = z.infer<typeof schema>;
+
+function normalizarCompras(corpo: unknown): Canonico | null {
+  const p = comprasSchema.safeParse(corpo);
+  if (!p.success) return null;
+  const itens = Array.isArray(p.data) ? p.data : p.data.mensagens;
+  const chave = itens.find((m) => m.chaveCompra)?.chaveCompra;
+  const referencia =
+    chave?.numero != null && chave?.ano != null
+      ? `${String(chave.numero).padStart(5, "0")}/${chave.ano}`
+      : chave?.numeroUasg != null
+        ? String(chave.numeroUasg)
+        : undefined;
+
+  return {
+    portal: "Compras.gov.br",
+    ...(referencia ? { referencia } : {}),
+    mensagens: itens.map((m) => {
+      const papel = papelCompras(m.tipoRemetente);
+      const prefixoItem = m.identificadorItem ? `[Item ${m.identificadorItem}] ` : "";
+      return {
+        ...(m.chaveMensagemNaOrigem ? { externo_id: m.chaveMensagemNaOrigem } : {}),
+        autor: autorCompras(papel),
+        papel,
+        mensagem: `${prefixoItem}${m.texto}`.slice(0, 8000),
+        ...(dataCompras(m.dataHora) ? { enviada_em: dataCompras(m.dataHora)! } : {}),
+      };
+    }),
+  };
+}
+
 export const Route = createFileRoute("/api/public/chat-ingest")({
   server: {
     handlers: {
@@ -56,11 +140,23 @@ export const Route = createFileRoute("/api/public/chat-ingest")({
           return json({ erro: "JSON inválido" }, 400);
         }
 
-        const parsed = schema.safeParse(corpo);
+        const url = new URL(request.url);
+        const refQuery = url.searchParams.get("referencia") ?? undefined;
+        const licQuery = url.searchParams.get("licitacao_id") ?? undefined;
+
+        const nativo = normalizarCompras(corpo);
+        const parsed = nativo
+          ? ({ success: true, data: nativo } as const)
+          : schema.safeParse(corpo);
         if (!parsed.success) {
           return json({ erro: "Payload inválido", detalhes: parsed.error.flatten() }, 400);
         }
-        const data = parsed.data;
+        const data: Canonico = {
+          ...parsed.data,
+          ...(parsed.data.referencia ? {} : refQuery ? { referencia: refQuery } : {}),
+          ...(parsed.data.licitacao_id ? {} : licQuery ? { licitacao_id: licQuery } : {}),
+        };
+
         const token = request.headers.get("x-captura-token") ?? data.token;
         if (!token) return json({ erro: "Token de captura ausente" }, 401);
 
