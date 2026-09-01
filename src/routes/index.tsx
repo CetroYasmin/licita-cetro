@@ -249,8 +249,8 @@ function Dashboard() {
                 valor={c.valor}
                 icon={c.icon}
                 cor={c.cor}
-                to={"to" in c ? (c.to as string) : undefined}
-                portais={"portais" in c ? (c.portais as Lic[]) : undefined}
+                {...("to" in c ? { to: c.to as string } : {})}
+                {...("portais" in c ? { portais: c.portais as Lic[] } : {})}
               />
             ))}
           </div>
