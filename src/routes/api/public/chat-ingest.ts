@@ -249,7 +249,7 @@ export const Route = createFileRoute("/api/public/chat-ingest")({
           papel: m.papel ?? inferirPapel(m.autor, m.mensagem),
           origem: data.portal ?? "portal",
           mensagem: m.mensagem,
-          enviada_em: m.enviada_em ?? new Date().toISOString(),
+          enviada_em: paraIso(m.enviada_em) ?? new Date().toISOString(),
           externo_id: m.externo_id ?? null,
           referencia_externa: data.referencia ?? null,
         }));
