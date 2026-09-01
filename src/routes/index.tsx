@@ -111,7 +111,7 @@ function CardIndicador({
         >
           {conteudo}
           <p className="mt-2 inline-flex items-center gap-1 text-xs text-secondary">
-            Abrir {comLink[0].portal ?? "portal"} <ExternalLink className="h-3 w-3" />
+            Abrir {comLink[0]?.portal ?? "portal"} <ExternalLink className="h-3 w-3" />
           </p>
         </a>
       );
