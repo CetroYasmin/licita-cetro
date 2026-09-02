@@ -4,6 +4,17 @@ import { relevancia } from "@/lib/busca";
 
 const BASE = "https://pncp.gov.br/api/consulta/v1";
 
+/**
+ * O PNCP rejeita (503/502) chamadas sem identificação de navegador.
+ * Todas as consultas precisam destes cabeçalhos.
+ */
+const CABECALHOS = {
+  Accept: "application/json",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+  "Accept-Language": "pt-BR,pt;q=0.9",
+} as const;
+
 const MODALIDADE_CODIGOS: Record<string, number> = {
   "Pregão Eletrônico": 6,
   "Pregão Presencial": 7,
@@ -152,9 +163,12 @@ async function buscarPagina(
   params: URLSearchParams,
 ): Promise<{ lista: any[]; totalPaginas: number } | null> {
   try {
-    const res = await fetch(`${BASE}${caminho}?${params.toString()}`, {
-      headers: { Accept: "application/json" },
-    });
+    let res = await fetch(`${BASE}${caminho}?${params.toString()}`, { headers: CABECALHOS });
+    // O PNCP responde 502/503 de forma intermitente; uma nova tentativa resolve.
+    if (res.status >= 500) {
+      await new Promise((r) => setTimeout(r, 600));
+      res = await fetch(`${BASE}${caminho}?${params.toString()}`, { headers: CABECALHOS });
+    }
     if (res.status === 204) return { lista: [], totalPaginas: 0 };
     if (!res.ok) return null;
     const payload = (await res.json()) as { data?: unknown[]; totalPaginas?: number };
@@ -254,37 +268,54 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       if (!encontradas.has(l.fonte_id)) encontradas.set(l.fonte_id, l);
     };
 
-    for (const consulta of consultas) {
-      if (requisicoes >= limiteRequisicoes) break;
-      const primeira = new URLSearchParams(consulta.base);
-      primeira.set("pagina", "1");
-      requisicoes++;
-      const inicial = await buscarPagina(consulta.caminho, primeira);
-      if (!inicial) {
-        erros.push("Alguns portais não responderam à consulta e foram ignorados.");
-        continue;
-      }
-      inicial.lista.forEach(registrar);
+    // Tempo máximo de varredura: a pesquisa precisa responder mesmo com o PNCP lento.
+    const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 12000 : data.profundidade === "total" ? 45000 : 25000);
+    const noPrazo = () => Date.now() < prazoFinal && requisicoes < limiteRequisicoes;
 
-      const totalPaginas = Math.min(inicial.totalPaginas, maxPaginasPorConsulta);
-      const paginas: number[] = [];
-      for (let p = 2; p <= totalPaginas; p++) paginas.push(p);
+    // Fila com várias consultas simultâneas (por modalidade/UF) em vez de uma a uma.
+    const fila = [...consultas];
+    const trabalhador = async () => {
+      while (noPrazo()) {
+        const consulta = fila.shift();
+        if (!consulta) return;
+        const primeira = new URLSearchParams(consulta.base);
+        primeira.set("pagina", "1");
+        requisicoes++;
+        const inicial = await buscarPagina(consulta.caminho, primeira);
+        if (!inicial) {
+          erros.push("Alguns portais não responderam à consulta e foram ignorados.");
+          continue;
+        }
+        inicial.lista.forEach(registrar);
 
-      // Páginas em paralelo, em blocos, para cobrir muito mais resultados sem travar.
-      for (let i = 0; i < paginas.length; i += 6) {
-        if (requisicoes >= limiteRequisicoes) break;
-        const bloco = paginas.slice(i, i + 6);
-        requisicoes += bloco.length;
-        const respostas = await Promise.all(
-          bloco.map((p) => {
-            const params = new URLSearchParams(consulta.base);
-            params.set("pagina", String(p));
-            return buscarPagina(consulta.caminho, params);
-          }),
-        );
-        respostas.forEach((r) => r?.lista.forEach(registrar));
+        const totalPaginas = Math.min(inicial.totalPaginas, maxPaginasPorConsulta);
+        const paginas: number[] = [];
+        for (let p = 2; p <= totalPaginas; p++) paginas.push(p);
+
+        for (let i = 0; i < paginas.length; i += 5) {
+          if (!noPrazo()) break;
+          const bloco = paginas.slice(i, i + 5);
+          requisicoes += bloco.length;
+          const respostas = await Promise.all(
+            bloco.map((p) => {
+              const params = new URLSearchParams(consulta.base);
+              params.set("pagina", String(p));
+              return buscarPagina(consulta.caminho, params);
+            }),
+          );
+          respostas.forEach((r) => r?.lista.forEach(registrar));
+        }
       }
+    };
+
+    const simultaneas = data.profundidade === "rapida" ? 6 : 10;
+    await Promise.all(Array.from({ length: simultaneas }, trabalhador));
+    if (fila.length > 0) {
+      erros.push(
+        "A varredura foi interrompida pelo tempo limite; refine o objeto ou os estados para cobrir mais resultados.",
+      );
     }
+
 
     const ordenador = ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
     const lista = [...encontradas.values()].sort(ordenador);
@@ -305,7 +336,7 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
     try {
       const res = await fetch(
         `${BASE}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}/itens?pagina=1&tamanhoPagina=200`,
-        { headers: { Accept: "application/json" } },
+        { headers: CABECALHOS },
       );
       if (!res.ok) return { itens: [] as any[] };
       const payload = (await res.json()) as unknown;
@@ -338,7 +369,7 @@ export const sincronizarLicitacaoPncp = createServerFn({ method: "POST" })
     try {
       const res = await fetch(
         `${BASE}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}`,
-        { headers: { Accept: "application/json" } },
+        { headers: CABECALHOS },
       );
       if (!res.ok) return { ok: false as const, licitacao: null };
       const payload = (await res.json()) as unknown;

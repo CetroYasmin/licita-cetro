@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Radio, Copy, KeyRound, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -38,64 +37,11 @@ const PAPEL_COR: Record<string, string> = {
   licitante: "bg-accent text-accent-foreground",
 };
 
-/** Snippet colável no console da página da sessão: espelha /mensagens para o app. */
-function scriptCaptura(endpoint: string, token: string) {
-  return `(function(){
-  var ENDPOINT=${JSON.stringify(endpoint || "/api/public/chat-ingest")};
-  var TOKEN=${JSON.stringify(token)};
-  var vistos=new Set();
-  function enviar(corpo){
-    try{
-      var lista=Array.isArray(corpo)?corpo:(corpo&&corpo.mensagens)||null;
-      if(!lista||!lista.length||!lista[0]||!lista[0].texto)return;
-      var novas=lista.filter(function(m){
-        var k=m.chaveMensagemNaOrigem||(m.dataHora+"|"+m.texto);
-        if(vistos.has(k))return false; vistos.add(k); return true;
-      });
-      if(!novas.length)return;
-      fetch(ENDPOINT,{method:"POST",headers:{"content-type":"application/json","x-captura-token":TOKEN},body:JSON.stringify(novas)})
-        .then(function(r){return r.json()})
-        .then(function(r){console.log("[captura]",r)})
-        .catch(function(e){console.warn("[captura] falhou",e)});
-    }catch(e){console.warn("[captura]",e)}
-  }
-  var fetchOriginal=window.fetch;
-  window.fetch=function(){
-    var args=arguments;
-    return fetchOriginal.apply(this,args).then(function(resp){
-      try{
-        var u=(typeof args[0]==="string"?args[0]:(args[0]&&args[0].url))||"";
-        if(/mensagens/i.test(u))resp.clone().json().then(enviar).catch(function(){});
-      }catch(e){}
-      return resp;
-    });
-  };
-  var abrir=XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open=function(m,u){
-    this.addEventListener("load",function(){
-      try{ if(/mensagens/i.test(String(u)))enviar(JSON.parse(this.responseText)); }catch(e){}
-    });
-    return abrir.apply(this,arguments);
-  };
-  var WS=window.WebSocket;
-  window.WebSocket=function(url,protos){
-    var s=protos?new WS(url,protos):new WS(url);
-    s.addEventListener("message",function(ev){
-      try{ enviar(JSON.parse(ev.data)); }catch(e){}
-    });
-    return s;
-  };
-  window.WebSocket.prototype=WS.prototype;
-  console.log("[captura] ativa — mantenha esta aba aberta na sessão");
-})();`;
-}
-
 
 function Chats() {
-  const { equipeId, isAdmin } = useAuth();
+  const { equipeId } = useAuth();
   const queryClient = useQueryClient();
   const [ultimaAoVivo, setUltimaAoVivo] = useState<number | null>(null);
-  const [mostrarChaves, setMostrarChaves] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["chats-monitor"],
@@ -111,19 +57,7 @@ function Chats() {
     },
   });
 
-  const { data: chaves } = useQuery({
-    queryKey: ["captura-tokens", equipeId],
-    enabled: Boolean(equipeId) && mostrarChaves,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("captura_tokens")
-        .select("*")
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  // Recebe ao vivo cada mensagem enviada pela extensão de captura da equipe.
+  // Atualiza a lista assim que uma nova mensagem é registrada por alguém da equipe.
   useEffect(() => {
     if (!equipeId) return;
     const canal = supabase
@@ -151,153 +85,20 @@ function Chats() {
     grupos.set(chave, [...(grupos.get(chave) ?? []), m]);
   }
 
-  const endpoint =
-    typeof window === "undefined" ? "" : `${window.location.origin}/api/public/chat-ingest`;
-
-  const copiar = async (texto: string, rotulo: string) => {
-    await navigator.clipboard.writeText(texto);
-    toast.success(`${rotulo} copiado`);
-  };
-
-  const criarChave = async () => {
-    if (!equipeId) return;
-    const { error } = await supabase
-      .from("captura_tokens")
-      .insert({ equipe_id: equipeId, nome: "Captura de chat" });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Chave de captura criada");
-      void queryClient.invalidateQueries({ queryKey: ["captura-tokens", equipeId] });
-    }
-  };
-
   return (
     <AppLayout
       titulo="Monitoramento de chats"
-      descricao="Mensagens das sessões de disputa espelhadas do portal em tempo real"
+      descricao="Mensagens das sessões de disputa registradas nas licitações da equipe"
       acoes={
         <>
           <Badge variant={aoVivo ? "default" : "outline"} className="gap-1">
             <Radio className={aoVivo ? "h-3 w-3 animate-pulse" : "h-3 w-3"} />
             {aoVivo ? "Sessão ao vivo" : "Sem sessão ativa"}
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => setMostrarChaves((v) => !v)}>
-            <KeyRound className="mr-2 h-4 w-4" /> Captura
-          </Button>
         </>
       }
     >
       <div className="space-y-4">
-        {mostrarChaves && (
-          <div className="surface-panel space-y-4 p-4">
-            <div>
-              <p className="font-display text-sm font-semibold">Captura ao vivo do chat do portal</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                A extensão/bookmarklet da equipe roda na página da sessão já aberta e logada no
-                portal (ex.: Compras.gov.br). Ela lê as respostas de consulta periódica (JSON) ou o
-                canal WebSocket do próprio portal e envia cada mensagem para o endereço abaixo, com
-                a chave da equipe. Nenhuma senha é armazenada aqui.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <code className="rounded bg-muted px-2 py-1 text-xs">{endpoint}</code>
-              <Button variant="ghost" size="sm" onClick={() => void copiar(endpoint, "Endereço")}>
-                <Copy className="mr-2 h-3 w-3" /> Copiar
-              </Button>
-            </div>
-
-            <pre className="overflow-x-auto rounded bg-muted p-3 text-[11px] leading-relaxed">
-{`POST ${endpoint || "/api/public/chat-ingest"}
-x-captura-token: <chave da equipe>
-
-// 1) Formato nativo do Compras.gov.br: repasse a resposta de /mensagens como veio
-[
-  { "chaveCompra": { "numero": 118, "ano": 2026, "numeroUasg": 981547 },
-    "identificadorItem": "2",
-    "chaveMensagemNaOrigem": "4b5c382e-a581-49d6-a320-2b1c533a2ccd",
-    "texto": "O item 2 teve a convocação para envio de anexos encerrada...",
-    "categoria": "13", "dataHora": "2026-09-01 11:19:10.361",
-    "tipoRemetente": "1" }
-]
-// tipoRemetente 3 = pregoeiro · 0 e 1 = sistema · demais = licitante
-// dataHora é lida como horário de Brasília (-03:00)
-// Se a chaveCompra não vier, mande ?referencia=118/2026 na URL
-
-// 2) Formato genérico (qualquer portal)
-{
-  "referencia": "118/2026",          // nº do pregão, id da compra ou URL da sessão
-  "portal": "Compras.gov.br",
-  "mensagens": [
-    { "externo_id": "1821", "autor": "Pregoeiro", "papel": "pregoeiro",
-      "mensagem": "Sessão reaberta.", "enviada_em": "2026-09-01T14:02:00-03:00" }
-  ]
-}`}
-            </pre>
-
-            <div className="rounded border border-dashed p-3">
-              <p className="text-xs font-semibold">Script de captura (colar no console do portal)</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Abra a sessão do pregão já logada, pressione F12 → Console, cole o script da chave
-                desejada e deixe a aba aberta. Ele intercepta as respostas de <code>/mensagens</code>{" "}
-                e reenvia para o app. Atenção: não cole texto de documentação no console — só este
-                script.
-              </p>
-              {(chaves ?? []).length === 0 && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Crie uma chave abaixo para gerar o script.
-                </p>
-              )}
-              {(chaves ?? []).map((c: any) => (
-                <Button
-                  key={c.id}
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 mr-2"
-                  onClick={() => void copiar(scriptCaptura(endpoint, c.token), "Script")}
-                >
-                  <Copy className="mr-2 h-3 w-3" /> Copiar script — {c.nome}
-                </Button>
-              ))}
-            </div>
-
-
-
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                {isAdmin
-                  ? "Crie uma chave por operador para poder revogar individualmente."
-                  : "Só administradores da equipe podem criar chaves de captura."}
-              </p>
-              {isAdmin && (
-                <Button size="sm" onClick={() => void criarChave()}>
-                  <Plus className="mr-2 h-4 w-4" /> Nova chave
-                </Button>
-              )}
-            </div>
-
-            <ul className="divide-y rounded border">
-              {(chaves ?? []).map((c: any) => (
-                <li key={c.id} className="flex flex-wrap items-center gap-2 p-3 text-xs">
-                  <span className="font-medium">{c.nome}</span>
-                  <code className="rounded bg-muted px-2 py-0.5">{c.token}</code>
-                  <Button variant="ghost" size="sm" onClick={() => void copiar(c.token, "Token")}>
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                  <Badge variant={c.ativo ? "outline" : "secondary"}>
-                    {c.ativo ? "ativa" : "desativada"}
-                  </Badge>
-                  <span className="text-muted-foreground">
-                    {c.ultimo_uso_em ? `último uso ${dataHora(c.ultimo_uso_em)}` : "nunca usada"}
-                  </span>
-                </li>
-              ))}
-              {(chaves ?? []).length === 0 && (
-                <li className="p-3 text-xs text-muted-foreground">Nenhuma chave criada ainda.</li>
-              )}
-            </ul>
-          </div>
-        )}
 
         {[...grupos.entries()].map(([id, msgs]) => {
           const lic = msgs[0].licitacoes;
@@ -346,8 +147,8 @@ x-captura-token: <chave da equipe>
 
         {grupos.size === 0 && (
           <div className="surface-panel p-10 text-center text-sm text-muted-foreground">
-            Nenhuma mensagem recebida ainda. Configure a captura ao vivo no botão “Captura” ou cole o
-            chat da sessão na aba “Chat da licitação”.
+            Nenhuma mensagem registrada ainda. Cole ou importe o chat da sessão na aba “Chat da
+            licitação”.
           </div>
         )}
       </div>
