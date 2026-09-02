@@ -418,6 +418,7 @@ export type Database = {
           qtd_concorrentes: number | null
           qtd_itens: number | null
           qtd_lotes: number | null
+          qualificacao_tecnica: string | null
           responsavel_id: string | null
           resultado_final: string | null
           site_url: string | null
@@ -461,6 +462,7 @@ export type Database = {
           qtd_concorrentes?: number | null
           qtd_itens?: number | null
           qtd_lotes?: number | null
+          qualificacao_tecnica?: string | null
           responsavel_id?: string | null
           resultado_final?: string | null
           site_url?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           qtd_concorrentes?: number | null
           qtd_itens?: number | null
           qtd_lotes?: number | null
+          qualificacao_tecnica?: string | null
           responsavel_id?: string | null
           resultado_final?: string | null
           site_url?: string | null
