@@ -22,6 +22,7 @@ import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
 import { Route as MonitoramentoIndexRouteImport } from './routes/monitoramento.index'
 import { Route as MonitoramentoLicitacoesRouteImport } from './routes/monitoramento.licitacoes'
+import { Route as MonitoramentoChatIdRouteImport } from './routes/monitoramento.chat.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +89,11 @@ const MonitoramentoLicitacoesRoute = MonitoramentoLicitacoesRouteImport.update({
   path: '/monitoramento/licitacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MonitoramentoChatIdRoute = MonitoramentoChatIdRouteImport.update({
+  id: '/monitoramento/chat/$id',
+  path: '/monitoramento/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/monitoramento/': typeof MonitoramentoIndexRoute
+  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
   '/licitacoes': typeof LicitacoesIndexRoute
   '/monitoramento': typeof MonitoramentoIndexRoute
+  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/monitoramento/': typeof MonitoramentoIndexRoute
+  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/monitoramento/licitacoes'
     | '/licitacoes/'
     | '/monitoramento/'
+    | '/monitoramento/chat/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/monitoramento/licitacoes'
     | '/licitacoes'
     | '/monitoramento'
+    | '/monitoramento/chat/$id'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/monitoramento/licitacoes'
     | '/licitacoes/'
     | '/monitoramento/'
+    | '/monitoramento/chat/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   MonitoramentoLicitacoesRoute: typeof MonitoramentoLicitacoesRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
   MonitoramentoIndexRoute: typeof MonitoramentoIndexRoute
+  MonitoramentoChatIdRoute: typeof MonitoramentoChatIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitoramentoLicitacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/monitoramento/chat/$id': {
+      id: '/monitoramento/chat/$id'
+      path: '/monitoramento/chat/$id'
+      fullPath: '/monitoramento/chat/$id'
+      preLoaderRoute: typeof MonitoramentoChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   MonitoramentoLicitacoesRoute: MonitoramentoLicitacoesRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
   MonitoramentoIndexRoute: MonitoramentoIndexRoute,
+  MonitoramentoChatIdRoute: MonitoramentoChatIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
