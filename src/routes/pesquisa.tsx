@@ -305,7 +305,7 @@ function Pesquisa() {
       orgao: (a, b) => a.orgao.localeCompare(b.orgao, "pt-BR"),
       uf: (a, b) => (a.uf ?? "").localeCompare(b.uf ?? "", "pt-BR"),
     };
-    return lista.sort(comparadores[ordenar] ?? comparadores.relevancia);
+    return lista.sort(comparadores[ordenar] ?? comparadores["relevancia"]);
   }, [ocultarVistas, ordenar, resultados, user?.id, vistas]);
 
   return (
