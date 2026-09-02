@@ -431,48 +431,61 @@ async function valorDaContratacao(
     return Number.isFinite(n) && n > 0 ? n : null;
   };
 
+  const somaDosItens = (lista: any[]) => {
+    const soma = lista.reduce((acc, i) => {
+      const total =
+        numero(i?.valorTotal) ??
+        (numero(i?.valorUnitarioEstimado) != null && numero(i?.quantidade) != null
+          ? Number(i.valorUnitarioEstimado) * Number(i.quantidade)
+          : null);
+      return acc + (total ?? 0);
+    }, 0);
+    return soma > 0 ? soma : null;
+  };
+
   let valor: number | null = null;
+
+  // Endpoint usado pelo próprio site do PNCP: responde mesmo quando /api/consulta cai.
   try {
-    const res = await fetch(`${BASE_CONSULTA}/orgaos/${cnpj}/compras/${ano}/${sequencial}`, {
-      headers: CABECALHOS,
-      signal: AbortSignal.timeout(9000),
-    });
+    const res = await fetch(
+      `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${sequencial}/itens`,
+      {
+        headers: {
+          ...CABECALHOS,
+          Referer: `https://pncp.gov.br/app/editais/${cnpj}/${ano}/${sequencial}`,
+          Origin: "https://pncp.gov.br",
+        },
+        signal: AbortSignal.timeout(9000),
+      },
+    );
     if (res.ok) {
       const payload = (await res.json()) as any;
-      const b = Array.isArray(payload) ? payload[0] : (payload?.data ?? payload);
-      valor =
-        numero(b?.valorTotalEstimado) ??
-        numero(b?.valorTotalHomologado) ??
-        numero(b?.valorGlobal) ??
-        null;
+      valor = somaDosItens((Array.isArray(payload) ? payload : (payload?.data ?? [])) as any[]);
     }
   } catch {
-    /* portal indisponível: tentamos pelos itens */
+    /* segue para o detalhe da contratação */
   }
 
   if (valor == null) {
     try {
-      const res = await fetch(
-        `${BASE_CONSULTA}/orgaos/${cnpj}/compras/${ano}/${sequencial}/itens?pagina=1&tamanhoPagina=200`,
-        { headers: CABECALHOS, signal: AbortSignal.timeout(9000) },
-      );
+      const res = await fetch(`${BASE_CONSULTA}/orgaos/${cnpj}/compras/${ano}/${sequencial}`, {
+        headers: CABECALHOS,
+        signal: AbortSignal.timeout(9000),
+      });
       if (res.ok) {
         const payload = (await res.json()) as any;
-        const lista = (Array.isArray(payload) ? payload : (payload?.data ?? [])) as any[];
-        const soma = lista.reduce((acc, i) => {
-          const total =
-            numero(i?.valorTotal) ??
-            (numero(i?.valorUnitarioEstimado) != null && numero(i?.quantidade) != null
-              ? Number(i.valorUnitarioEstimado) * Number(i.quantidade)
-              : null);
-          return acc + (total ?? 0);
-        }, 0);
-        valor = soma > 0 ? soma : null;
+        const b = Array.isArray(payload) ? payload[0] : (payload?.data ?? payload);
+        valor =
+          numero(b?.valorTotalEstimado) ??
+          numero(b?.valorTotalHomologado) ??
+          numero(b?.valorGlobal) ??
+          null;
       }
     } catch {
-      /* segue sem valor */
+      /* portal indisponível */
     }
   }
+
 
   if (valor != null) cacheValores.set(chave, { em: Date.now(), valor });
   return valor;
