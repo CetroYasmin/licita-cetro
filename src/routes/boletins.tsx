@@ -20,7 +20,11 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/lib/formato";
-import { buscarLicitacoesPncp, type LicitacaoPncp } from "@/lib/pncp.functions";
+import {
+  buscarLicitacoesPncp,
+  buscarValoresPncp,
+  type LicitacaoPncp,
+} from "@/lib/pncp.functions";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 
 export const Route = createFileRoute("/boletins")({
@@ -56,6 +60,8 @@ function Boletins() {
   const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
   const buscar = useServerFn(buscarLicitacoesPncp);
+  const buscarValores = useServerFn(buscarValoresPncp);
+
 
   const [dias, setDias] = useState<string>("3");
   const [objeto, setObjeto] = useState("");
@@ -89,6 +95,32 @@ function Boletins() {
     (vistas ?? []).some((v) => v.fonte_id === fonteId && v.user_id === user?.id);
   const vistaPor = (fonteId: string) =>
     (vistas ?? []).filter((v) => v.fonte_id === fonteId).map((v) => v.user_nome ?? "membro");
+
+  /** O índice do PNCP não traz valor estimado: buscamos no detalhe da contratação. */
+  const alvosValor = useMemo(
+    () =>
+      novas
+        .filter((l) => l.valor_estimado == null && l.orgao_cnpj && l.sequencial > 0)
+        .slice(0, 120)
+        .map((l) => ({
+          fonte_id: l.fonte_id,
+          cnpj: l.orgao_cnpj,
+          ano: l.ano,
+          sequencial: l.sequencial,
+        })),
+    [novas],
+  );
+
+  const { data: valoresExtra, isFetching: buscandoValores } = useQuery({
+    queryKey: ["valores-pncp-boletim", alvosValor.map((a) => a.fonte_id)],
+    enabled: alvosValor.length > 0,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => (await buscarValores({ data: { contratacoes: alvosValor } })).valores,
+  });
+
+  const valorDe = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
+
+
 
   const gerar = useMutation({
     mutationFn: async () =>
@@ -155,7 +187,7 @@ function Boletins() {
           plataforma: l.plataforma,
           portal: l.portal,
           site_url: l.site_url,
-          valor_estimado: l.valor_estimado,
+          valor_estimado: valorDe(l),
           cidade: l.cidade,
           uf: l.uf,
           status: "publicada",
@@ -362,7 +394,13 @@ function Boletins() {
                       {l.objeto}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · {moeda(l.valor_estimado)} ·
+                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} ·{" "}
+                      {valorDe(l) != null
+                        ? moeda(valorDe(l) as number)
+                        : buscandoValores
+                          ? "consultando valor…"
+                          : "valor não informado"}{" "}
+                      ·
                       propostas até {dataHora(l.encerramento_proposta)}
                     </p>
                   </div>
