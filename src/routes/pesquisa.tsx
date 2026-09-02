@@ -23,6 +23,7 @@ import { MODALIDADES, NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/l
 import {
   buscarItensPncp,
   buscarLicitacoesPncp,
+  buscarValoresPncp,
   type LicitacaoPncp,
 } from "@/lib/pncp.functions";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
