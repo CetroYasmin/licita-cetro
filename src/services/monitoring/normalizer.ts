@@ -14,10 +14,11 @@ const TIPOS = new Set(["pregoeiro", "sistema", "licitante", "equipe"]);
  * Quando o portal não fornece external_message_id, usa
  * hash(auction_id + author + message + timestamp).
  */
-export function normalizarMensagem(
-  auctionId: string,
-  bruta: ChatMessage,
-): Required<Pick<ChatMessage, "external_message_id">> & ChatMessage {
+export type MensagemNormalizada = Omit<ChatMessage, "external_message_id"> & {
+  external_message_id: string;
+};
+
+export function normalizarMensagem(auctionId: string, bruta: ChatMessage): MensagemNormalizada {
   const timestamp = paraIso(bruta.message_timestamp);
   const autor = (bruta.author ?? "").trim() || "Desconhecido";
   const mensagem = (bruta.message ?? "").trim();
@@ -37,7 +38,7 @@ export function normalizarMensagem(
 
 export function normalizarLote(auctionId: string, brutas: ChatMessage[]) {
   const vistos = new Set<string>();
-  const saida: ReturnType<typeof normalizarMensagem>[] = [];
+  const saida: MensagemNormalizada[] = [];
   for (const bruta of brutas) {
     if (!bruta?.message?.trim()) continue;
     const norm = normalizarMensagem(auctionId, bruta);
