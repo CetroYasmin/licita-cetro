@@ -218,8 +218,16 @@ const ORDENACOES = {
     (b.data_publicacao ?? "").localeCompare(a.data_publicacao ?? ""),
   encerramento: (a: LicitacaoPncp, b: LicitacaoPncp) =>
     (a.encerramento_proposta ?? "9999").localeCompare(b.encerramento_proposta ?? "9999"),
-  valor_desc: (a: LicitacaoPncp, b: LicitacaoPncp) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0),
-  valor_asc: (a: LicitacaoPncp, b: LicitacaoPncp) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0),
+  valor_desc: (a: LicitacaoPncp, b: LicitacaoPncp) => {
+    if (a.valor_estimado == null) return 1;
+    if (b.valor_estimado == null) return -1;
+    return b.valor_estimado - a.valor_estimado;
+  },
+  valor_asc: (a: LicitacaoPncp, b: LicitacaoPncp) => {
+    if (a.valor_estimado == null) return 1;
+    if (b.valor_estimado == null) return -1;
+    return a.valor_estimado - b.valor_estimado;
+  },
   orgao: (a: LicitacaoPncp, b: LicitacaoPncp) => a.orgao.localeCompare(b.orgao, "pt-BR"),
   uf: (a: LicitacaoPncp, b: LicitacaoPncp) => (a.uf ?? "").localeCompare(b.uf ?? ""),
 } as const;

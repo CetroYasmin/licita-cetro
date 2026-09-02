@@ -291,7 +291,11 @@ function Pesquisa() {
       relevancia: (a, b) => b.relevancia - a.relevancia,
       encerramento: (a, b) => dataValida(a.encerramento_proposta) - dataValida(b.encerramento_proposta),
       sessao: (a, b) => dataValida(a.data_abertura) - dataValida(b.data_abertura),
-      publicacao: (a, b) => dataValida(b.data_publicacao) - dataValida(a.data_publicacao),
+      publicacao: (a, b) => {
+        if (!a.data_publicacao) return 1;
+        if (!b.data_publicacao) return -1;
+        return dataValida(b.data_publicacao) - dataValida(a.data_publicacao);
+      },
       valor_desc: (a, b) => {
         if (a.valor_estimado == null) return 1;
         if (b.valor_estimado == null) return -1;
