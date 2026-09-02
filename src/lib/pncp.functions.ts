@@ -408,6 +408,111 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * A pesquisa do PNCP não devolve o valor estimado dos editais (campo vem nulo no
+ * índice). O valor só existe no detalhe da contratação, então buscamos sob demanda
+ * para os resultados exibidos, com cache e recuo em caso de indisponibilidade.
+ */
+const cacheValores = new Map<string, { em: number; valor: number | null }>();
+const VALIDADE_VALOR = 30 * 60 * 1000;
+
+async function valorDaContratacao(
+  cnpj: string,
+  ano: number,
+  sequencial: number,
+): Promise<number | null> {
+  const chave = `${cnpj}-${ano}-${sequencial}`;
+  const emCache = cacheValores.get(chave);
+  if (emCache && Date.now() - emCache.em < VALIDADE_VALOR) return emCache.valor;
+
+  const numero = (v: unknown) => {
+    if (v == null || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+
+  let valor: number | null = null;
+  try {
+    const res = await fetch(`${BASE_CONSULTA}/orgaos/${cnpj}/compras/${ano}/${sequencial}`, {
+      headers: CABECALHOS,
+      signal: AbortSignal.timeout(9000),
+    });
+    if (res.ok) {
+      const payload = (await res.json()) as any;
+      const b = Array.isArray(payload) ? payload[0] : (payload?.data ?? payload);
+      valor =
+        numero(b?.valorTotalEstimado) ??
+        numero(b?.valorTotalHomologado) ??
+        numero(b?.valorGlobal) ??
+        null;
+    }
+  } catch {
+    /* portal indisponível: tentamos pelos itens */
+  }
+
+  if (valor == null) {
+    try {
+      const res = await fetch(
+        `${BASE_CONSULTA}/orgaos/${cnpj}/compras/${ano}/${sequencial}/itens?pagina=1&tamanhoPagina=200`,
+        { headers: CABECALHOS, signal: AbortSignal.timeout(9000) },
+      );
+      if (res.ok) {
+        const payload = (await res.json()) as any;
+        const lista = (Array.isArray(payload) ? payload : (payload?.data ?? [])) as any[];
+        const soma = lista.reduce((acc, i) => {
+          const total =
+            numero(i?.valorTotal) ??
+            (numero(i?.valorUnitarioEstimado) != null && numero(i?.quantidade) != null
+              ? Number(i.valorUnitarioEstimado) * Number(i.quantidade)
+              : null);
+          return acc + (total ?? 0);
+        }, 0);
+        valor = soma > 0 ? soma : null;
+      }
+    } catch {
+      /* segue sem valor */
+    }
+  }
+
+  if (valor != null) cacheValores.set(chave, { em: Date.now(), valor });
+  return valor;
+}
+
+/** Busca o valor estimado de várias contratações em paralelo (lotes pequenos). */
+export const buscarValoresPncp = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        contratacoes: z
+          .array(
+            z.object({
+              fonte_id: z.string(),
+              cnpj: z.string(),
+              ano: z.number(),
+              sequencial: z.number(),
+            }),
+          )
+          .max(120),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const valores: Record<string, number | null> = {};
+    const alvos = data.contratacoes.filter((c) => /^\d{14}$/.test(c.cnpj) && c.sequencial > 0);
+    const LOTE = 8;
+    for (let i = 0; i < alvos.length; i += LOTE) {
+      const lote = alvos.slice(i, i + LOTE);
+      const resultados = await Promise.all(
+        lote.map((c) => valorDaContratacao(c.cnpj, c.ano, c.sequencial)),
+      );
+      lote.forEach((c, idx) => {
+        valores[c.fonte_id] = resultados[idx] ?? null;
+      });
+    }
+    const comValor = Object.values(valores).filter((v) => v != null).length;
+    return { valores, comValor };
+  });
+
 
 export const buscarItensPncp = createServerFn({ method: "POST" })
   .inputValidator((data) =>
