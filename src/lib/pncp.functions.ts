@@ -163,11 +163,13 @@ async function buscarPagina(
   params: URLSearchParams,
 ): Promise<{ lista: any[]; totalPaginas: number } | null> {
   try {
-    let res = await fetch(`${BASE}${caminho}?${params.toString()}`, { headers: CABECALHOS });
+    const alvo = `${BASE}${caminho}?${params.toString()}`;
+    // Tempo limite por chamada: o PNCP às vezes deixa a conexão pendurada.
+    let res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(9000) });
     // O PNCP responde 502/503 de forma intermitente; uma nova tentativa resolve.
     if (res.status >= 500) {
       await new Promise((r) => setTimeout(r, 600));
-      res = await fetch(`${BASE}${caminho}?${params.toString()}`, { headers: CABECALHOS });
+      res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(9000) });
     }
     if (res.status === 204) return { lista: [], totalPaginas: 0 };
     if (!res.ok) return null;
