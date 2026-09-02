@@ -12,28 +12,28 @@ type Roteiro = { offset: number; autor: string; tipo: ChatMessage["author_type"]
 /** Segundos após o início do monitoramento em que cada mensagem é publicada. */
 const ROTEIRO: Roteiro[] = [
   { offset: 0, autor: "Sistema", tipo: "sistema", texto: "Sessão pública aberta pelo pregoeiro." },
-  { offset: 8, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Bom dia, senhores licitantes." },
-  { offset: 20, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Iniciaremos a fase de lances." },
-  { offset: 32, autor: "Sistema", tipo: "sistema", texto: "Item 1 aberto para lances." },
-  { offset: 44, autor: "Licitante 21.181.254/0001-23", tipo: "licitante", texto: "Lance registrado para o item 1." },
-  { offset: 58, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Encerrada a fase de lances do item 1." },
-  { offset: 70, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Empresa vencedora, favor enviar documentação de habilitação." },
-  { offset: 84, autor: "Sistema", tipo: "sistema", texto: "Convocação para envio de anexos aberta para o item 1." },
-  { offset: 98, autor: "Licitante 21.181.254/0001-23", tipo: "licitante", texto: "Documentação enviada conforme solicitado." },
-  { offset: 112, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Aguardamos manifestação quanto ao recurso." },
-  { offset: 126, autor: "Licitante 09.412.777/0001-88", tipo: "licitante", texto: "Manifestamos intenção de recurso." },
-  { offset: 140, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Prazo para contrarrazões aberto por 3 dias úteis." },
+  { offset: 2, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Bom dia, senhores licitantes." },
+  { offset: 4, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Iniciaremos a fase de lances." },
+  { offset: 6, autor: "Sistema", tipo: "sistema", texto: "Item 1 aberto para lances." },
+  { offset: 9, autor: "Licitante 21.181.254/0001-23", tipo: "licitante", texto: "Lance registrado para o item 1." },
+  { offset: 12, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Encerrada a fase de lances do item 1." },
+  { offset: 14, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Empresa vencedora, favor enviar documentação de habilitação." },
+  { offset: 17, autor: "Sistema", tipo: "sistema", texto: "Convocação para envio de anexos aberta para o item 1." },
+  { offset: 20, autor: "Licitante 21.181.254/0001-23", tipo: "licitante", texto: "Documentação enviada conforme solicitado." },
+  { offset: 22, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Aguardamos manifestação quanto ao recurso." },
+  { offset: 25, autor: "Licitante 09.412.777/0001-88", tipo: "licitante", texto: "Manifestamos intenção de recurso." },
+  { offset: 28, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Prazo para contrarrazões aberto por 3 dias úteis." },
 ];
 
 /** Mensagens cíclicas depois do roteiro, para a sessão seguir viva. */
 const CICLO: Roteiro[] = [
   { offset: 0, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Seguimos com a análise da proposta apresentada." },
-  { offset: 16, autor: "Sistema", tipo: "sistema", texto: "Nova convocação para envio de amostra registrada." },
-  { offset: 32, autor: "Licitante 21.181.254/0001-23", tipo: "licitante", texto: "Ciente, providenciaremos a amostra." },
-  { offset: 48, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Sessão suspensa e será retomada em breve." },
+  { offset: 3, autor: "Sistema", tipo: "sistema", texto: "Nova convocação para envio de amostra registrada." },
+  { offset: 6, autor: "Licitante 21.181.254/0001-23", tipo: "licitante", texto: "Ciente, providenciaremos a amostra." },
+  { offset: 10, autor: "Pregoeiro", tipo: "pregoeiro", texto: "Sessão suspensa e será retomada em breve." },
 ];
 
-const CICLO_DURACAO = 60;
+const CICLO_DURACAO = 14;
 
 const DEMO_AUCTIONS: Auction[] = [
   {
