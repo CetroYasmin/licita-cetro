@@ -221,6 +221,13 @@ const ORDENACOES = {
 
 export type Ordenacao = keyof typeof ORDENACOES;
 
+const UFS_TODAS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+] as const;
+
+/** Documentos de contratação publicados no PNCP (edital cobre pregões/concorrências). */
+const TIPOS_DOCUMENTO = ["edital"] as const;
+
 export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -233,51 +240,30 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
         valorMinimo: z.number().optional(),
         valorMaximo: z.number().optional(),
         incluirEncerradas: z.boolean().optional().default(false),
-        profundidade: z.string().optional().default("ampla"),
         ordenar: z.string().optional().default("relevancia"),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
     const codigos = data.modalidade ? [MODALIDADE_CODIGOS[data.modalidade] ?? 6] : [];
-
-    const maxPaginasPorConsulta =
-      data.profundidade === "rapida" ? 2 : data.profundidade === "total" ? 10 : 5;
-    const limiteRequisicoes = data.profundidade === "rapida" ? 8 : data.profundidade === "total" ? 40 : 20;
+    const termo = data.objeto.replace(/["]/g, " ").trim();
+    const status = data.incluirEncerradas ? "todos" : "recebendo_proposta";
 
     const erros: string[] = [];
     const encontradas = new Map<string, LicitacaoPncp>();
     let requisicoes = 0;
 
-    // A pesquisa do PNCP aceita vários estados e modalidades na mesma chamada.
-    const termo = data.objeto.replace(/["]/g, " ").trim();
-
-    /**
-     * Não usamos o filtro "status" do PNCP: ele só marca uma fração dos editais
-     * (corta ~97% dos resultados e derruba os publicados via Licitações-e, BLL,
-     * Compras.gov.br etc.). O prazo é filtrado localmente por data_fim_vigencia.
-     */
-    const consultas: URLSearchParams[] = [];
-    {
-      const base = new URLSearchParams({
-        tipos_documento: "edital",
-        ordenacao: "-data",
-        tam_pagina: "50",
-        q: termo,
-      });
-      for (const uf of data.ufs) base.append("ufs", uf);
-      for (const codigo of codigos) base.append("modalidades", String(codigo));
-      consultas.push(base);
-    }
-
-
+    const LIMITE_REQUISICOES = 420;
+    const prazoFinal = Date.now() + 65000;
+    const noPrazo = () => Date.now() < prazoFinal && requisicoes < LIMITE_REQUISICOES;
 
     const agora = Date.now();
-    const registrar = (bruto: any) => {
+    /** `filtrarLocal` = a consulta não filtrou por texto; filtramos aqui com busca tolerante. */
+    const registrar = (bruto: any, filtrarLocal: boolean) => {
       const l = mapear(bruto);
       const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""}`;
-      // O PNCP já filtra pelo termo; a pontuação serve para ordenar por relevância.
-      const pontos = termo ? relevancia(texto, data.objeto) : 0;
+      const pontos = termo ? relevancia(texto, data.objeto) : 1;
+      if (filtrarLocal && termo && pontos < 0.6) return;
       if (!data.incluirEncerradas) {
         const fim = l.encerramento_proposta ? new Date(l.encerramento_proposta).getTime() : null;
         if (fim != null && !Number.isNaN(fim) && fim < agora) return;
@@ -287,57 +273,105 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return;
       if (data.valorMaximo != null && (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo) return;
       l.relevancia = pontos;
-      if (!encontradas.has(l.fonte_id)) encontradas.set(l.fonte_id, l);
+      const existente = encontradas.get(l.fonte_id);
+      if (!existente || existente.relevancia < pontos) encontradas.set(l.fonte_id, l);
     };
 
+    /**
+     * Duas estratégias combinadas para não perder editais:
+     *  1) varredura completa por estado (sem termo) filtrando o texto no app —
+     *     alcança editais operados em Licitações-e, BLL, Licitanet etc., cujo
+     *     texto no PNCP nem sempre casa com o índice de busca do portal;
+     *  2) consultas com o termo direto no PNCP, incluindo cada alternativa
+     *     separada por vírgula, para alcançar editais mais antigos/profundos.
+     */
+    const consultas: Array<{ params: URLSearchParams; filtrarLocal: boolean; maxPaginas: number }> = [];
 
-    // Tempo máximo de varredura: a pesquisa precisa responder mesmo com o PNCP lento.
-    const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 20000 : data.profundidade === "total" ? 55000 : 35000);
-    const noPrazo = () => Date.now() < prazoFinal && requisicoes < limiteRequisicoes;
+    const montar = (extras: Record<string, string>, ufs: string[]) => {
+      const p = new URLSearchParams({ ordenacao: "-data", tam_pagina: "50", ...extras });
+      for (const tipo of TIPOS_DOCUMENTO) p.append("tipos_documento", tipo);
+      for (const uf of ufs) p.append("ufs", uf);
+      for (const codigo of codigos) p.append("modalidades", String(codigo));
+      return p;
+    };
 
-    // Uma página por vez: o PNCP derruba a conexão em varreduras paralelas.
-    let interrompida = false;
-    for (const base of consultas) {
-      let pagina = 1;
-      while (pagina <= maxPaginasPorConsulta) {
-        if (!noPrazo()) {
-          interrompida = true;
-          break;
-        }
-        const params = new URLSearchParams(base);
-        params.set("pagina", String(pagina));
-        requisicoes++;
-        const resposta = await buscarPagina(params);
-        if (!resposta) {
-          erros.push(
-            "O Portal Nacional (PNCP) recusou parte das consultas. Os resultados podem estar incompletos — tente novamente em alguns instantes.",
-          );
-          break;
-        }
-        resposta.lista.forEach(registrar);
-        if (resposta.lista.length < 50 || pagina * 50 >= resposta.total) break;
-        pagina++;
-      }
-      if (interrompida) break;
+    const ufsAlvo = data.ufs.length > 0 ? data.ufs : [...UFS_TODAS];
+    const paginasVarredura = data.ufs.length > 0 ? Math.max(6, Math.floor(200 / data.ufs.length)) : 8;
+    for (const uf of ufsAlvo) {
+      consultas.push({ params: montar({ status }, [uf]), filtrarLocal: true, maxPaginas: paginasVarredura });
     }
-    if (interrompida) {
+
+    if (termo) {
+      const partes = [termo, ...termo.split(/[,;]|\s+ou\s+/i).map((t) => t.trim())].filter(
+        (t, i, a) => t.length > 1 && a.indexOf(t) === i,
+      );
+      for (const parte of partes) {
+        consultas.push({
+          params: montar({ q: parte, status }, data.ufs),
+          filtrarLocal: false,
+          maxPaginas: 20,
+        });
+      }
+    }
+
+    /** Busca um lote de páginas em paralelo controlado (o PNCP cai com excesso). */
+    const LOTE = 4;
+    let falhas = 0;
+    for (const consulta of consultas) {
+      let pagina = 1;
+      let total = Infinity;
+      while (pagina <= consulta.maxPaginas && noPrazo()) {
+        const paginas: number[] = [];
+        for (let i = 0; i < LOTE && pagina + i <= consulta.maxPaginas; i++) {
+          if ((pagina + i - 1) * 50 >= total) break;
+          paginas.push(pagina + i);
+        }
+        if (paginas.length === 0) break;
+        requisicoes += paginas.length;
+        const respostas = await Promise.all(
+          paginas.map((n) => {
+            const p = new URLSearchParams(consulta.params);
+            p.set("pagina", String(n));
+            return buscarPagina(p);
+          }),
+        );
+        let acabou = false;
+        for (const resposta of respostas) {
+          if (!resposta) {
+            falhas++;
+            acabou = true;
+            continue;
+          }
+          total = resposta.total;
+          resposta.lista.forEach((bruto) => registrar(bruto, consulta.filtrarLocal));
+          if (resposta.lista.length < 50) acabou = true;
+        }
+        if (acabou) break;
+        pagina += paginas.length;
+      }
+    }
+    if (falhas > 0) {
       erros.push(
-        "A varredura foi interrompida pelo tempo limite; refine o objeto ou os estados para cobrir mais resultados.",
+        "O Portal Nacional (PNCP) recusou parte das consultas; os resultados podem estar incompletos — repita a pesquisa em alguns instantes.",
       );
     }
-
-
+    if (requisicoes >= LIMITE_REQUISICOES || Date.now() >= prazoFinal) {
+      erros.push(
+        "A varredura atingiu o tempo limite. Selecionar os estados de interesse deixa a cobertura mais completa.",
+      );
+    }
 
     const ordenador = ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
     const lista = [...encontradas.values()].sort(ordenador);
 
     return {
-      licitacoes: lista.slice(0, 500),
+      licitacoes: lista.slice(0, 1000),
       total: lista.length,
       consultasFeitas: requisicoes,
       erros: [...new Set(erros)],
     };
   });
+
 
 export const buscarItensPncp = createServerFn({ method: "POST" })
   .inputValidator((data) =>
