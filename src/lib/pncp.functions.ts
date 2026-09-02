@@ -252,34 +252,44 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     // A pesquisa do PNCP aceita vários estados e modalidades na mesma chamada.
     const termo = data.objeto.replace(/["]/g, " ").trim();
 
-    const situacoes = data.incluirEncerradas ? ["recebendo_proposta", ""] : ["recebendo_proposta"];
-
+    /**
+     * Não usamos o filtro "status" do PNCP: ele só marca uma fração dos editais
+     * (corta ~97% dos resultados e derruba os publicados via Licitações-e, BLL,
+     * Compras.gov.br etc.). O prazo é filtrado localmente por data_fim_vigencia.
+     */
     const consultas: URLSearchParams[] = [];
-    for (const situacao of situacoes) {
+    {
       const base = new URLSearchParams({
         tipos_documento: "edital",
-        ordenacao: data.ordenar === "publicacao" ? "-data" : "-data",
+        ordenacao: "-data",
         tam_pagina: "50",
         q: termo,
       });
-      if (situacao) base.set("status", situacao);
       for (const uf of data.ufs) base.append("ufs", uf);
       for (const codigo of codigos) base.append("modalidades", String(codigo));
       consultas.push(base);
     }
 
 
+
+    const agora = Date.now();
     const registrar = (bruto: any) => {
       const l = mapear(bruto);
       const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""}`;
       // O PNCP já filtra pelo termo; a pontuação serve para ordenar por relevância.
       const pontos = termo ? relevancia(texto, data.objeto) : 0;
+      if (!data.incluirEncerradas) {
+        const fim = l.encerramento_proposta ? new Date(l.encerramento_proposta).getTime() : null;
+        if (fim != null && !Number.isNaN(fim) && fim < agora) return;
+        if (l.situacao === "Cancelada") return;
+      }
       if (data.natureza && l.natureza !== data.natureza) return;
       if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return;
       if (data.valorMaximo != null && (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo) return;
       l.relevancia = pontos;
       if (!encontradas.has(l.fonte_id)) encontradas.set(l.fonte_id, l);
     };
+
 
     // Tempo máximo de varredura: a pesquisa precisa responder mesmo com o PNCP lento.
     const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 20000 : data.profundidade === "total" ? 55000 : 35000);
