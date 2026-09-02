@@ -96,6 +96,32 @@ function Boletins() {
   const vistaPor = (fonteId: string) =>
     (vistas ?? []).filter((v) => v.fonte_id === fonteId).map((v) => v.user_nome ?? "membro");
 
+  /** O índice do PNCP não traz valor estimado: buscamos no detalhe da contratação. */
+  const alvosValor = useMemo(
+    () =>
+      novas
+        .filter((l) => l.valor_estimado == null && l.orgao_cnpj && l.sequencial > 0)
+        .slice(0, 120)
+        .map((l) => ({
+          fonte_id: l.fonte_id,
+          cnpj: l.orgao_cnpj,
+          ano: l.ano,
+          sequencial: l.sequencial,
+        })),
+    [novas],
+  );
+
+  const { data: valoresExtra, isFetching: buscandoValores } = useQuery({
+    queryKey: ["valores-pncp-boletim", alvosValor.map((a) => a.fonte_id)],
+    enabled: alvosValor.length > 0,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => (await buscarValores({ data: { contratacoes: alvosValor } })).valores,
+  });
+
+  const valorDe = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
+
+
+
   const gerar = useMutation({
     mutationFn: async () =>
       buscar({
