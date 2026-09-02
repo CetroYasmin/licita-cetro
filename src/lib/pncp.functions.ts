@@ -148,7 +148,19 @@ function mapear(c: any): LicitacaoPncp {
     portal: "PNCP",
     site_url: `https://pncp.gov.br/app/editais/${cnpj}/${ano}/${sequencial}`,
     processo_administrativo: c.numero ? String(c.numero) : null,
-    valor_estimado: c.valor_global != null ? Number(c.valor_global) : null,
+    valor_estimado: (() => {
+      const valor =
+        c.valor_global ??
+        c.valorGlobal ??
+        c.valorTotalEstimado ??
+        c.valor_total_estimado ??
+        c.valorEstimado ??
+        c.valor_estimado ??
+        c.valor;
+      if (valor == null || valor === "") return null;
+      const numero = Number(valor);
+      return Number.isFinite(numero) && numero > 0 ? numero : null;
+    })(),
     cidade: c.municipio_nome ?? null,
     uf: c.uf ?? null,
     situacao: c.cancelado ? "Cancelada" : (c.situacao_nome ?? null),
@@ -213,8 +225,16 @@ const ORDENACOES = {
     (b.data_publicacao ?? "").localeCompare(a.data_publicacao ?? ""),
   encerramento: (a: LicitacaoPncp, b: LicitacaoPncp) =>
     (a.encerramento_proposta ?? "9999").localeCompare(b.encerramento_proposta ?? "9999"),
-  valor_desc: (a: LicitacaoPncp, b: LicitacaoPncp) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0),
-  valor_asc: (a: LicitacaoPncp, b: LicitacaoPncp) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0),
+  valor_desc: (a: LicitacaoPncp, b: LicitacaoPncp) => {
+    if (a.valor_estimado == null) return 1;
+    if (b.valor_estimado == null) return -1;
+    return b.valor_estimado - a.valor_estimado;
+  },
+  valor_asc: (a: LicitacaoPncp, b: LicitacaoPncp) => {
+    if (a.valor_estimado == null) return 1;
+    if (b.valor_estimado == null) return -1;
+    return a.valor_estimado - b.valor_estimado;
+  },
   orgao: (a: LicitacaoPncp, b: LicitacaoPncp) => a.orgao.localeCompare(b.orgao, "pt-BR"),
   uf: (a: LicitacaoPncp, b: LicitacaoPncp) => (a.uf ?? "").localeCompare(b.uf ?? ""),
 } as const;
@@ -288,31 +308,46 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
      */
     const consultas: Array<{ params: URLSearchParams; filtrarLocal: boolean; maxPaginas: number }> = [];
 
+    const TAMANHO_PAGINA = 50;
     const montar = (extras: Record<string, string>, ufs: string[]) => {
-      const p = new URLSearchParams({ ordenacao: "-data", tam_pagina: "500", ...extras });
+      const p = new URLSearchParams({ ordenacao: "-data", tam_pagina: String(TAMANHO_PAGINA), ...extras });
       for (const tipo of TIPOS_DOCUMENTO) p.append("tipos_documento", tipo);
       for (const uf of ufs) p.append("ufs", uf);
       for (const codigo of codigos) p.append("modalidades", String(codigo));
       return p;
     };
 
-    const ufsAlvo = data.ufs.length > 0 ? data.ufs : [...UFS_TODAS];
-    const paginasVarredura = 6;
-    for (const uf of ufsAlvo) {
-      consultas.push({ params: montar({ status }, [uf]), filtrarLocal: true, maxPaginas: paginasVarredura });
-    }
-
     if (termo) {
-      const partes = [termo, ...termo.split(/[,;]|\s+ou\s+/i).map((t) => t.trim())].filter(
+      // Consultas textuais vêm primeiro: a antiga varredura estadual consumia o
+      // prazo antes de chegar à pesquisa nacional, especialmente para PE.
+      const palavras = termo
+        .split(/[^\p{L}\p{N}/-]+/u)
+        .map((p) => p.trim())
+        .filter((p) => p.length >= 5);
+      const frases = termo.split(/[,;:]|\s+ou\s+/i).map((t) => t.trim());
+      const janelas = palavras.length >= 2
+        ? [palavras.slice(0, 4).join(" "), palavras.slice(-4).join(" ")]
+        : [];
+      const identificadores = termo.match(/\b\d{3,}(?:\/\d{2,4})?(?:-[\p{L}\d]+)?\b/gu) ?? [];
+      const raras = [...palavras].sort((a, b) => b.length - a.length).slice(0, 4);
+      const partes = [termo, ...frases, ...janelas, ...identificadores, ...raras].filter(
         (t, i, a) => t.length > 1 && a.indexOf(t) === i,
       );
       for (const parte of partes) {
         consultas.push({
           params: montar({ q: parte, status }, data.ufs),
-          filtrarLocal: false,
-          maxPaginas: 20,
+          // O índice do PNCP pode devolver aproximações muito amplas; a
+          // validação local impede que elas ocupem o limite de resultados.
+          filtrarLocal: true,
+          maxPaginas: 30,
         });
       }
+    }
+
+    const ufsAlvo = data.ufs.length > 0 ? data.ufs : [...UFS_TODAS];
+    const paginasVarredura = 6;
+    for (const uf of ufsAlvo) {
+      consultas.push({ params: montar({ status }, [uf]), filtrarLocal: true, maxPaginas: paginasVarredura });
     }
 
     /** Busca um lote de páginas em paralelo controlado (o PNCP cai com excesso). */
@@ -324,7 +359,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       while (pagina <= consulta.maxPaginas && noPrazo()) {
         const paginas: number[] = [];
         for (let i = 0; i < LOTE && pagina + i <= consulta.maxPaginas; i++) {
-          if ((pagina + i - 1) * 500 >= total) break;
+          if ((pagina + i - 1) * TAMANHO_PAGINA >= total) break;
           paginas.push(pagina + i);
         }
         if (paginas.length === 0) break;
@@ -345,7 +380,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
           }
           total = resposta.total;
           resposta.lista.forEach((bruto) => registrar(bruto, consulta.filtrarLocal));
-          if (resposta.lista.length < 500) acabou = true;
+          if (resposta.lista.length < TAMANHO_PAGINA) acabou = true;
         }
         if (acabou) break;
         pagina += paginas.length;

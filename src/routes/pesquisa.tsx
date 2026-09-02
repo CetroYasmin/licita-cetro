@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Download, Eye, EyeOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -279,9 +279,34 @@ function Pesquisa() {
       ),
   });
 
-  const visiveis = ocultarVistas
-    ? resultados.filter((l) => !euVi(l.fonte_id))
-    : resultados;
+  const visiveis = useMemo(() => {
+    const lista = ocultarVistas ? resultados.filter((l) => !euVi(l.fonte_id)) : [...resultados];
+    const dataValida = (valor: string | null) => {
+      if (!valor) return Number.POSITIVE_INFINITY;
+      const tempo = new Date(valor).getTime();
+      return Number.isNaN(tempo) ? Number.POSITIVE_INFINITY : tempo;
+    };
+    const valorOuFim = (valor: number | null) => valor == null ? Number.POSITIVE_INFINITY : valor;
+    const comparadores: Record<string, (a: LicitacaoPncp, b: LicitacaoPncp) => number> = {
+      relevancia: (a, b) => b.relevancia - a.relevancia,
+      encerramento: (a, b) => dataValida(a.encerramento_proposta) - dataValida(b.encerramento_proposta),
+      sessao: (a, b) => dataValida(a.data_abertura) - dataValida(b.data_abertura),
+      publicacao: (a, b) => {
+        if (!a.data_publicacao) return 1;
+        if (!b.data_publicacao) return -1;
+        return dataValida(b.data_publicacao) - dataValida(a.data_publicacao);
+      },
+      valor_desc: (a, b) => {
+        if (a.valor_estimado == null) return 1;
+        if (b.valor_estimado == null) return -1;
+        return b.valor_estimado - a.valor_estimado;
+      },
+      valor_asc: (a, b) => valorOuFim(a.valor_estimado) - valorOuFim(b.valor_estimado),
+      orgao: (a, b) => a.orgao.localeCompare(b.orgao, "pt-BR"),
+      uf: (a, b) => (a.uf ?? "").localeCompare(b.uf ?? "", "pt-BR"),
+    };
+    return lista.sort(comparadores[ordenar] ?? comparadores["relevancia"]);
+  }, [ocultarVistas, ordenar, resultados, user?.id, vistas]);
 
   return (
     <AppLayout
@@ -434,7 +459,7 @@ function Pesquisa() {
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Portal: <strong>{l.portal}</strong> · Disputa: {l.plataforma} · Estimado:{" "}
-                      <strong>{moeda(l.valor_estimado)}</strong>
+                       <strong>{l.valor_estimado == null ? "Não informado pelo órgão" : moeda(l.valor_estimado)}</strong>
                     </p>
                   </div>
                   <div className="flex flex-col items-stretch gap-2">
