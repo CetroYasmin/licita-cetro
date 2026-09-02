@@ -187,7 +187,7 @@ function Boletins() {
           plataforma: l.plataforma,
           portal: l.portal,
           site_url: l.site_url,
-          valor_estimado: l.valor_estimado,
+          valor_estimado: valorDe(l),
           cidade: l.cidade,
           uf: l.uf,
           status: "publicada",
@@ -394,7 +394,13 @@ function Boletins() {
                       {l.objeto}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · {moeda(l.valor_estimado)} ·
+                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} ·{" "}
+                      {valorDe(l) != null
+                        ? moeda(valorDe(l) as number)
+                        : buscandoValores
+                          ? "consultando valor…"
+                          : "valor não informado"}{" "}
+                      ·
                       propostas até {dataHora(l.encerramento_proposta)}
                     </p>
                   </div>
