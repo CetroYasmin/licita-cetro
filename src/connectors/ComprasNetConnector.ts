@@ -114,7 +114,7 @@ export class ComprasNetConnector implements PortalConnector {
       });
       if (r.ok) {
         const corpo = (await r.json().catch(() => null)) as Bruta | null;
-        const novo = corpo?.token ?? corpo?.accessToken ?? corpo?.access_token;
+        const novo = corpo?.["token"] ?? corpo?.["accessToken"] ?? corpo?.["access_token"];
         if (typeof novo === "string" && novo.length > 20) this.token = novo;
       }
     } catch {
@@ -153,10 +153,10 @@ export class ComprasNetConnector implements PortalConnector {
     const corpo = (await r.json().catch(() => null)) as unknown;
     const lista: Bruta[] = Array.isArray(corpo)
       ? (corpo as Bruta[])
-      : Array.isArray((corpo as Bruta)?.content)
-        ? ((corpo as Bruta).content as Bruta[])
-        : Array.isArray((corpo as Bruta)?.mensagens)
-          ? ((corpo as Bruta).mensagens as Bruta[])
+      : Array.isArray((corpo as Bruta)?.["content"])
+        ? ((corpo as Bruta)["content"] as Bruta[])
+        : Array.isArray((corpo as Bruta)?.["mensagens"])
+          ? ((corpo as Bruta)["mensagens"] as Bruta[])
           : [];
 
     const desde = context?.since ? new Date(context.since).getTime() : null;
