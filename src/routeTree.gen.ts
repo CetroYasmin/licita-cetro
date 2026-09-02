@@ -14,7 +14,6 @@ import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoletinsRouteImport } from './routes/boletins'
-import { Route as ChatsRouteImport } from './routes/chats'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
@@ -48,11 +47,6 @@ const AuthRoute = AuthRouteImport.update({
 const BoletinsRoute = BoletinsRouteImport.update({
   id: '/boletins',
   path: '/boletins',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatsRoute = ChatsRouteImport.update({
-  id: '/chats',
-  path: '/chats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EquipeRoute = EquipeRouteImport.update({
@@ -107,7 +101,6 @@ export interface FileRoutesByFullPath {
   '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/boletins': typeof BoletinsRoute
-  '/chats': typeof ChatsRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
@@ -124,7 +117,6 @@ export interface FileRoutesByTo {
   '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/boletins': typeof BoletinsRoute
-  '/chats': typeof ChatsRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
@@ -142,7 +134,6 @@ export interface FileRoutesById {
   '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/boletins': typeof BoletinsRoute
-  '/chats': typeof ChatsRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
@@ -161,7 +152,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auth'
     | '/boletins'
-    | '/chats'
     | '/equipe'
     | '/pesquisa'
     | '/relatorios'
@@ -178,7 +168,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auth'
     | '/boletins'
-    | '/chats'
     | '/equipe'
     | '/pesquisa'
     | '/relatorios'
@@ -195,7 +184,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auth'
     | '/boletins'
-    | '/chats'
     | '/equipe'
     | '/pesquisa'
     | '/relatorios'
@@ -213,7 +201,6 @@ export interface RootRouteChildren {
   AlertasRoute: typeof AlertasRoute
   AuthRoute: typeof AuthRoute
   BoletinsRoute: typeof BoletinsRoute
-  ChatsRoute: typeof ChatsRoute
   EquipeRoute: typeof EquipeRoute
   PesquisaRoute: typeof PesquisaRoute
   RelatoriosRoute: typeof RelatoriosRoute
@@ -260,13 +247,6 @@ declare module '@tanstack/react-router' {
       path: '/boletins'
       fullPath: '/boletins'
       preLoaderRoute: typeof BoletinsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chats': {
-      id: '/chats'
-      path: '/chats'
-      fullPath: '/chats'
-      preLoaderRoute: typeof ChatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/equipe': {
@@ -341,7 +321,6 @@ const rootRouteChildren: RootRouteChildren = {
   AlertasRoute: AlertasRoute,
   AuthRoute: AuthRoute,
   BoletinsRoute: BoletinsRoute,
-  ChatsRoute: ChatsRoute,
   EquipeRoute: EquipeRoute,
   PesquisaRoute: PesquisaRoute,
   RelatoriosRoute: RelatoriosRoute,
