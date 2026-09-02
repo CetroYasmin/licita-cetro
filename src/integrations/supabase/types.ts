@@ -527,6 +527,41 @@ export type Database = {
           },
         ]
       }
+      monitoramentos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          pregao_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          pregao_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          pregao_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoramentos_pregao_id_fkey"
+            columns: ["pregao_id"]
+            isOneToOne: false
+            referencedRelation: "pregoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movimentacoes: {
         Row: {
           autor_id: string | null
@@ -578,6 +613,84 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          corpo: string | null
+          created_at: string
+          id: string
+          lida: boolean
+          mensagem_id: string | null
+          palavra: string | null
+          pregao_id: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          corpo?: string | null
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem_id?: string | null
+          palavra?: string | null
+          pregao_id?: string | null
+          tipo?: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          corpo?: string | null
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem_id?: string | null
+          palavra?: string | null
+          pregao_id?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_mensagem_id_fkey"
+            columns: ["mensagem_id"]
+            isOneToOne: false
+            referencedRelation: "pregao_mensagens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_pregao_id_fkey"
+            columns: ["pregao_id"]
+            isOneToOne: false
+            referencedRelation: "pregoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      palavras_chave: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          palavra: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          palavra: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          palavra?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pastas: {
         Row: {
           cor: string | null
@@ -609,6 +722,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portais: {
+        Row: {
+          ativo: boolean
+          base_url: string | null
+          connector_type: string
+          created_at: string
+          id: string
+          nome: string
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_url?: string | null
+          connector_type?: string
+          created_at?: string
+          id?: string
+          nome: string
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          base_url?: string | null
+          connector_type?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          slug?: string
+        }
+        Relationships: []
       }
       prazos: {
         Row: {
@@ -654,6 +797,130 @@ export type Database = {
             columns: ["licitacao_id"]
             isOneToOne: false
             referencedRelation: "licitacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pregao_mensagens: {
+        Row: {
+          autor: string
+          autor_tipo: string
+          coletada_em: string
+          created_at: string
+          equipe_id: string | null
+          external_message_id: string
+          id: string
+          mensagem: string
+          mensagem_em: string
+          portal_id: string
+          pregao_id: string
+        }
+        Insert: {
+          autor: string
+          autor_tipo?: string
+          coletada_em?: string
+          created_at?: string
+          equipe_id?: string | null
+          external_message_id: string
+          id?: string
+          mensagem: string
+          mensagem_em?: string
+          portal_id: string
+          pregao_id: string
+        }
+        Update: {
+          autor?: string
+          autor_tipo?: string
+          coletada_em?: string
+          created_at?: string
+          equipe_id?: string | null
+          external_message_id?: string
+          id?: string
+          mensagem?: string
+          mensagem_em?: string
+          portal_id?: string
+          pregao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pregao_mensagens_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pregao_mensagens_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pregao_mensagens_pregao_id_fkey"
+            columns: ["pregao_id"]
+            isOneToOne: false
+            referencedRelation: "pregoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pregoes: {
+        Row: {
+          created_at: string
+          data_abertura: string | null
+          equipe_id: string | null
+          external_id: string
+          id: string
+          monitoramento_ativo: boolean
+          objeto: string | null
+          orgao: string | null
+          portal_id: string
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_abertura?: string | null
+          equipe_id?: string | null
+          external_id: string
+          id?: string
+          monitoramento_ativo?: boolean
+          objeto?: string | null
+          orgao?: string | null
+          portal_id: string
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_abertura?: string | null
+          equipe_id?: string | null
+          external_id?: string
+          id?: string
+          monitoramento_ativo?: boolean
+          objeto?: string | null
+          orgao?: string | null
+          portal_id?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pregoes_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pregoes_portal_id_fkey"
+            columns: ["portal_id"]
+            isOneToOne: false
+            referencedRelation: "portais"
             referencedColumns: ["id"]
           },
         ]
