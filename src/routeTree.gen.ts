@@ -20,6 +20,10 @@ import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
+import { Route as MonitoramentoIndexRouteImport } from './routes/monitoramento.index'
+import { Route as MonitoramentoLicitacoesRouteImport } from './routes/monitoramento.licitacoes'
+import { Route as MonitoramentoPalavrasRouteImport } from './routes/monitoramento.palavras'
+import { Route as MonitoramentoChatIdRouteImport } from './routes/monitoramento.chat.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +80,26 @@ const LicitacoesIdRoute = LicitacoesIdRouteImport.update({
   path: '/licitacoes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MonitoramentoIndexRoute = MonitoramentoIndexRouteImport.update({
+  id: '/monitoramento/',
+  path: '/monitoramento/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoramentoLicitacoesRoute = MonitoramentoLicitacoesRouteImport.update({
+  id: '/monitoramento/licitacoes',
+  path: '/monitoramento/licitacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoramentoPalavrasRoute = MonitoramentoPalavrasRouteImport.update({
+  id: '/monitoramento/palavras',
+  path: '/monitoramento/palavras',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoramentoChatIdRoute = MonitoramentoChatIdRouteImport.update({
+  id: '/monitoramento/chat/$id',
+  path: '/monitoramento/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,7 +112,11 @@ export interface FileRoutesByFullPath {
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
+  '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
+  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/monitoramento/': typeof MonitoramentoIndexRoute
+  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,7 +129,11 @@ export interface FileRoutesByTo {
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
+  '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
+  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes': typeof LicitacoesIndexRoute
+  '/monitoramento': typeof MonitoramentoIndexRoute
+  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,7 +147,11 @@ export interface FileRoutesById {
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
+  '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
+  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/monitoramento/': typeof MonitoramentoIndexRoute
+  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,7 +166,11 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/relatorios'
     | '/licitacoes/$id'
+    | '/monitoramento/licitacoes'
+    | '/monitoramento/palavras'
     | '/licitacoes/'
+    | '/monitoramento/'
+    | '/monitoramento/chat/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -143,7 +183,11 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/relatorios'
     | '/licitacoes/$id'
+    | '/monitoramento/licitacoes'
+    | '/monitoramento/palavras'
     | '/licitacoes'
+    | '/monitoramento'
+    | '/monitoramento/chat/$id'
   id:
     | '__root__'
     | '/'
@@ -156,7 +200,11 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/relatorios'
     | '/licitacoes/$id'
+    | '/monitoramento/licitacoes'
+    | '/monitoramento/palavras'
     | '/licitacoes/'
+    | '/monitoramento/'
+    | '/monitoramento/chat/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -170,7 +218,11 @@ export interface RootRouteChildren {
   PesquisaRoute: typeof PesquisaRoute
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
+  MonitoramentoLicitacoesRoute: typeof MonitoramentoLicitacoesRoute
+  MonitoramentoPalavrasRoute: typeof MonitoramentoPalavrasRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
+  MonitoramentoIndexRoute: typeof MonitoramentoIndexRoute
+  MonitoramentoChatIdRoute: typeof MonitoramentoChatIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +304,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LicitacoesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/monitoramento/': {
+      id: '/monitoramento/'
+      path: '/monitoramento'
+      fullPath: '/monitoramento/'
+      preLoaderRoute: typeof MonitoramentoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoramento/licitacoes': {
+      id: '/monitoramento/licitacoes'
+      path: '/monitoramento/licitacoes'
+      fullPath: '/monitoramento/licitacoes'
+      preLoaderRoute: typeof MonitoramentoLicitacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoramento/palavras': {
+      id: '/monitoramento/palavras'
+      path: '/monitoramento/palavras'
+      fullPath: '/monitoramento/palavras'
+      preLoaderRoute: typeof MonitoramentoPalavrasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoramento/chat/$id': {
+      id: '/monitoramento/chat/$id'
+      path: '/monitoramento/chat/$id'
+      fullPath: '/monitoramento/chat/$id'
+      preLoaderRoute: typeof MonitoramentoChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -266,7 +346,11 @@ const rootRouteChildren: RootRouteChildren = {
   PesquisaRoute: PesquisaRoute,
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
+  MonitoramentoLicitacoesRoute: MonitoramentoLicitacoesRoute,
+  MonitoramentoPalavrasRoute: MonitoramentoPalavrasRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
+  MonitoramentoIndexRoute: MonitoramentoIndexRoute,
+  MonitoramentoChatIdRoute: MonitoramentoChatIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
