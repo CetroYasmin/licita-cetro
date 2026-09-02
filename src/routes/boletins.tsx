@@ -20,7 +20,11 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/lib/formato";
-import { buscarLicitacoesPncp, type LicitacaoPncp } from "@/lib/pncp.functions";
+import {
+  buscarLicitacoesPncp,
+  buscarValoresPncp,
+  type LicitacaoPncp,
+} from "@/lib/pncp.functions";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 
 export const Route = createFileRoute("/boletins")({
