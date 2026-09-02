@@ -28,8 +28,10 @@ const MODALIDADE_CODIGOS: Record<string, number> = {
   Leilão: 1,
 };
 
-/** Todas as modalidades relevantes do PNCP, em ordem de volume. */
-const MODALIDADES_PADRAO = [6, 8, 4, 9, 7, 5, 12, 13, 11, 3, 1, 2];
+/** Modalidades consultadas quando o usuário não escolhe uma, em ordem de volume. */
+const MODALIDADES_PADRAO = [6, 8, 4];
+/** Varredura total: cobre também as modalidades menos frequentes. */
+const MODALIDADES_TOTAIS = [6, 8, 4, 9, 7, 5, 12, 13, 11, 3, 1, 2];
 
 const PADRAO_OBRAS =
   /(obra|obras|constru|reforma|pavimenta|engenharia|edifica|drenagem|saneamento|terraplan|recapea|ampliação|reformas|infraestrutura|ponte|calçamen|urbaniza|revitaliza)/i;
@@ -237,11 +239,15 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const codigos = data.modalidade
       ? [MODALIDADE_CODIGOS[data.modalidade] ?? 6]
-      : MODALIDADES_PADRAO;
+      : data.profundidade === "total"
+        ? MODALIDADES_TOTAIS
+        : data.profundidade === "rapida"
+          ? [6]
+          : MODALIDADES_PADRAO;
 
     const maxPaginasPorConsulta =
-      data.profundidade === "rapida" ? 4 : data.profundidade === "total" ? 40 : 14;
-    const limiteRequisicoes = data.profundidade === "rapida" ? 40 : data.profundidade === "total" ? 400 : 160;
+      data.profundidade === "rapida" ? 3 : data.profundidade === "total" ? 12 : 6;
+    const limiteRequisicoes = data.profundidade === "rapida" ? 20 : data.profundidade === "total" ? 120 : 60;
 
     const dataFinal = yyyymmdd(new Date(Date.now() + 1000 * 60 * 60 * 24 * 365));
     const hoje = yyyymmdd(new Date());
@@ -292,7 +298,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     };
 
     // Tempo máximo de varredura: a pesquisa precisa responder mesmo com o PNCP lento.
-    const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 12000 : data.profundidade === "total" ? 45000 : 25000);
+    const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 15000 : data.profundidade === "total" ? 50000 : 30000);
     const noPrazo = () => Date.now() < prazoFinal && requisicoes < limiteRequisicoes;
 
     // Fila com várias consultas simultâneas (por modalidade/UF) em vez de uma a uma.
@@ -315,9 +321,9 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
         const paginas: number[] = [];
         for (let p = 2; p <= totalPaginas; p++) paginas.push(p);
 
-        for (let i = 0; i < paginas.length; i += 5) {
+        for (let i = 0; i < paginas.length; i += 3) {
           if (!noPrazo()) break;
-          const bloco = paginas.slice(i, i + 5);
+          const bloco = paginas.slice(i, i + 3);
           requisicoes += bloco.length;
           const respostas = await Promise.all(
             bloco.map((p) => {
@@ -331,7 +337,8 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       }
     };
 
-    const simultaneas = data.profundidade === "rapida" ? 6 : 10;
+    // Poucas chamadas ao mesmo tempo: o PNCP bloqueia (429) varreduras agressivas.
+    const simultaneas = data.profundidade === "total" ? 4 : 3;
     await Promise.all(Array.from({ length: simultaneas }, trabalhador));
     if (fila.length > 0) {
       erros.push(
