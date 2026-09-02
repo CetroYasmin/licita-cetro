@@ -281,6 +281,30 @@ function Pesquisa() {
       ),
   });
 
+  /** O índice de pesquisa do PNCP não traz o valor estimado; buscamos no detalhe. */
+  const alvosValor = useMemo(
+    () =>
+      resultados
+        .filter((l) => l.valor_estimado == null && l.orgao_cnpj && l.sequencial > 0)
+        .slice(0, 120)
+        .map((l) => ({
+          fonte_id: l.fonte_id,
+          cnpj: l.orgao_cnpj,
+          ano: l.ano,
+          sequencial: l.sequencial,
+        })),
+    [resultados],
+  );
+
+  const { data: valoresExtra, isFetching: buscandoValores } = useQuery({
+    queryKey: ["valores-pncp", alvosValor.map((a) => a.fonte_id)],
+    enabled: alvosValor.length > 0,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => (await valoresDe({ data: { contratacoes: alvosValor } })).valores,
+  });
+
+  const valorDe = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
+
   const visiveis = useMemo(() => {
     const lista = ocultarVistas ? resultados.filter((l) => !euVi(l.fonte_id)) : [...resultados];
     const dataValida = (valor: string | null) => {
@@ -288,6 +312,7 @@ function Pesquisa() {
       const tempo = new Date(valor).getTime();
       return Number.isNaN(tempo) ? Number.POSITIVE_INFINITY : tempo;
     };
+    const valorLic = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
     const valorOuFim = (valor: number | null) => valor == null ? Number.POSITIVE_INFINITY : valor;
     const comparadores: Record<string, (a: LicitacaoPncp, b: LicitacaoPncp) => number> = {
       relevancia: (a, b) => b.relevancia - a.relevancia,
@@ -299,16 +324,19 @@ function Pesquisa() {
         return dataValida(b.data_publicacao) - dataValida(a.data_publicacao);
       },
       valor_desc: (a, b) => {
-        if (a.valor_estimado == null) return 1;
-        if (b.valor_estimado == null) return -1;
-        return b.valor_estimado - a.valor_estimado;
+        const va = valorLic(a);
+        const vb = valorLic(b);
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        return vb - va;
       },
-      valor_asc: (a, b) => valorOuFim(a.valor_estimado) - valorOuFim(b.valor_estimado),
+      valor_asc: (a, b) => valorOuFim(valorLic(a)) - valorOuFim(valorLic(b)),
       orgao: (a, b) => a.orgao.localeCompare(b.orgao, "pt-BR"),
       uf: (a, b) => (a.uf ?? "").localeCompare(b.uf ?? "", "pt-BR"),
     };
     return lista.sort(comparadores[ordenar] ?? comparadores["relevancia"]);
-  }, [ocultarVistas, ordenar, resultados, user?.id, vistas]);
+  }, [ocultarVistas, ordenar, resultados, user?.id, vistas, valoresExtra]);
+
 
   return (
     <AppLayout
