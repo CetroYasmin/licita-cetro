@@ -149,7 +149,14 @@ function mapear(c: any): LicitacaoPncp {
     site_url: `https://pncp.gov.br/app/editais/${cnpj}/${ano}/${sequencial}`,
     processo_administrativo: c.numero ? String(c.numero) : null,
     valor_estimado: (() => {
-      const valor = c.valor_global ?? c.valorTotalEstimado ?? c.valor_total_estimado ?? c.valorEstimado;
+      const valor =
+        c.valor_global ??
+        c.valorGlobal ??
+        c.valorTotalEstimado ??
+        c.valor_total_estimado ??
+        c.valorEstimado ??
+        c.valor_estimado ??
+        c.valor;
       if (valor == null || valor === "") return null;
       const numero = Number(valor);
       return Number.isFinite(numero) && numero > 0 ? numero : null;
@@ -329,7 +336,9 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       for (const parte of partes) {
         consultas.push({
           params: montar({ q: parte, status }, data.ufs),
-          filtrarLocal: false,
+          // O índice do PNCP pode devolver aproximações muito amplas; a
+          // validação local impede que elas ocupem o limite de resultados.
+          filtrarLocal: true,
           maxPaginas: 30,
         });
       }
