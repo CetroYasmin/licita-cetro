@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/select";
 import { MODALIDADES, NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/lib/formato";
 import {
-  PORTAIS,
   buscarItensPncp,
   buscarLicitacoesPncp,
   type LicitacaoPncp,
@@ -70,7 +69,6 @@ function Pesquisa() {
   const [ufs, setUfs] = useState<string[]>([]);
   const [modalidade, setModalidade] = useState("todas");
   const [natureza, setNatureza] = useState("Obras e engenharia");
-  const [portal, setPortal] = useState("todos");
   const [valorMinimo, setValorMinimo] = useState("");
   const [valorMaximo, setValorMaximo] = useState("");
   const [profundidade, setProfundidade] = useState("ampla");
@@ -130,7 +128,7 @@ function Pesquisa() {
           ufs,
           modalidade: modalidade === "todas" ? "" : modalidade,
           natureza: natureza === "todas" ? "" : natureza,
-          portal: portal === "todos" ? "" : portal,
+          portal: "",
           valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
           valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
           incluirEncerradas,
@@ -326,18 +324,6 @@ function Pesquisa() {
                 <SelectItem value="todas">Todas as modalidades</SelectItem>
                 {MODALIDADES.map((m) => (
                   <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Portal de origem</Label>
-            <Select value={portal} onValueChange={setPortal}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os portais</SelectItem>
-                {PORTAIS.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
