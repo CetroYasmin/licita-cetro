@@ -272,17 +272,24 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
 
 
 
+    const agora = Date.now();
     const registrar = (bruto: any) => {
       const l = mapear(bruto);
       const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""}`;
       // O PNCP já filtra pelo termo; a pontuação serve para ordenar por relevância.
       const pontos = termo ? relevancia(texto, data.objeto) : 0;
+      if (!data.incluirEncerradas) {
+        const fim = l.encerramento_proposta ? new Date(l.encerramento_proposta).getTime() : null;
+        if (fim != null && !Number.isNaN(fim) && fim < agora) return;
+        if (l.situacao === "Cancelada") return;
+      }
       if (data.natureza && l.natureza !== data.natureza) return;
       if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return;
       if (data.valorMaximo != null && (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo) return;
       l.relevancia = pontos;
       if (!encontradas.has(l.fonte_id)) encontradas.set(l.fonte_id, l);
     };
+
 
     // Tempo máximo de varredura: a pesquisa precisa responder mesmo com o PNCP lento.
     const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 20000 : data.profundidade === "total" ? 55000 : 35000);
