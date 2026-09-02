@@ -22,6 +22,7 @@ import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
 import { Route as MonitoramentoIndexRouteImport } from './routes/monitoramento.index'
 import { Route as MonitoramentoLicitacoesRouteImport } from './routes/monitoramento.licitacoes'
+import { Route as MonitoramentoPalavrasRouteImport } from './routes/monitoramento.palavras'
 import { Route as MonitoramentoChatIdRouteImport } from './routes/monitoramento.chat.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -89,6 +90,11 @@ const MonitoramentoLicitacoesRoute = MonitoramentoLicitacoesRouteImport.update({
   path: '/monitoramento/licitacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MonitoramentoPalavrasRoute = MonitoramentoPalavrasRouteImport.update({
+  id: '/monitoramento/palavras',
+  path: '/monitoramento/palavras',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MonitoramentoChatIdRoute = MonitoramentoChatIdRouteImport.update({
   id: '/monitoramento/chat/$id',
   path: '/monitoramento/chat/$id',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
+  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/monitoramento/': typeof MonitoramentoIndexRoute
   '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
+  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes': typeof LicitacoesIndexRoute
   '/monitoramento': typeof MonitoramentoIndexRoute
   '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
+  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/monitoramento/': typeof MonitoramentoIndexRoute
   '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/monitoramento/licitacoes'
+    | '/monitoramento/palavras'
     | '/licitacoes/'
     | '/monitoramento/'
     | '/monitoramento/chat/$id'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/monitoramento/licitacoes'
+    | '/monitoramento/palavras'
     | '/licitacoes'
     | '/monitoramento'
     | '/monitoramento/chat/$id'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/monitoramento/licitacoes'
+    | '/monitoramento/palavras'
     | '/licitacoes/'
     | '/monitoramento/'
     | '/monitoramento/chat/$id'
@@ -207,6 +219,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   MonitoramentoLicitacoesRoute: typeof MonitoramentoLicitacoesRoute
+  MonitoramentoPalavrasRoute: typeof MonitoramentoPalavrasRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
   MonitoramentoIndexRoute: typeof MonitoramentoIndexRoute
   MonitoramentoChatIdRoute: typeof MonitoramentoChatIdRoute
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitoramentoLicitacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/monitoramento/palavras': {
+      id: '/monitoramento/palavras'
+      path: '/monitoramento/palavras'
+      fullPath: '/monitoramento/palavras'
+      preLoaderRoute: typeof MonitoramentoPalavrasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/monitoramento/chat/$id': {
       id: '/monitoramento/chat/$id'
       path: '/monitoramento/chat/$id'
@@ -327,6 +347,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
   MonitoramentoLicitacoesRoute: MonitoramentoLicitacoesRoute,
+  MonitoramentoPalavrasRoute: MonitoramentoPalavrasRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
   MonitoramentoIndexRoute: MonitoramentoIndexRoute,
   MonitoramentoChatIdRoute: MonitoramentoChatIdRoute,
