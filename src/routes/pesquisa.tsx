@@ -71,7 +71,6 @@ function Pesquisa() {
   const [natureza, setNatureza] = useState("Obras e engenharia");
   const [valorMinimo, setValorMinimo] = useState("");
   const [valorMaximo, setValorMaximo] = useState("");
-  const [profundidade, setProfundidade] = useState("ampla");
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
   const [ocultarVistas, setOcultarVistas] = useState(false);
