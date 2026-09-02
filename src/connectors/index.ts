@@ -9,10 +9,7 @@ import type { PortalConnector } from "./PortalConnector";
  */
 const REGISTRO: Record<string, () => PortalConnector> = {
   mock: () => new MockConnector(),
-  comprasnet: () =>
-    new ComprasNetConnector(
-      process.env["COMPRASNET_BASE_URL"] ?? "https://cnetmobile.estaleiro.serpro.gov.br",
-    ),
+  comprasnet: () => new ComprasNetConnector(),
   // bll: () => new BLLConnector(...),
   // licitacoes-e: () => new LicitacoesEConnector(...),
   // portal-compras-publicas: () => new PortalComprasPublicasConnector(...),
