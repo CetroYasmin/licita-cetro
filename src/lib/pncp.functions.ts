@@ -158,27 +158,48 @@ function mapear(c: any): LicitacaoPncp {
   };
 }
 
+/** Cache curto por consulta: evita repetir chamadas e estourar o limite do PNCP. */
+const cache = new Map<string, { em: number; valor: { lista: any[]; totalPaginas: number } }>();
+const VALIDADE_CACHE = 5 * 60 * 1000;
+
+const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * O PNCP limita requisições por minuto e responde 429/502/503 quando a
+ * varredura é agressiva. Por isso cada chamada tem tempo limite, novas
+ * tentativas com espera crescente e resultado em cache.
+ */
 async function buscarPagina(
   caminho: string,
   params: URLSearchParams,
 ): Promise<{ lista: any[]; totalPaginas: number } | null> {
-  try {
-    const alvo = `${BASE}${caminho}?${params.toString()}`;
-    // Tempo limite por chamada: o PNCP às vezes deixa a conexão pendurada.
-    let res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(9000) });
-    // O PNCP responde 502/503 de forma intermitente; uma nova tentativa resolve.
-    if (res.status >= 500) {
-      await new Promise((r) => setTimeout(r, 600));
-      res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(9000) });
+  const alvo = `${BASE}${caminho}?${params.toString()}`;
+  const emCache = cache.get(alvo);
+  if (emCache && Date.now() - emCache.em < VALIDADE_CACHE) return emCache.valor;
+
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    try {
+      const res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(12000) });
+      if (res.status === 204) return { lista: [], totalPaginas: 0 };
+      if (res.status === 429 || res.status >= 500) {
+        await espera(900 * (tentativa + 1));
+        continue;
+      }
+      if (!res.ok) return null;
+      const payload = (await res.json()) as { data?: unknown[]; totalPaginas?: number };
+      const valor = {
+        lista: (payload?.data ?? []) as any[],
+        totalPaginas: Number(payload?.totalPaginas ?? 1),
+      };
+      cache.set(alvo, { em: Date.now(), valor });
+      return valor;
+    } catch {
+      await espera(500 * (tentativa + 1));
     }
-    if (res.status === 204) return { lista: [], totalPaginas: 0 };
-    if (!res.ok) return null;
-    const payload = (await res.json()) as { data?: unknown[]; totalPaginas?: number };
-    return { lista: (payload?.data ?? []) as any[], totalPaginas: Number(payload?.totalPaginas ?? 1) };
-  } catch {
-    return null;
   }
+  return null;
 }
+
 
 const ORDENACOES = {
   relevancia: (a: LicitacaoPncp, b: LicitacaoPncp) => b.relevancia - a.relevancia,
