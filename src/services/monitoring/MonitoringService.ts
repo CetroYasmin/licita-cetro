@@ -54,13 +54,22 @@ export class MonitoringService {
       if (!connector) continue;
 
       resultado.pregoes_processados++;
-      await connector.authenticate();
 
-      const brutas = await connector.getChatMessages(pregao.external_id, {
-        monitoringStartedAt: (m as any).created_at,
-      });
+      // Falha de um portal (token expirado, indisponibilidade) não derruba os outros.
+      let brutas;
+      try {
+        await connector.authenticate();
+        brutas = await connector.getChatMessages(pregao.external_id, {
+          monitoringStartedAt: (m as any).created_at,
+        });
+      } catch (e) {
+        console.error(`[monitoramento] ${portal.slug}:`, e instanceof Error ? e.message : e);
+        continue;
+      }
+
       const normalizadas = normalizarLote(pregao.external_id, brutas);
       if (normalizadas.length === 0) continue;
+
 
       const existentes = await this.idsExistentes(pregao.id);
       const novas = normalizadas.filter((n) => !existentes.has(n.external_message_id));

@@ -1,4 +1,5 @@
 import { MockConnector } from "./MockConnector";
+import { ComprasNetConnector } from "./ComprasNetConnector";
 import type { PortalConnector } from "./PortalConnector";
 
 /**
@@ -8,7 +9,7 @@ import type { PortalConnector } from "./PortalConnector";
  */
 const REGISTRO: Record<string, () => PortalConnector> = {
   mock: () => new MockConnector(),
-  // comprasnet: () => new ComprasNetConnector(...),
+  comprasnet: () => new ComprasNetConnector(),
   // bll: () => new BLLConnector(...),
   // licitacoes-e: () => new LicitacoesEConnector(...),
   // portal-compras-publicas: () => new PortalComprasPublicasConnector(...),
