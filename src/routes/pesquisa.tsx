@@ -489,7 +489,14 @@ function Pesquisa() {
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Portal: <strong>{l.portal}</strong> · Disputa: {l.plataforma} · Estimado:{" "}
-                       <strong>{l.valor_estimado == null ? "Não informado pelo órgão" : moeda(l.valor_estimado)}</strong>
+                      <strong>
+                        {valorDe(l) != null
+                          ? moeda(valorDe(l) as number)
+                          : buscandoValores
+                            ? "consultando valor…"
+                            : "Não informado pelo órgão"}
+                      </strong>
+
                     </p>
                   </div>
                   <div className="flex flex-col items-stretch gap-2">
