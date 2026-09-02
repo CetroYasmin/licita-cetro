@@ -500,6 +500,14 @@ function Pesquisa() {
                     </p>
                   </div>
                   <div className="flex flex-col items-stretch gap-2">
+                    {l.site_url && (
+                      <Button asChild size="sm" variant="secondary">
+                        <a href={l.site_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Ver edital
+                        </a>
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       disabled={importar.isPending || importadas.includes(l.fonte_id)}
