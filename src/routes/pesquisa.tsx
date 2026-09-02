@@ -169,7 +169,7 @@ function Pesquisa() {
           portal: l.portal,
           site_url: l.site_url,
           processo_administrativo: l.processo_administrativo,
-          valor_estimado: l.valor_estimado,
+          valor_estimado: valorDe(l),
           cidade: l.cidade,
           uf: l.uf,
           status: "publicada",
