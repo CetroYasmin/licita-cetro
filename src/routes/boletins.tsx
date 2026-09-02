@@ -96,9 +96,8 @@ function Boletins() {
         data: {
           objeto,
           ufs,
-          natureza: natureza === "todas" ? "" : natureza,
-          ordenar: "publicacao",
-          profundidade: Number(dias) > 7 ? "total" : "ampla",
+           natureza: natureza === "todas" ? "" : natureza,
+           ordenar: "publicacao",
         },
       }),
     onSuccess: (r) => {

@@ -68,10 +68,9 @@ function Pesquisa() {
   const [objeto, setObjeto] = useState("");
   const [ufs, setUfs] = useState<string[]>([]);
   const [modalidade, setModalidade] = useState("todas");
-  const [natureza, setNatureza] = useState("Obras e engenharia");
+  const [natureza, setNatureza] = useState("todas");
   const [valorMinimo, setValorMinimo] = useState("");
   const [valorMaximo, setValorMaximo] = useState("");
-  const [profundidade, setProfundidade] = useState("ampla");
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
   const [ocultarVistas, setOcultarVistas] = useState(false);
@@ -123,18 +122,17 @@ function Pesquisa() {
   const pesquisa = useMutation({
     mutationFn: async () =>
       buscar({
-        data: {
-          objeto,
-          ufs,
-          modalidade: modalidade === "todas" ? "" : modalidade,
-          natureza: natureza === "todas" ? "" : natureza,
-          portal: "",
-          valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
-          valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
-          incluirEncerradas,
-          profundidade,
-          ordenar,
-        },
+         data: {
+           objeto,
+           ufs,
+           modalidade: modalidade === "todas" ? "" : modalidade,
+           natureza: natureza === "todas" ? "" : natureza,
+           portal: "",
+           valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
+           valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
+           incluirEncerradas,
+           ordenar,
+         },
       }),
     onSuccess: (r) => {
       setResultados(r.licitacoes);
@@ -336,17 +334,6 @@ function Pesquisa() {
                 {ORDENACOES.map((o) => (
                   <SelectItem key={o.valor} value={o.valor}>{o.label}</SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Abrangência da varredura</Label>
-            <Select value={profundidade} onValueChange={setProfundidade}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rapida">Rápida (amostra recente)</SelectItem>
-                <SelectItem value="ampla">Ampla (recomendada)</SelectItem>
-                <SelectItem value="total">Completa (mais lenta, cobre todos os portais)</SelectItem>
               </SelectContent>
             </Select>
           </div>
