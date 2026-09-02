@@ -68,7 +68,7 @@ function Pesquisa() {
   const [objeto, setObjeto] = useState("");
   const [ufs, setUfs] = useState<string[]>([]);
   const [modalidade, setModalidade] = useState("todas");
-  const [natureza, setNatureza] = useState("Obras e engenharia");
+  const [natureza, setNatureza] = useState("todas");
   const [valorMinimo, setValorMinimo] = useState("");
   const [valorMaximo, setValorMaximo] = useState("");
   const [ordenar, setOrdenar] = useState("relevancia");
@@ -130,9 +130,8 @@ function Pesquisa() {
           portal: "",
           valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
           valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
-          incluirEncerradas,
-          profundidade,
-          ordenar,
+           incluirEncerradas,
+           ordenar,
         },
       }),
     onSuccess: (r) => {
@@ -335,17 +334,6 @@ function Pesquisa() {
                 {ORDENACOES.map((o) => (
                   <SelectItem key={o.valor} value={o.valor}>{o.label}</SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Abrangência da varredura</Label>
-            <Select value={profundidade} onValueChange={setProfundidade}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rapida">Rápida (amostra recente)</SelectItem>
-                <SelectItem value="ampla">Ampla (recomendada)</SelectItem>
-                <SelectItem value="total">Completa (mais lenta, cobre todos os portais)</SelectItem>
               </SelectContent>
             </Select>
           </div>
