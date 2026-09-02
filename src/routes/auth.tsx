@@ -105,7 +105,7 @@ function AuthPage() {
           </h2>
           <p className="text-sm text-sidebar-foreground/75">
             Importação automática de editais, prazos com contagem regressiva, posição da sua empresa,
-            concorrentes, chats das sessões e alertas em tempo real.
+            concorrentes e alertas em tempo real.
           </p>
         </div>
         <p className="text-xs text-sidebar-foreground/50">Acesso liberado após aprovação manual.</p>
