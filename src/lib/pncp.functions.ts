@@ -252,21 +252,24 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     // A pesquisa do PNCP aceita vários estados e modalidades na mesma chamada.
     const termo = data.objeto.replace(/["]/g, " ").trim();
 
-    const situacoes = data.incluirEncerradas ? ["recebendo_proposta", ""] : ["recebendo_proposta"];
-
+    /**
+     * Não usamos o filtro "status" do PNCP: ele só marca uma fração dos editais
+     * (corta ~97% dos resultados e derruba os publicados via Licitações-e, BLL,
+     * Compras.gov.br etc.). O prazo é filtrado localmente por data_fim_vigencia.
+     */
     const consultas: URLSearchParams[] = [];
-    for (const situacao of situacoes) {
+    {
       const base = new URLSearchParams({
         tipos_documento: "edital",
-        ordenacao: data.ordenar === "publicacao" ? "-data" : "-data",
+        ordenacao: "-data",
         tam_pagina: "50",
         q: termo,
       });
-      if (situacao) base.set("status", situacao);
       for (const uf of data.ufs) base.append("ufs", uf);
       for (const codigo of codigos) base.append("modalidades", String(codigo));
       consultas.push(base);
     }
+
 
 
     const registrar = (bruto: any) => {
