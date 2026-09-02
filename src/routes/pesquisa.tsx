@@ -65,6 +65,7 @@ function Pesquisa() {
   const qc = useQueryClient();
   const buscar = useServerFn(buscarLicitacoesPncp);
   const itensDe = useServerFn(buscarItensPncp);
+  const valoresDe = useServerFn(buscarValoresPncp);
 
   const [objeto, setObjeto] = useState("");
   const [ufs, setUfs] = useState<string[]>([]);
