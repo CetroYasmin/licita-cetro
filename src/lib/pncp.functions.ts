@@ -312,7 +312,9 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
         requisicoes++;
         const inicial = await buscarPagina(consulta.caminho, primeira);
         if (!inicial) {
-          erros.push("Alguns portais não responderam à consulta e foram ignorados.");
+          erros.push(
+            "O Portal Nacional (PNCP) recusou parte das consultas por limite de requisições. Tente novamente em alguns instantes ou use a varredura rápida.",
+          );
           continue;
         }
         inicial.lista.forEach(registrar);
