@@ -59,7 +59,7 @@ const PERIODOS = [
 function Boletins() {
   const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
-  const buscar = useServerFn(buscarLicitacoesPncp);
+  const buscarValores = useServerFn(buscarValoresPncp);
 
   const [dias, setDias] = useState<string>("3");
   const [objeto, setObjeto] = useState("");
