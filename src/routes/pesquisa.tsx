@@ -122,17 +122,17 @@ function Pesquisa() {
   const pesquisa = useMutation({
     mutationFn: async () =>
       buscar({
-        data: {
-          objeto,
-          ufs,
-          modalidade: modalidade === "todas" ? "" : modalidade,
-          natureza: natureza === "todas" ? "" : natureza,
-          portal: "",
-          valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
-          valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
+         data: {
+           objeto,
+           ufs,
+           modalidade: modalidade === "todas" ? "" : modalidade,
+           natureza: natureza === "todas" ? "" : natureza,
+           portal: "",
+           valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
+           valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
            incluirEncerradas,
            ordenar,
-        },
+         },
       }),
     onSuccess: (r) => {
       setResultados(r.licitacoes);
