@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { relevancia } from "@/lib/busca";
 
-const BASE = "https://pncp.gov.br/api/consulta/v1";
+/** Pesquisa oficial do PNCP (mesma usada pelo site do portal). */
+const BASE = "https://pncp.gov.br/api/search/";
+/** Endpoints de detalhe/itens de uma contratação. */
+const BASE_CONSULTA = "https://pncp.gov.br/api/consulta/v1";
 
 /**
  * O PNCP rejeita (503/502) chamadas sem identificação de navegador.
@@ -28,10 +31,6 @@ const MODALIDADE_CODIGOS: Record<string, number> = {
   Leilão: 1,
 };
 
-/** Modalidades consultadas quando o usuário não escolhe uma, em ordem de volume. */
-const MODALIDADES_PADRAO = [6, 8, 4];
-/** Varredura total: cobre também as modalidades menos frequentes. */
-const MODALIDADES_TOTAIS = [6, 8, 4, 9, 7, 5, 12, 13, 11, 3, 1, 2];
 
 const PADRAO_OBRAS =
   /(obra|obras|constru|reforma|pavimenta|engenharia|edifica|drenagem|saneamento|terraplan|recapea|ampliação|reformas|infraestrutura|ponte|calçamen|urbaniza|revitaliza)/i;
@@ -47,8 +46,6 @@ export function classificarNatureza(objeto: string): string {
   return "Outros";
 }
 
-const yyyymmdd = (d: Date) =>
-  `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
 
 export type LicitacaoPncp = {
   fonte_id: string;
@@ -129,78 +126,83 @@ function nomePortal(link?: string | null): string {
   }
 }
 
+/** Converte um item da API de pesquisa do PNCP no formato usado pelo app. */
 function mapear(c: any): LicitacaoPncp {
-  const objeto = String(c.objetoCompra ?? "");
-  const orgaoUnidade = c.unidadeOrgao ?? {};
+  const objeto = String(c.description ?? c.objetoCompra ?? "");
+  const cnpj = String(c.orgao_cnpj ?? "");
+  const ano = Number(c.ano ?? new Date().getFullYear());
+  const sequencial = Number(c.numero_sequencial ?? 0);
   return {
-    fonte_id: String(
-      c.numeroControlePNCP ?? `${c.orgaoEntidade?.cnpj}-${c.anoCompra}-${c.sequencialCompra}`,
-    ),
-    numero: String(c.numeroCompra ?? c.numeroControlePNCP ?? "—"),
-    modalidade: String(c.modalidadeNome ?? "—"),
-    orgao: String(c.orgaoEntidade?.razaoSocial ?? orgaoUnidade.nomeUnidade ?? "—"),
-    orgao_cnpj: String(c.orgaoEntidade?.cnpj ?? ""),
+    fonte_id: String(c.numero_controle_pncp ?? `${cnpj}-${ano}-${sequencial}`),
+    numero: String(c.numero ?? c.title ?? c.numero_controle_pncp ?? "—").replace(/^Edital nº\s*/i, ""),
+    modalidade: String(c.modalidade_licitacao_nome ?? "—").replace(" - ", " "),
+    orgao: String(c.orgao_nome ?? c.unidade_nome ?? "—"),
+    orgao_cnpj: cnpj,
     objeto,
     natureza: classificarNatureza(objeto),
-    data_publicacao: c.dataPublicacaoPncp ?? null,
-    data_abertura: c.dataAberturaProposta ?? null,
-    data_sessao: c.dataAberturaProposta ?? null,
-    encerramento_proposta: c.dataEncerramentoProposta ?? null,
-    plataforma: String(c.modoDisputaNome ?? "—"),
-    portal: nomePortal(c.linkSistemaOrigem),
-    site_url: c.linkSistemaOrigem ?? null,
-    processo_administrativo: c.processo ?? null,
-    valor_estimado: c.valorTotalEstimado != null ? Number(c.valorTotalEstimado) : null,
-    cidade: orgaoUnidade.municipioNome ?? null,
-    uf: orgaoUnidade.ufSigla ?? null,
-    situacao: c.situacaoCompraNome ?? null,
-    ano: Number(c.anoCompra ?? new Date().getFullYear()),
-    sequencial: Number(c.sequencialCompra ?? 0),
+    data_publicacao: c.data_publicacao_pncp ?? null,
+    data_abertura: c.data_inicio_vigencia ?? null,
+    data_sessao: c.data_inicio_vigencia ?? null,
+    encerramento_proposta: c.data_fim_vigencia ?? null,
+    plataforma: String(c.esfera_nome ?? "—"),
+    portal: "PNCP",
+    site_url: `https://pncp.gov.br/app/editais/${cnpj}/${ano}/${sequencial}`,
+    processo_administrativo: c.numero ? String(c.numero) : null,
+    valor_estimado: c.valor_global != null ? Number(c.valor_global) : null,
+    cidade: c.municipio_nome ?? null,
+    uf: c.uf ?? null,
+    situacao: c.cancelado ? "Cancelada" : (c.situacao_nome ?? null),
+    ano,
+    sequencial,
     relevancia: 0,
   };
 }
 
 /** Cache curto por consulta: evita repetir chamadas e estourar o limite do PNCP. */
-const cache = new Map<string, { em: number; valor: { lista: any[]; totalPaginas: number } }>();
+const cache = new Map<string, { em: number; valor: { lista: any[]; total: number } }>();
 const VALIDADE_CACHE = 5 * 60 * 1000;
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * O PNCP limita requisições por minuto e responde 429/502/503 quando a
- * varredura é agressiva. Por isso cada chamada tem tempo limite, novas
- * tentativas com espera crescente e resultado em cache.
+ * O PNCP derruba conexões quando recebe muitas chamadas seguidas do mesmo IP.
+ * Cada página tem tempo limite, novas tentativas com espera crescente e cache.
  */
 async function buscarPagina(
-  caminho: string,
   params: URLSearchParams,
-): Promise<{ lista: any[]; totalPaginas: number } | null> {
-  const alvo = `${BASE}${caminho}?${params.toString()}`;
+): Promise<{ lista: any[]; total: number } | null> {
+  const alvo = `${BASE}?${params.toString()}`;
   const emCache = cache.get(alvo);
   if (emCache && Date.now() - emCache.em < VALIDADE_CACHE) return emCache.valor;
 
-  for (let tentativa = 0; tentativa < 3; tentativa++) {
+  for (let tentativa = 0; tentativa < 4; tentativa++) {
     try {
-      const res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(12000) });
-      if (res.status === 204) return { lista: [], totalPaginas: 0 };
+      const res = await fetch(alvo, { headers: CABECALHOS, signal: AbortSignal.timeout(15000) });
+      if (res.status === 204) return { lista: [], total: 0 };
       if (res.status === 429 || res.status >= 500) {
-        await espera(900 * (tentativa + 1));
+        await espera(800 * (tentativa + 1));
         continue;
       }
       if (!res.ok) return null;
-      const payload = (await res.json()) as { data?: unknown[]; totalPaginas?: number };
+      const texto = await res.text();
+      if (!texto.trim()) {
+        await espera(700 * (tentativa + 1));
+        continue;
+      }
+      const payload = JSON.parse(texto) as { items?: unknown[]; total?: number };
       const valor = {
-        lista: (payload?.data ?? []) as any[],
-        totalPaginas: Number(payload?.totalPaginas ?? 1),
+        lista: (payload?.items ?? []) as any[],
+        total: Number(payload?.total ?? 0),
       };
       cache.set(alvo, { em: Date.now(), valor });
       return valor;
     } catch {
-      await espera(500 * (tentativa + 1));
+      await espera(700 * (tentativa + 1));
     }
   }
   return null;
 }
+
 
 
 const ORDENACOES = {
@@ -237,60 +239,42 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    const codigos = data.modalidade
-      ? [MODALIDADE_CODIGOS[data.modalidade] ?? 6]
-      : data.profundidade === "total"
-        ? MODALIDADES_TOTAIS
-        : data.profundidade === "rapida"
-          ? [6]
-          : MODALIDADES_PADRAO;
+    const codigos = data.modalidade ? [MODALIDADE_CODIGOS[data.modalidade] ?? 6] : [];
 
     const maxPaginasPorConsulta =
-      data.profundidade === "rapida" ? 3 : data.profundidade === "total" ? 12 : 6;
-    const limiteRequisicoes = data.profundidade === "rapida" ? 20 : data.profundidade === "total" ? 120 : 60;
-
-    const dataFinal = yyyymmdd(new Date(Date.now() + 1000 * 60 * 60 * 24 * 365));
-    const hoje = yyyymmdd(new Date());
-    const dataInicial = yyyymmdd(new Date(Date.now() - 1000 * 60 * 60 * 24 * 90));
+      data.profundidade === "rapida" ? 2 : data.profundidade === "total" ? 10 : 5;
+    const limiteRequisicoes = data.profundidade === "rapida" ? 8 : data.profundidade === "total" ? 40 : 20;
 
     const erros: string[] = [];
     const encontradas = new Map<string, LicitacaoPncp>();
     let requisicoes = 0;
 
-    // Quando o usuário escolhe estados, consultamos cada UF (o PNCP filtra por uma UF por chamada).
-    const ufs = data.ufs.length > 0 ? data.ufs : [""];
+    // A pesquisa do PNCP aceita vários estados e modalidades na mesma chamada.
+    const termo = data.objeto.replace(/["]/g, " ").trim();
 
-    const consultas: Array<{ caminho: string; base: URLSearchParams }> = [];
-    for (const codigo of codigos) {
-      for (const uf of ufs) {
-        const base = new URLSearchParams({
-          dataFinal,
-          codigoModalidadeContratacao: String(codigo),
-          tamanhoPagina: "50",
-        });
-        if (uf) base.set("uf", uf);
-        consultas.push({ caminho: "/contratacoes/proposta", base });
+    const situacoes = data.incluirEncerradas ? ["recebendo_proposta", ""] : ["recebendo_proposta"];
 
-        if (data.incluirEncerradas) {
-          const pub = new URLSearchParams({
-            dataInicial,
-            dataFinal: hoje,
-            codigoModalidadeContratacao: String(codigo),
-            tamanhoPagina: "50",
-          });
-          if (uf) pub.set("uf", uf);
-          consultas.push({ caminho: "/contratacoes/publicacao", base: pub });
-        }
-      }
+    const consultas: URLSearchParams[] = [];
+    for (const situacao of situacoes) {
+      const base = new URLSearchParams({
+        tipos_documento: "edital",
+        ordenacao: data.ordenar === "publicacao" ? "-data" : "-data",
+        tam_pagina: "50",
+        q: termo,
+      });
+      if (situacao) base.set("status", situacao);
+      for (const uf of data.ufs) base.append("ufs", uf);
+      for (const codigo of codigos) base.append("modalidades", String(codigo));
+      consultas.push(base);
     }
+
 
     const registrar = (bruto: any) => {
       const l = mapear(bruto);
-      const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""} ${l.processo_administrativo ?? ""}`;
-      const pontos = relevancia(texto, data.objeto);
-      if (data.objeto.trim() && pontos < 0.6) return;
+      const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""}`;
+      // O PNCP já filtra pelo termo; a pontuação serve para ordenar por relevância.
+      const pontos = termo ? relevancia(texto, data.objeto) : 0;
       if (data.natureza && l.natureza !== data.natureza) return;
-      if (data.portal && l.portal !== data.portal) return;
       if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return;
       if (data.valorMaximo != null && (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo) return;
       l.relevancia = pontos;
@@ -298,55 +282,40 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     };
 
     // Tempo máximo de varredura: a pesquisa precisa responder mesmo com o PNCP lento.
-    const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 15000 : data.profundidade === "total" ? 50000 : 30000);
+    const prazoFinal = Date.now() + (data.profundidade === "rapida" ? 20000 : data.profundidade === "total" ? 55000 : 35000);
     const noPrazo = () => Date.now() < prazoFinal && requisicoes < limiteRequisicoes;
 
-    // Fila com várias consultas simultâneas (por modalidade/UF) em vez de uma a uma.
-    const fila = [...consultas];
-    const trabalhador = async () => {
-      while (noPrazo()) {
-        const consulta = fila.shift();
-        if (!consulta) return;
-        const primeira = new URLSearchParams(consulta.base);
-        primeira.set("pagina", "1");
+    // Uma página por vez: o PNCP derruba a conexão em varreduras paralelas.
+    let interrompida = false;
+    for (const base of consultas) {
+      let pagina = 1;
+      while (pagina <= maxPaginasPorConsulta) {
+        if (!noPrazo()) {
+          interrompida = true;
+          break;
+        }
+        const params = new URLSearchParams(base);
+        params.set("pagina", String(pagina));
         requisicoes++;
-        const inicial = await buscarPagina(consulta.caminho, primeira);
-        if (!inicial) {
+        const resposta = await buscarPagina(params);
+        if (!resposta) {
           erros.push(
-            "O Portal Nacional (PNCP) recusou parte das consultas por limite de requisições. Tente novamente em alguns instantes ou use a varredura rápida.",
+            "O Portal Nacional (PNCP) recusou parte das consultas. Os resultados podem estar incompletos — tente novamente em alguns instantes.",
           );
-          continue;
+          break;
         }
-        inicial.lista.forEach(registrar);
-
-        const totalPaginas = Math.min(inicial.totalPaginas, maxPaginasPorConsulta);
-        const paginas: number[] = [];
-        for (let p = 2; p <= totalPaginas; p++) paginas.push(p);
-
-        for (let i = 0; i < paginas.length; i += 3) {
-          if (!noPrazo()) break;
-          const bloco = paginas.slice(i, i + 3);
-          requisicoes += bloco.length;
-          const respostas = await Promise.all(
-            bloco.map((p) => {
-              const params = new URLSearchParams(consulta.base);
-              params.set("pagina", String(p));
-              return buscarPagina(consulta.caminho, params);
-            }),
-          );
-          respostas.forEach((r) => r?.lista.forEach(registrar));
-        }
+        resposta.lista.forEach(registrar);
+        if (resposta.lista.length < 50 || pagina * 50 >= resposta.total) break;
+        pagina++;
       }
-    };
-
-    // Poucas chamadas ao mesmo tempo: o PNCP bloqueia (429) varreduras agressivas.
-    const simultaneas = data.profundidade === "total" ? 4 : 3;
-    await Promise.all(Array.from({ length: simultaneas }, trabalhador));
-    if (fila.length > 0) {
+      if (interrompida) break;
+    }
+    if (interrompida) {
       erros.push(
         "A varredura foi interrompida pelo tempo limite; refine o objeto ou os estados para cobrir mais resultados.",
       );
     }
+
 
 
     const ordenador = ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
@@ -367,8 +336,8 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const res = await fetch(
-        `${BASE}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}/itens?pagina=1&tamanhoPagina=200`,
-        { headers: CABECALHOS },
+        `${BASE_CONSULTA}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}/itens?pagina=1&tamanhoPagina=200`,
+        { headers: CABECALHOS, signal: AbortSignal.timeout(10000) },
       );
       if (!res.ok) return { itens: [] as any[] };
       const payload = (await res.json()) as unknown;
@@ -400,8 +369,8 @@ export const sincronizarLicitacaoPncp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const res = await fetch(
-        `${BASE}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}`,
-        { headers: CABECALHOS },
+        `${BASE_CONSULTA}/orgaos/${data.cnpj}/compras/${data.ano}/${data.sequencial}`,
+        { headers: CABECALHOS, signal: AbortSignal.timeout(10000) },
       );
       if (!res.ok) return { ok: false as const, licitacao: null };
       const payload = (await res.json()) as unknown;
