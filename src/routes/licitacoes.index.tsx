@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -117,6 +118,21 @@ function ListaLicitacoes() {
     },
     onSuccess: () => {
       toast.success("Licitação removida do acompanhamento.");
+      void qc.invalidateQueries({ queryKey: ["licitacoes"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const salvarQualificacao = useMutation({
+    mutationFn: async ({ id, valor }: { id: string; valor: string }) => {
+      const { error } = await supabase
+        .from("licitacoes")
+        .update({ qualificacao_tecnica: valor })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Qualificação técnica salva.");
       void qc.invalidateQueries({ queryKey: ["licitacoes"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -408,6 +424,24 @@ function ListaLicitacoes() {
                       <span>
                         Posição: <strong>{l.posicao_empresa ? `${l.posicao_empresa}º` : "—"}</strong>
                       </span>
+                    </div>
+                    <div className="mt-3 space-y-1">
+                      <Label className="text-xs">Qualificação técnica exigida pelo edital</Label>
+                      <Textarea
+                        defaultValue={l.qualificacao_tecnica ?? ""}
+                        rows={3}
+                        placeholder={
+                          "Ex.: 1- Execução de piso intertravado de 6cm\n2- Revestimento cerâmico\n3- Alvenaria de tijolo cerâmico"
+                        }
+                        onBlur={(e) => {
+                          const valor = e.target.value;
+                          if (valor === (l.qualificacao_tecnica ?? "")) return;
+                          salvarQualificacao.mutate({ id: l.id, valor });
+                        }}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Salva automaticamente ao sair do campo.
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">

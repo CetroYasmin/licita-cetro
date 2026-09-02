@@ -433,25 +433,6 @@ function Detalhes() {
                   }
                 />
               </div>
-              <div className="space-y-1 md:col-span-3">
-                <Label>Qualificação técnica exigida pelo edital</Label>
-                <Textarea
-                  defaultValue={(lic as any).qualificacao_tecnica ?? ""}
-                  rows={5}
-                  placeholder={
-                    "Ex.: 1- Execução de piso intertravado de 6cm\n2- Revestimento cerâmico\n3- Alvenaria de tijolo cerâmico"
-                  }
-                  onBlur={(e) =>
-                    atualizar.mutate({
-                      campos: { qualificacao_tecnica: e.target.value },
-                      log: "Qualificação técnica atualizada",
-                    })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Liste os itens de acervo/atestado exigidos. Salva automaticamente ao sair do campo.
-                </p>
-              </div>
             </div>
           </div>
         </TabsContent>
