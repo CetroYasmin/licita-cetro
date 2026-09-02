@@ -24,6 +24,7 @@ const NAV = [
   { to: "/licitacoes", label: "Licitações", icon: Gavel },
   { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
+  { to: "/monitoramento", label: "Monitoramento", icon: Radio },
   { to: "/chats", label: "Chats", icon: MessageSquare },
   { to: "/boletins", label: "Boletins", icon: Mailbox },
   { to: "/alertas", label: "Alertas", icon: Bell },
