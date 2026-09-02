@@ -247,7 +247,8 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const codigos = data.modalidade ? [MODALIDADE_CODIGOS[data.modalidade] ?? 6] : [];
     const termo = data.objeto.replace(/["]/g, " ").trim();
-    const status = data.incluirEncerradas ? "todos" : "recebendo_proposta";
+    // O PNCP exige um status; "todos" evita perder editais de portais de origem.
+    const status = "todos";
 
     const erros: string[] = [];
     const encontradas = new Map<string, LicitacaoPncp>();
@@ -288,7 +289,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     const consultas: Array<{ params: URLSearchParams; filtrarLocal: boolean; maxPaginas: number }> = [];
 
     const montar = (extras: Record<string, string>, ufs: string[]) => {
-      const p = new URLSearchParams({ ordenacao: "-data", tam_pagina: "50", ...extras });
+      const p = new URLSearchParams({ ordenacao: "-data", tam_pagina: "500", ...extras });
       for (const tipo of TIPOS_DOCUMENTO) p.append("tipos_documento", tipo);
       for (const uf of ufs) p.append("ufs", uf);
       for (const codigo of codigos) p.append("modalidades", String(codigo));
@@ -296,7 +297,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     };
 
     const ufsAlvo = data.ufs.length > 0 ? data.ufs : [...UFS_TODAS];
-    const paginasVarredura = data.ufs.length > 0 ? Math.max(6, Math.floor(200 / data.ufs.length)) : 8;
+    const paginasVarredura = 6;
     for (const uf of ufsAlvo) {
       consultas.push({ params: montar({ status }, [uf]), filtrarLocal: true, maxPaginas: paginasVarredura });
     }
@@ -323,7 +324,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       while (pagina <= consulta.maxPaginas && noPrazo()) {
         const paginas: number[] = [];
         for (let i = 0; i < LOTE && pagina + i <= consulta.maxPaginas; i++) {
-          if ((pagina + i - 1) * 50 >= total) break;
+          if ((pagina + i - 1) * 500 >= total) break;
           paginas.push(pagina + i);
         }
         if (paginas.length === 0) break;
@@ -344,7 +345,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
           }
           total = resposta.total;
           resposta.lista.forEach((bruto) => registrar(bruto, consulta.filtrarLocal));
-          if (resposta.lista.length < 50) acabou = true;
+          if (resposta.lista.length < 500) acabou = true;
         }
         if (acabou) break;
         pagina += paginas.length;
