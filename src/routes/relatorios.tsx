@@ -47,6 +47,11 @@ function Relatorios() {
   const totalDisputado = participadas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
+  /** Planilha operacional: sessões mais próximas primeiro. */
+  const planilha = [...lics].sort((a, b) =>
+    String(a.data_sessao ?? "9999").localeCompare(String(b.data_sessao ?? "9999")),
+  );
+
   const porOrgao = new Map<string, { total: number; vencidas: number; valor: number }>();
   for (const l of lics) {
     const k = l.orgao ?? "—";
