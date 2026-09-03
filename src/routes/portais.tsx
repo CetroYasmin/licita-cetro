@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePortais } from "@/hooks/usePortais";
 import { AppLayout } from "@/components/AppLayout";
+import { AcessosPortais } from "@/components/AcessosPortais";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
