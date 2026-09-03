@@ -756,6 +756,41 @@ export type Database = {
         }
         Relationships: []
       }
+      portais_config: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          equipe_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          equipe_id: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portais_config_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prazos: {
         Row: {
           concluido: boolean

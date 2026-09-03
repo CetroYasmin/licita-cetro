@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { relevancia } from "@/lib/busca";
+import { normalizar, relevancia } from "@/lib/busca";
 
 /** Pesquisa oficial do PNCP (mesma usada pelo site do portal). */
 const BASE = "https://pncp.gov.br/api/search/";
@@ -261,6 +261,10 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
         valorMaximo: z.number().optional(),
         incluirEncerradas: z.boolean().optional().default(false),
         ordenar: z.string().optional().default("relevancia"),
+        /** Palavras que descartam o edital (ex.: "medicamento, merenda"). */
+        excluir: z.string().optional().default(""),
+        /** Somente editais publicados nos últimos N dias (boletins). */
+        diasPublicacao: z.number().optional(),
       })
       .parse(data),
   )
@@ -279,12 +283,26 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     const noPrazo = () => Date.now() < prazoFinal && requisicoes < LIMITE_REQUISICOES;
 
     const agora = Date.now();
+    const negativas = data.excluir
+      .split(/[,;\n]+/)
+      .map((t) => normalizar(t))
+      .filter((t) => t.length > 2);
+    const limitePublicacao =
+      data.diasPublicacao != null ? agora - data.diasPublicacao * 86400000 : null;
     /** `filtrarLocal` = a consulta não filtrou por texto; filtramos aqui com busca tolerante. */
     const registrar = (bruto: any, filtrarLocal: boolean) => {
       const l = mapear(bruto);
       const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""}`;
       const pontos = termo ? relevancia(texto, data.objeto) : 1;
       if (filtrarLocal && termo && pontos < 0.6) return;
+      if (negativas.length > 0) {
+        const alvo = normalizar(texto);
+        if (negativas.some((n) => alvo.includes(n))) return;
+      }
+      if (limitePublicacao != null) {
+        const pub = l.data_publicacao ? new Date(l.data_publicacao).getTime() : null;
+        if (pub == null || Number.isNaN(pub) || pub < limitePublicacao) return;
+      }
       if (!data.incluirEncerradas) {
         const fim = l.encerramento_proposta ? new Date(l.encerramento_proposta).getTime() : null;
         if (fim != null && !Number.isNaN(fim) && fim < agora) return;
@@ -524,6 +542,119 @@ export const buscarValoresPncp = createServerFn({ method: "POST" })
     }
     const comValor = Object.values(valores).filter((v) => v != null).length;
     return { valores, comValor };
+  });
+
+export type DetalhePncp = {
+  valor_estimado: number | null;
+  portal: string;
+  link_origem: string | null;
+  data_abertura_proposta: string | null;
+  data_encerramento_proposta: string | null;
+  situacao: string | null;
+  processo: string | null;
+  modalidade: string | null;
+};
+
+const cacheDetalhes = new Map<string, { em: number; valor: DetalhePncp }>();
+
+/**
+ * O índice de pesquisa do PNCP não traz valor, portal de origem nem as datas
+ * reais de proposta — só o detalhe da contratação tem. Buscamos sob demanda
+ * para os resultados exibidos (como o ConLicitação faz ao abrir o edital).
+ */
+async function detalheDaContratacao(
+  cnpj: string,
+  ano: number,
+  sequencial: number,
+): Promise<DetalhePncp | null> {
+  const chave = `${cnpj}-${ano}-${sequencial}`;
+  const emCache = cacheDetalhes.get(chave);
+  if (emCache && Date.now() - emCache.em < VALIDADE_VALOR) return emCache.valor;
+
+  const numero = (v: unknown) => {
+    if (v == null || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+
+  let bruto: any = null;
+  for (let tentativa = 0; tentativa < 2 && !bruto; tentativa++) {
+    try {
+      const res = await fetch(`${BASE_CONSULTA}/orgaos/${cnpj}/compras/${ano}/${sequencial}`, {
+        headers: CABECALHOS,
+        signal: AbortSignal.timeout(9000),
+      });
+      if (res.ok) {
+        const payload = (await res.json()) as any;
+        bruto = Array.isArray(payload) ? payload[0] : (payload?.data ?? payload);
+      } else if (res.status < 500) {
+        break;
+      }
+    } catch {
+      /* tenta novamente */
+    }
+    if (!bruto) await espera(500 * (tentativa + 1));
+  }
+
+  let valor =
+    numero(bruto?.valorTotalEstimado) ??
+    numero(bruto?.valorTotalHomologado) ??
+    numero(bruto?.valorGlobal) ??
+    (await valorDaContratacao(cnpj, ano, sequencial));
+
+  if (!bruto && valor == null) return null;
+
+  const link = bruto?.linkSistemaOrigem ? String(bruto.linkSistemaOrigem) : null;
+  const detalhe: DetalhePncp = {
+    valor_estimado: valor,
+    portal: nomePortal(link) === "Não informado" ? "PNCP" : nomePortal(link),
+    link_origem: link,
+    data_abertura_proposta: bruto?.dataAberturaProposta ?? null,
+    data_encerramento_proposta: bruto?.dataEncerramentoProposta ?? null,
+    situacao: bruto?.situacaoCompraNome ?? null,
+    processo: bruto?.processo ?? null,
+    modalidade: bruto?.modalidadeNome ?? null,
+  };
+  cacheDetalhes.set(chave, { em: Date.now(), valor: detalhe });
+  return detalhe;
+}
+
+/**
+ * Enriquece os resultados da pesquisa com valor estimado, portal de origem e as
+ * datas reais de proposta, em lotes pequenos para não derrubar o PNCP.
+ */
+export const buscarDetalhesPncp = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        contratacoes: z
+          .array(
+            z.object({
+              fonte_id: z.string(),
+              cnpj: z.string(),
+              ano: z.number(),
+              sequencial: z.number(),
+            }),
+          )
+          .max(150),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const detalhes: Record<string, DetalhePncp> = {};
+    const alvos = data.contratacoes.filter((c) => /^\d{14}$/.test(c.cnpj) && c.sequencial > 0);
+    const LOTE = 8;
+    for (let i = 0; i < alvos.length; i += LOTE) {
+      const lote = alvos.slice(i, i + LOTE);
+      const resultados = await Promise.all(
+        lote.map((c) => detalheDaContratacao(c.cnpj, c.ano, c.sequencial)),
+      );
+      lote.forEach((c, idx) => {
+        const d = resultados[idx];
+        if (d) detalhes[c.fonte_id] = d;
+      });
+    }
+    return { detalhes, encontrados: Object.keys(detalhes).length };
   });
 
 

@@ -23,9 +23,10 @@ import { MODALIDADES, NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/l
 import {
   buscarItensPncp,
   buscarLicitacoesPncp,
-  buscarValoresPncp,
   type LicitacaoPncp,
 } from "@/lib/pncp.functions";
+import { useDetalhesPncp } from "@/hooks/useDetalhesPncp";
+import { usePortais } from "@/hooks/usePortais";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 
 export const Route = createFileRoute("/pesquisa")({
@@ -65,9 +66,9 @@ function Pesquisa() {
   const qc = useQueryClient();
   const buscar = useServerFn(buscarLicitacoesPncp);
   const itensDe = useServerFn(buscarItensPncp);
-  const valoresDe = useServerFn(buscarValoresPncp);
 
   const [objeto, setObjeto] = useState("");
+  const [excluir, setExcluir] = useState("");
   const [ufs, setUfs] = useState<string[]>([]);
   const [modalidade, setModalidade] = useState("todas");
   const [natureza, setNatureza] = useState("todas");
@@ -76,8 +77,22 @@ function Pesquisa() {
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
   const [ocultarVistas, setOcultarVistas] = useState(false);
+  const [somentePortaisAtivos, setSomentePortaisAtivos] = useState(false);
   const [resultados, setResultados] = useState<LicitacaoPncp[]>([]);
   const [importadas, setImportadas] = useState<string[]>([]);
+
+  const { portalAtivo, desativados } = usePortais();
+  const {
+    detalhes,
+    detalheDe,
+    buscando: buscandoValores,
+    valorDe,
+    portalDe,
+    linkOrigemDe,
+    aberturaDe,
+    encerramentoDe,
+    situacaoDe,
+  } = useDetalhesPncp(resultados, "pesquisa");
 
   const { data: vistas } = useQuery({
     queryKey: ["visualizacoes-pesquisa", equipeId],
@@ -126,6 +141,7 @@ function Pesquisa() {
       buscar({
          data: {
            objeto,
+           excluir,
            ufs,
            modalidade: modalidade === "todas" ? "" : modalidade,
            natureza: natureza === "todas" ? "" : natureza,
@@ -281,43 +297,26 @@ function Pesquisa() {
       ),
   });
 
-  /** O índice de pesquisa do PNCP não traz o valor estimado; buscamos no detalhe. */
-  const alvosValor = useMemo(
-    () =>
-      resultados
-        .filter((l) => l.valor_estimado == null && l.orgao_cnpj && l.sequencial > 0)
-        .slice(0, 120)
-        .map((l) => ({
-          fonte_id: l.fonte_id,
-          cnpj: l.orgao_cnpj,
-          ano: l.ano,
-          sequencial: l.sequencial,
-        })),
-    [resultados],
-  );
-
-  const { data: valoresExtra, isFetching: buscandoValores } = useQuery({
-    queryKey: ["valores-pncp", alvosValor.map((a) => a.fonte_id)],
-    enabled: alvosValor.length > 0,
-    staleTime: 10 * 60 * 1000,
-    queryFn: async () => (await valoresDe({ data: { contratacoes: alvosValor } })).valores,
-  });
-
-  const valorDe = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
-
   const visiveis = useMemo(() => {
-    const lista = ocultarVistas ? resultados.filter((l) => !euVi(l.fonte_id)) : [...resultados];
+    let lista = ocultarVistas ? resultados.filter((l) => !euVi(l.fonte_id)) : [...resultados];
+    if (somentePortaisAtivos) {
+      // Sem detalhe carregado ainda o edital continua visível (evita "sumir" resultado).
+      lista = lista.filter((l) => {
+        const d = detalheDe(l);
+        return !d || portalAtivo(d.portal);
+      });
+    }
     const dataValida = (valor: string | null) => {
       if (!valor) return Number.POSITIVE_INFINITY;
       const tempo = new Date(valor).getTime();
       return Number.isNaN(tempo) ? Number.POSITIVE_INFINITY : tempo;
     };
-    const valorLic = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
+    const valorLic = (l: LicitacaoPncp) => valorDe(l);
     const valorOuFim = (valor: number | null) => valor == null ? Number.POSITIVE_INFINITY : valor;
     const comparadores: Record<string, (a: LicitacaoPncp, b: LicitacaoPncp) => number> = {
       relevancia: (a, b) => b.relevancia - a.relevancia,
-      encerramento: (a, b) => dataValida(a.encerramento_proposta) - dataValida(b.encerramento_proposta),
-      sessao: (a, b) => dataValida(a.data_abertura) - dataValida(b.data_abertura),
+      encerramento: (a, b) => dataValida(encerramentoDe(a)) - dataValida(encerramentoDe(b)),
+      sessao: (a, b) => dataValida(aberturaDe(a)) - dataValida(aberturaDe(b)),
       publicacao: (a, b) => {
         if (!a.data_publicacao) return 1;
         if (!b.data_publicacao) return -1;
@@ -335,7 +334,8 @@ function Pesquisa() {
       uf: (a, b) => (a.uf ?? "").localeCompare(b.uf ?? "", "pt-BR"),
     };
     return lista.sort(comparadores[ordenar] ?? comparadores["relevancia"]);
-  }, [ocultarVistas, ordenar, resultados, user?.id, vistas, valoresExtra]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ocultarVistas, ordenar, resultados, user?.id, vistas, detalhes, somentePortaisAtivos]);
 
 
   return (
@@ -355,6 +355,17 @@ function Pesquisa() {
             <p className="text-[11px] text-muted-foreground">
               Busca tolerante a acentos, plural e erros de digitação. Separe alternativas por vírgula
               e use aspas para frases exatas.
+            </p>
+          </div>
+          <div className="space-y-1 md:col-span-3 xl:col-span-2">
+            <Label>Palavras a excluir</Label>
+            <Input
+              value={excluir}
+              onChange={(e) => setExcluir(e.target.value)}
+              placeholder="ex.: medicamento, merenda, combustível"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Editais que citarem estas palavras ficam fora do resultado.
             </p>
           </div>
           <div className="space-y-1">
@@ -445,6 +456,16 @@ function Pesquisa() {
               <Checkbox checked={ocultarVistas} onCheckedChange={(v) => setOcultarVistas(Boolean(v))} />
               Ocultar as que eu já vi
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={somentePortaisAtivos}
+                onCheckedChange={(v) => setSomentePortaisAtivos(Boolean(v))}
+              />
+              Somente portais liberados em “Gerenciar portais”
+              {desativados.length > 0 && (
+                <span className="text-xs text-muted-foreground">({desativados.length} desligado[s])</span>
+              )}
+            </label>
           </div>
           <div className="flex items-end md:col-span-1 xl:col-span-2">
             <Button className="w-full" onClick={() => pesquisa.mutate()} disabled={pesquisa.isPending}>
@@ -474,7 +495,8 @@ function Pesquisa() {
                       <span className="font-display font-semibold">{l.numero}</span>
                       <Badge variant="secondary">{l.modalidade}</Badge>
                       <Badge variant="outline">{l.natureza}</Badge>
-                      {l.situacao && <Badge variant="outline">{l.situacao}</Badge>}
+                      {situacaoDe(l) && <Badge variant="outline">{situacaoDe(l)}</Badge>}
+                      <Badge variant="outline">{portalDe(l)}</Badge>
                       {quem.length > 0 && (
                         <Badge variant="outline" className="border-secondary/40 text-secondary">
                           Vista por {quem.join(", ")}
@@ -484,11 +506,12 @@ function Pesquisa() {
                     <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{l.objeto}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicado {fData(l.data_publicacao)} ·
-                      Abertura {dataHora(l.data_abertura)} · Propostas até{" "}
-                      {dataHora(l.encerramento_proposta)}
+                      Abertura {dataHora(aberturaDe(l))} · Propostas até{" "}
+                      {dataHora(encerramentoDe(l))}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Portal: <strong>{l.portal}</strong> · Disputa: {l.plataforma} · Estimado:{" "}
+                      Portal de origem: <strong>{portalDe(l)}</strong> · Esfera: {l.plataforma} ·
+                      Estimado:{" "}
                       <strong>
                         {valorDe(l) != null
                           ? moeda(valorDe(l) as number)
@@ -505,6 +528,14 @@ function Pesquisa() {
                         <a href={l.site_url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="mr-2 h-4 w-4" />
                           Ver edital
+                        </a>
+                      </Button>
+                    )}
+                    {linkOrigemDe(l) && (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={linkOrigemDe(l) as string} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Portal de origem
                         </a>
                       </Button>
                     )}

@@ -10,6 +10,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,11 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/lib/formato";
-import {
-  buscarLicitacoesPncp,
-  buscarValoresPncp,
-  type LicitacaoPncp,
-} from "@/lib/pncp.functions";
+import { buscarLicitacoesPncp, type LicitacaoPncp } from "@/lib/pncp.functions";
+import { useDetalhesPncp } from "@/hooks/useDetalhesPncp";
+import { usePortais } from "@/hooks/usePortais";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 
 export const Route = createFileRoute("/boletins")({
@@ -60,11 +59,12 @@ function Boletins() {
   const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
   const buscar = useServerFn(buscarLicitacoesPncp);
-  const buscarValores = useServerFn(buscarValoresPncp);
 
 
   const [dias, setDias] = useState<string>("3");
   const [objeto, setObjeto] = useState("");
+  const [excluir, setExcluir] = useState("");
+  const [somentePortaisAtivos, setSomentePortaisAtivos] = useState(false);
   const [natureza, setNatureza] = useState("Obras e engenharia");
   const [ufs, setUfs] = useState<string[]>([]);
   const [novas, setNovas] = useState<LicitacaoPncp[]>([]);
@@ -96,29 +96,16 @@ function Boletins() {
   const vistaPor = (fonteId: string) =>
     (vistas ?? []).filter((v) => v.fonte_id === fonteId).map((v) => v.user_nome ?? "membro");
 
-  /** O índice do PNCP não traz valor estimado: buscamos no detalhe da contratação. */
-  const alvosValor = useMemo(
-    () =>
-      novas
-        .filter((l) => l.valor_estimado == null && l.orgao_cnpj && l.sequencial > 0)
-        .slice(0, 120)
-        .map((l) => ({
-          fonte_id: l.fonte_id,
-          cnpj: l.orgao_cnpj,
-          ano: l.ano,
-          sequencial: l.sequencial,
-        })),
-    [novas],
-  );
-
-  const { data: valoresExtra, isFetching: buscandoValores } = useQuery({
-    queryKey: ["valores-pncp-boletim", alvosValor.map((a) => a.fonte_id)],
-    enabled: alvosValor.length > 0,
-    staleTime: 10 * 60 * 1000,
-    queryFn: async () => (await buscarValores({ data: { contratacoes: alvosValor } })).valores,
-  });
-
-  const valorDe = (l: LicitacaoPncp) => l.valor_estimado ?? valoresExtra?.[l.fonte_id] ?? null;
+  const { portalAtivo, desativados } = usePortais();
+  const {
+    detalheDe,
+    buscando: buscandoValores,
+    valorDe,
+    portalDe,
+    linkOrigemDe,
+    encerramentoDe,
+    situacaoDe,
+  } = useDetalhesPncp(novas, "boletim");
 
 
 
@@ -127,9 +114,11 @@ function Boletins() {
       buscar({
         data: {
           objeto,
+          excluir,
           ufs,
-           natureza: natureza === "todas" ? "" : natureza,
-           ordenar: "publicacao",
+          natureza: natureza === "todas" ? "" : natureza,
+          ordenar: "publicacao",
+          diasPublicacao: Number(dias),
         },
       }),
     onSuccess: (r) => {
@@ -257,11 +246,16 @@ function Boletins() {
       if (jaAcompanhadas.has(l.fonte_id) || importadas.includes(l.fonte_id)) continue;
       const publicada = l.data_publicacao ? new Date(l.data_publicacao).getTime() : 0;
       if (!publicada || publicada < limite) continue;
+      if (somentePortaisAtivos) {
+        const d = detalheDe(l);
+        if (d && !portalAtivo(d.portal)) continue;
+      }
       const dia = String(l.data_publicacao).slice(0, 10);
       mapa.set(dia, [...(mapa.get(dia) ?? []), l]);
     }
     return [...mapa.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [novas, acompanhadas, importadas, dias]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [novas, acompanhadas, importadas, dias, somentePortaisAtivos, detalheDe]);
 
   const total = grupos.reduce((s, [, l]) => s + l.length, 0);
 
@@ -292,6 +286,14 @@ function Boletins() {
             value={objeto}
             onChange={(e) => setObjeto(e.target.value)}
             placeholder="ex.: pavimentação, drenagem, construção de escola"
+          />
+        </div>
+        <div className="space-y-1 md:col-span-2">
+          <Label>Palavras a excluir (opcional)</Label>
+          <Input
+            value={excluir}
+            onChange={(e) => setExcluir(e.target.value)}
+            placeholder="ex.: medicamento, merenda, combustível"
           />
         </div>
         <div className="space-y-1">
@@ -341,6 +343,17 @@ function Boletins() {
         </div>
       </div>
 
+      <label className="mb-3 flex items-center gap-2 text-sm">
+        <Checkbox
+          checked={somentePortaisAtivos}
+          onCheckedChange={(v) => setSomentePortaisAtivos(Boolean(v))}
+        />
+        Somente portais liberados em “Gerenciar portais”
+        {desativados.length > 0 && (
+          <span className="text-xs text-muted-foreground">({desativados.length} desligado[s])</span>
+        )}
+      </label>
+
       <Tabs value={dias} onValueChange={setDias} className="mb-4">
         <TabsList>
           {PERIODOS.map((p) => (
@@ -383,7 +396,8 @@ function Boletins() {
                       <span className="font-display font-semibold">{l.numero}</span>
                       <Badge variant="secondary">{l.modalidade}</Badge>
                       <Badge variant="outline">{l.natureza}</Badge>
-                      {l.situacao && <Badge variant="outline">{l.situacao}</Badge>}
+                      {situacaoDe(l) && <Badge variant="outline">{situacaoDe(l)}</Badge>}
+                      <Badge variant="outline">{portalDe(l)}</Badge>
                       {vistaPor(l.fonte_id).length > 0 && (
                         <Badge variant="outline" className="border-secondary/40 text-secondary">
                           Vista por {vistaPor(l.fonte_id).join(", ")}
@@ -401,7 +415,7 @@ function Boletins() {
                           ? "consultando valor…"
                           : "valor não informado"}{" "}
                       ·
-                      propostas até {dataHora(l.encerramento_proposta)}
+                      propostas até {dataHora(encerramentoDe(l))}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -409,6 +423,13 @@ function Boletins() {
                       <Button variant="secondary" size="sm" asChild>
                         <a href={l.site_url} target="_blank" rel="noreferrer">
                           Edital <ExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      </Button>
+                    )}
+                    {linkOrigemDe(l) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={linkOrigemDe(l) as string} target="_blank" rel="noreferrer">
+                          Portal <ExternalLink className="ml-1 h-3 w-3" />
                         </a>
                       </Button>
                     )}
