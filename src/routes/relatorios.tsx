@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { moeda, numero } from "@/lib/formato";
+import { dataHora, moeda, numero } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
 
 export const Route = createFileRoute("/relatorios")({
@@ -46,6 +46,11 @@ function Relatorios() {
   const taxa = participadas.length ? (vencidas.length / participadas.length) * 100 : 0;
   const totalDisputado = participadas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
+
+  /** Planilha operacional: sessões mais próximas primeiro. */
+  const planilha = [...lics].sort((a, b) =>
+    String(a.data_sessao ?? "9999").localeCompare(String(b.data_sessao ?? "9999")),
+  );
 
   const porOrgao = new Map<string, { total: number; vencidas: number; valor: number }>();
   for (const l of lics) {
@@ -101,6 +106,81 @@ function Relatorios() {
             lics.filter((l) => ["publicada", "em disputa", "em análise"].includes(l.status)).length,
           )}
         />
+      </div>
+
+      <div className="surface-panel mt-5 overflow-x-auto">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Planilha de acompanhamento</h3>
+            <p className="text-xs text-muted-foreground">
+              Órgão, modalidade/nº, objeto com a qualificação técnica exigida, município, valor
+              global estimado e data/hora da sessão.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              baixarCsv(
+                "planilha-acompanhamento",
+                planilha.map((l) => ({
+                  orgao: l.orgao ?? "",
+                  "modalidade / nº": `${l.modalidade ?? ""} ${l.numero ?? ""}`.trim(),
+                  objeto: l.objeto ?? "",
+                  "qualificação técnica": l.qualificacao_tecnica ?? "",
+                  "estado / município": [l.cidade, l.uf].filter(Boolean).join("/"),
+                  "valor global estimado": l.valor_estimado ?? "",
+                  "data / hora": l.data_sessao ? dataHora(l.data_sessao) : "",
+                })),
+              )
+            }
+          >
+            <Download className="mr-2 h-4 w-4" /> Exportar planilha
+          </Button>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
+            <tr>
+              <th className="p-3">Órgão</th>
+              <th className="p-3">Modalidade / Nº</th>
+              <th className="p-3">Objeto / Qualificação técnica</th>
+              <th className="p-3">Estado / Município</th>
+              <th className="p-3 text-right">Valor global estimado</th>
+              <th className="p-3">Data / Hora</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y align-top">
+            {planilha.map((l) => (
+              <tr key={l.id}>
+                <td className="p-3 font-medium uppercase">{l.orgao ?? "—"}</td>
+                <td className="p-3">
+                  {l.modalidade ?? "—"}
+                  {l.numero ? ` nº ${l.numero}` : ""}
+                </td>
+                <td className="max-w-xl p-3">
+                  <p className="font-medium">{l.objeto ?? "—"}</p>
+                  {l.qualificacao_tecnica && (
+                    <p className="mt-2 whitespace-pre-line text-xs text-primary">
+                      {l.qualificacao_tecnica}
+                    </p>
+                  )}
+                </td>
+                <td className="p-3">{[l.cidade, l.uf].filter(Boolean).join("/") || "—"}</td>
+                <td className="p-3 text-right">
+                  {l.valor_estimado != null ? moeda(l.valor_estimado) : "—"}
+                </td>
+                <td className="p-3">{l.data_sessao ? dataHora(l.data_sessao) : "—"}</td>
+              </tr>
+            ))}
+            {planilha.length === 0 && (
+              <tr>
+                <td colSpan={6} className="p-4 text-muted-foreground">
+                  Nenhuma licitação em acompanhamento ainda.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       <div className="surface-panel mt-5 overflow-x-auto">

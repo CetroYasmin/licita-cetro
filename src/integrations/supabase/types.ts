@@ -756,6 +756,56 @@ export type Database = {
         }
         Relationships: []
       }
+      portais_acessos: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          equipe_id: string
+          id: string
+          login: string | null
+          nome: string
+          senha: string | null
+          tipo: string
+          updated_at: string
+          url: string | null
+          vencimento: string | null
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          equipe_id: string
+          id?: string
+          login?: string | null
+          nome: string
+          senha?: string | null
+          tipo?: string
+          updated_at?: string
+          url?: string | null
+          vencimento?: string | null
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          login?: string | null
+          nome?: string
+          senha?: string | null
+          tipo?: string
+          updated_at?: string
+          url?: string | null
+          vencimento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portais_acessos_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portais_config: {
         Row: {
           ativo: boolean

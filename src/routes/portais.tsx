@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePortais } from "@/hooks/usePortais";
 import { AppLayout } from "@/components/AppLayout";
+import { AcessosPortais } from "@/components/AcessosPortais";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +117,14 @@ function Portais() {
             <Power className="mr-2 h-4 w-4" />
             Ligar todos os portais
           </Button>
+        </div>
+
+        <div className="border-t pt-5">
+          <h2 className="mb-1 font-display text-lg font-semibold">Acessos aos portais</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Guarde login, senha, CPF e data de vencimento de cada portal usado pela equipe.
+          </p>
+          <AcessosPortais />
         </div>
       </div>
     </AppLayout>
