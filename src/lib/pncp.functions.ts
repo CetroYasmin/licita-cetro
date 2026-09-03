@@ -261,6 +261,10 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
         valorMaximo: z.number().optional(),
         incluirEncerradas: z.boolean().optional().default(false),
         ordenar: z.string().optional().default("relevancia"),
+        /** Palavras que descartam o edital (ex.: "medicamento, merenda"). */
+        excluir: z.string().optional().default(""),
+        /** Somente editais publicados nos últimos N dias (boletins). */
+        diasPublicacao: z.number().optional(),
       })
       .parse(data),
   )
@@ -279,12 +283,23 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     const noPrazo = () => Date.now() < prazoFinal && requisicoes < LIMITE_REQUISICOES;
 
     const agora = Date.now();
+    const negativas = normalizarTermos(data.excluir);
+    const limitePublicacao =
+      data.diasPublicacao != null ? agora - data.diasPublicacao * 86400000 : null;
     /** `filtrarLocal` = a consulta não filtrou por texto; filtramos aqui com busca tolerante. */
     const registrar = (bruto: any, filtrarLocal: boolean) => {
       const l = mapear(bruto);
       const texto = `${l.objeto} ${l.orgao} ${l.numero} ${l.cidade ?? ""}`;
       const pontos = termo ? relevancia(texto, data.objeto) : 1;
       if (filtrarLocal && termo && pontos < 0.6) return;
+      if (negativas.length > 0) {
+        const alvo = semAcento(texto);
+        if (negativas.some((n) => alvo.includes(n))) return;
+      }
+      if (limitePublicacao != null) {
+        const pub = l.data_publicacao ? new Date(l.data_publicacao).getTime() : null;
+        if (pub == null || Number.isNaN(pub) || pub < limitePublicacao) return;
+      }
       if (!data.incluirEncerradas) {
         const fim = l.encerramento_proposta ? new Date(l.encerramento_proposta).getTime() : null;
         if (fim != null && !Number.isNaN(fim) && fim < agora) return;
