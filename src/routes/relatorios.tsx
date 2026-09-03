@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { moeda, numero } from "@/lib/formato";
+import { dataHora, moeda, numero } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
 
 export const Route = createFileRoute("/relatorios")({
