@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { relevancia } from "@/lib/busca";
+import { normalizar, relevancia } from "@/lib/busca";
 
 /** Pesquisa oficial do PNCP (mesma usada pelo site do portal). */
 const BASE = "https://pncp.gov.br/api/search/";
@@ -283,7 +283,10 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     const noPrazo = () => Date.now() < prazoFinal && requisicoes < LIMITE_REQUISICOES;
 
     const agora = Date.now();
-    const negativas = normalizarTermos(data.excluir);
+    const negativas = data.excluir
+      .split(/[,;\n]+/)
+      .map((t) => normalizar(t))
+      .filter((t) => t.length > 2);
     const limitePublicacao =
       data.diasPublicacao != null ? agora - data.diasPublicacao * 86400000 : null;
     /** `filtrarLocal` = a consulta não filtrou por texto; filtramos aqui com busca tolerante. */
@@ -293,7 +296,7 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       const pontos = termo ? relevancia(texto, data.objeto) : 1;
       if (filtrarLocal && termo && pontos < 0.6) return;
       if (negativas.length > 0) {
-        const alvo = semAcento(texto);
+        const alvo = normalizar(texto);
         if (negativas.some((n) => alvo.includes(n))) return;
       }
       if (limitePublicacao != null) {
