@@ -117,6 +117,14 @@ function Portais() {
             Ligar todos os portais
           </Button>
         </div>
+
+        <div className="border-t pt-5">
+          <h2 className="mb-1 font-display text-lg font-semibold">Acessos aos portais</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Guarde login, senha, CPF e data de vencimento de cada portal usado pela equipe.
+          </p>
+          <AcessosPortais />
+        </div>
       </div>
     </AppLayout>
   );
