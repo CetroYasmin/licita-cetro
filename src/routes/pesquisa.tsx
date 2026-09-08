@@ -85,7 +85,7 @@ function Pesquisa() {
   const {
     detalhes,
     detalheDe,
-    buscando: buscandoValores,
+    
     pendenteDe,
     valorDe,
     portalDe,

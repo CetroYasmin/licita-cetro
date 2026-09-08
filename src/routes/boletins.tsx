@@ -99,7 +99,7 @@ function Boletins() {
   const { portalAtivo, desativados } = usePortais();
   const {
     detalheDe,
-    buscando: buscandoValores,
+    
     pendenteDe,
     valorDe,
     portalDe,
