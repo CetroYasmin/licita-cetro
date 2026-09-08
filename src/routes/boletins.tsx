@@ -243,8 +243,13 @@ function Boletins() {
     );
     const limite = Date.now() - Number(dias) * 86400000;
     const mapa = new Map<string, LicitacaoPncp[]>();
+    /** Já vistas por mim: saem do meu boletim, mas seguem no de quem não viu. */
+    const vistasPorMim = new Set(
+      (vistas ?? []).filter((v) => v.user_id === user?.id).map((v) => v.fonte_id),
+    );
     for (const l of novas) {
       if (jaAcompanhadas.has(l.fonte_id) || importadas.includes(l.fonte_id)) continue;
+      if (vistasPorMim.has(l.fonte_id)) continue;
       const publicada = l.data_publicacao ? new Date(l.data_publicacao).getTime() : 0;
       if (!publicada || publicada < limite) continue;
       if (somentePortaisAtivos) {
@@ -256,7 +261,7 @@ function Boletins() {
     }
     return [...mapa.entries()].sort((a, b) => b[0].localeCompare(a[0]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [novas, acompanhadas, importadas, dias, somentePortaisAtivos, detalheDe]);
+  }, [novas, acompanhadas, importadas, dias, somentePortaisAtivos, detalheDe, vistas, user?.id]);
 
   const total = grupos.reduce((s, [, l]) => s + l.length, 0);
 
