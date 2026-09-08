@@ -236,6 +236,8 @@ function Pesquisa() {
           proximo_evento_data: l.encerramento_proposta,
           fonte: "PNCP",
           fonte_id: l.fonte_id,
+          observacoes: anotacaoDe(l.fonte_id) || null,
+
         })
         .select("id")
         .single();
