@@ -318,6 +318,15 @@ function BoletimReal() {
             orçamento sigiloso também são descartados, pois não há como confirmar o valor.
           </p>
         </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={ocultarVistas}
+            onCheckedChange={(v) => setOcultarVistas(Boolean(v))}
+          />
+          Ocultar as que eu já marquei como vistas
+        </label>
+
       </div>
 
       {consulta && (
