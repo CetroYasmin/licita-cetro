@@ -669,7 +669,14 @@ function Pesquisa() {
                         </a>
                       </Button>
                     )}
-                    <Button
+                    {linkProcessoDe(l) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={linkProcessoDe(l) as string} target="_blank" rel="noreferrer">
+                          Processo eletrônico <ExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      </Button>
+                    )}
+
                       size="sm"
                       disabled={importar.isPending || importadas.includes(l.fonte_id)}
                       onClick={() => importar.mutate(l)}
