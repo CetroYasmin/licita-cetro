@@ -99,7 +99,8 @@ function Boletins() {
   const { portalAtivo, desativados } = usePortais();
   const {
     detalheDe,
-    buscando: buscandoValores,
+    
+    pendenteDe,
     valorDe,
     portalDe,
     linkOrigemDe,
@@ -411,7 +412,7 @@ function Boletins() {
                       {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} ·{" "}
                       {valorDe(l) != null
                         ? moeda(valorDe(l) as number)
-                        : buscandoValores
+                        : pendenteDe(l)
                           ? "consultando valor…"
                           : "valor não informado"}{" "}
                       ·

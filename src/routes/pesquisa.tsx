@@ -85,7 +85,8 @@ function Pesquisa() {
   const {
     detalhes,
     detalheDe,
-    buscando: buscandoValores,
+    
+    pendenteDe,
     valorDe,
     portalDe,
     linkOrigemDe,
@@ -515,7 +516,7 @@ function Pesquisa() {
                       <strong>
                         {valorDe(l) != null
                           ? moeda(valorDe(l) as number)
-                          : buscandoValores
+                          : pendenteDe(l)
                             ? "consultando valor…"
                             : "Não informado pelo órgão"}
                       </strong>

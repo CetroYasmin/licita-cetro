@@ -1,44 +1,62 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { buscarDetalhesPncp, type LicitacaoPncp } from "@/lib/pncp.functions";
+
+const TAMANHO_LOTE = 12;
 
 /**
  * O índice de pesquisa do PNCP não devolve valor estimado, portal de origem nem
  * as datas reais de proposta. Este hook enriquece os resultados exibidos com o
- * detalhe da contratação — é o que dá à pesquisa a mesma leitura do ConLicitação.
+ * detalhe da contratação — em lotes pequenos e independentes, para que os
+ * valores apareçam aos poucos sem travar a exibição da lista.
  */
 export function useDetalhesPncp(licitacoes: LicitacaoPncp[], chave: string) {
   const buscar = useServerFn(buscarDetalhesPncp);
 
-  const alvos = useMemo(
-    () =>
-      licitacoes
-        .filter((l) => /^\d{14}$/.test(l.orgao_cnpj) && l.sequencial > 0)
-        .slice(0, 150)
-        .map((l) => ({
-          fonte_id: l.fonte_id,
-          cnpj: l.orgao_cnpj,
-          ano: l.ano,
-          sequencial: l.sequencial,
-        })),
-    [licitacoes],
-  );
+  const lotes = useMemo(() => {
+    const alvos = licitacoes
+      .filter((l) => /^\d{14}$/.test(l.orgao_cnpj) && l.sequencial > 0)
+      .slice(0, 150)
+      .map((l) => ({
+        fonte_id: l.fonte_id,
+        cnpj: l.orgao_cnpj,
+        ano: l.ano,
+        sequencial: l.sequencial,
+      }));
+    const grupos: (typeof alvos)[] = [];
+    for (let i = 0; i < alvos.length; i += TAMANHO_LOTE) {
+      grupos.push(alvos.slice(i, i + TAMANHO_LOTE));
+    }
+    return grupos;
+  }, [licitacoes]);
 
-  const { data, isFetching } = useQuery({
-    queryKey: ["detalhes-pncp", chave, alvos.map((a) => a.fonte_id)],
-    enabled: alvos.length > 0,
-    staleTime: 15 * 60 * 1000,
-    queryFn: async () => (await buscar({ data: { contratacoes: alvos } })).detalhes,
+  const resultados = useQueries({
+    queries: lotes.map((lote) => ({
+      queryKey: ["detalhes-pncp", chave, lote.map((a) => a.fonte_id).join(",")],
+      staleTime: 15 * 60 * 1000,
+      retry: 1,
+      queryFn: async () => (await buscar({ data: { contratacoes: lote } })).detalhes,
+    })),
   });
 
-  const detalheDe = (l: LicitacaoPncp) => data?.[l.fonte_id];
+  const data = useMemo(() => {
+    const mapa: Record<string, any> = {};
+    for (const r of resultados) if (r.data) Object.assign(mapa, r.data);
+    return mapa;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultados.map((r) => (r.data ? "1" : "0")).join("")]);
+
+  const detalheDe = (l: LicitacaoPncp) => data[l.fonte_id];
+  const pendente = (l: LicitacaoPncp) =>
+    !data[l.fonte_id] && resultados.some((r) => r.isFetching);
 
   return {
     detalhes: data,
-    buscando: isFetching,
+    buscando: resultados.some((r) => r.isFetching),
+    pendenteDe: pendente,
     detalheDe,
-    valorDe: (l: LicitacaoPncp) => detalheDe(l)?.valor_estimado ?? l.valor_estimado ?? null,
+    valorDe: (l: LicitacaoPncp) => l.valor_estimado ?? detalheDe(l)?.valor_estimado ?? null,
     portalDe: (l: LicitacaoPncp) => detalheDe(l)?.portal ?? l.portal,
     linkOrigemDe: (l: LicitacaoPncp) => detalheDe(l)?.link_origem ?? null,
     aberturaDe: (l: LicitacaoPncp) => detalheDe(l)?.data_abertura_proposta ?? l.data_abertura,
