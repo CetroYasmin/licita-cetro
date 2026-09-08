@@ -7,7 +7,6 @@ import { Download, ExternalLink, Eye, EyeOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -484,59 +483,118 @@ function Pesquisa() {
           </p>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {visiveis.map((l) => {
             const quem = vistaPor(l.fonte_id);
             const vi = euVi(l.fonte_id);
+            const enc = encerramentoDe(l);
+            const venceHoje =
+              Boolean(enc) && new Date(enc as string).toDateString() === new Date().toDateString();
             return (
-              <div key={l.fonte_id} className={`surface-panel p-4 ${quem.length > 0 ? "opacity-80" : ""}`}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-display font-semibold">{l.numero}</span>
-                      <Badge variant="secondary">{l.modalidade}</Badge>
-                      <Badge variant="outline">{l.natureza}</Badge>
-                      {situacaoDe(l) && <Badge variant="outline">{situacaoDe(l)}</Badge>}
-                      <Badge variant="outline">{portalDe(l)}</Badge>
+              <li key={l.fonte_id} className="overflow-hidden rounded-md border shadow-sm">
+                {/* Barra superior — azul institucional */}
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-secondary px-4 py-2 text-secondary-foreground">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-display text-sm font-semibold">{l.numero}</span>
+                    <span className="text-xs opacity-90">
+                      {l.modalidade} · {l.natureza}
+                    </span>
+                    {situacaoDe(l) && (
+                      <span className="rounded border border-secondary-foreground/30 px-1.5 py-0.5 text-[10px] uppercase">
+                        {situacaoDe(l)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {venceHoje && (
+                      <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                        Vencimento hoje
+                      </span>
+                    )}
+                    {!vi && (
+                      <button
+                        type="button"
+                        title="Marcar como vista"
+                        onClick={() => marcarVista.mutate({ fonteId: l.fonte_id, remover: false })}
+                        className="rounded p-1 opacity-80 transition-opacity hover:bg-white/10 hover:opacity-100"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3 p-4">
+                  {/* Objeto */}
+                  <p className="text-sm">
+                    <span className="font-semibold">Objeto: </span>
+                    <span className="text-muted-foreground">{l.objeto}</span>
+                  </p>
+
+                  {/* Grade de informações */}
+                  <div className="grid gap-x-8 gap-y-2 border-t pt-3 text-sm sm:grid-cols-2">
+                    <div>
+                      <p>
+                        <span className="font-semibold">Datas: </span>
+                        <span className="ml-1 inline-block rounded bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                          Abertura: {dataHora(aberturaDe(l))}
+                        </span>
+                        {enc && (
+                          <span className="ml-1 inline-block rounded border px-2 py-0.5 text-xs">
+                            Propostas até: {dataHora(enc)}
+                          </span>
+                        )}
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold">Publicado: </span>
+                        {fData(l.data_publicacao)}
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold">Cidade: </span>
+                        {l.cidade ?? "—"}/{l.uf ?? "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p>
+                        <span className="font-semibold">Valor estimado: </span>
+                        <span className="font-semibold text-primary">
+                          {valorDe(l) != null
+                            ? moeda(valorDe(l) as number)
+                            : pendenteDe(l)
+                              ? "consultando valor…"
+                              : "valor não informado"}
+                        </span>
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold">Órgão: </span>
+                        {l.orgao}
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold">Portal: </span>
+                        {portalDe(l)}
+                        {l.plataforma ? ` · Esfera: ${l.plataforma}` : ""}
+                      </p>
                       {quem.length > 0 && (
-                        <Badge variant="outline" className="border-secondary/40 text-secondary">
+                        <p className="mt-2 text-xs text-secondary">
                           Vista por {quem.join(", ")}
-                        </Badge>
+                        </p>
                       )}
                     </div>
-                    <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{l.objeto}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicado {fData(l.data_publicacao)} ·
-                      Abertura {dataHora(aberturaDe(l))} · Propostas até{" "}
-                      {dataHora(encerramentoDe(l))}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Portal de origem: <strong>{portalDe(l)}</strong> · Esfera: {l.plataforma} ·
-                      Estimado:{" "}
-                      <strong>
-                        {valorDe(l) != null
-                          ? moeda(valorDe(l) as number)
-                          : pendenteDe(l)
-                            ? "consultando valor…"
-                            : "Não informado pelo órgão"}
-                      </strong>
-
-                    </p>
                   </div>
-                  <div className="flex flex-col items-stretch gap-2">
+
+                  {/* Ações */}
+                  <div className="flex flex-wrap items-center gap-2 border-t pt-3">
                     {l.site_url && (
-                      <Button asChild size="sm" variant="secondary">
-                        <a href={l.site_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Ver edital
+                      <Button variant="secondary" size="sm" asChild>
+                        <a href={l.site_url} target="_blank" rel="noreferrer">
+                          Ver edital <ExternalLink className="ml-1 h-3 w-3" />
                         </a>
                       </Button>
                     )}
                     {linkOrigemDe(l) && (
-                      <Button asChild size="sm" variant="outline">
-                        <a href={linkOrigemDe(l) as string} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Portal de origem
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={linkOrigemDe(l) as string} target="_blank" rel="noreferrer">
+                          Portal de origem <ExternalLink className="ml-1 h-3 w-3" />
                         </a>
                       </Button>
                     )}
@@ -555,17 +613,17 @@ function Pesquisa() {
                     >
                       {vi ? (
                         <>
-                          <EyeOff className="mr-2 h-4 w-4" /> Desmarcar
+                          <EyeOff className="mr-1 h-3 w-3" /> Desmarcar
                         </>
                       ) : (
                         <>
-                          <Eye className="mr-2 h-4 w-4" /> Marcar como vista
+                          <Eye className="mr-1 h-3 w-3" /> Marcar como vista
                         </>
                       )}
                     </Button>
                   </div>
                 </div>
-              </div>
+              </li>
             );
           })}
           {resultados.length === 0 && !pesquisa.isPending && (
