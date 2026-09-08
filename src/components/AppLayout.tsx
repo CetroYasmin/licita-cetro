@@ -9,6 +9,7 @@ import {
   Bell,
   Mailbox,
   Radio,
+  Radar,
   BarChart3,
   Users,
   LogOut,
