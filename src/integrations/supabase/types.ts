@@ -65,6 +65,47 @@ export type Database = {
           },
         ]
       }
+      anotacoes_pesquisa: {
+        Row: {
+          autor_id: string | null
+          autor_nome: string | null
+          created_at: string
+          equipe_id: string
+          fonte_id: string
+          id: string
+          texto: string
+          updated_at: string
+        }
+        Insert: {
+          autor_id?: string | null
+          autor_nome?: string | null
+          created_at?: string
+          equipe_id: string
+          fonte_id: string
+          id?: string
+          texto?: string
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string | null
+          autor_nome?: string | null
+          created_at?: string
+          equipe_id?: string
+          fonte_id?: string
+          id?: string
+          texto?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anotacoes_pesquisa_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_mensagens: {
         Row: {
           autor: string

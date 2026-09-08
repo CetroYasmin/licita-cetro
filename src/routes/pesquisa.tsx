@@ -10,6 +10,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -84,15 +86,56 @@ function Pesquisa() {
   const {
     detalhes,
     detalheDe,
-    
+
     pendenteDe,
     valorDe,
+    sigilosoDe,
     portalDe,
     linkOrigemDe,
+    linkProcessoDe,
     aberturaDe,
     encerramentoDe,
     situacaoDe,
+    modalidadeDe,
+    disputaDe,
+    processoDe,
+    unidadeDe,
+    qtdItensDe,
+    publicacaoDe,
   } = useDetalhesPncp(resultados, "pesquisa");
+
+  const { data: anotacoes } = useQuery({
+    queryKey: ["anotacoes-pesquisa", equipeId],
+    enabled: Boolean(equipeId),
+    queryFn: async () =>
+      (await supabase.from("anotacoes_pesquisa").select("fonte_id,texto").limit(2000)).data ?? [],
+  });
+
+  const anotacaoDe = (fonteId: string) =>
+    (anotacoes ?? []).find((a) => a.fonte_id === fonteId)?.texto ?? "";
+
+  const salvarAnotacao = useMutation({
+    mutationFn: async ({ fonteId, texto }: { fonteId: string; texto: string }) => {
+      if (!equipeId) throw new Error("sem equipe");
+      const { error } = await supabase.from("anotacoes_pesquisa").upsert(
+        {
+          equipe_id: equipeId,
+          fonte_id: fonteId,
+          texto,
+          autor_id: user?.id ?? null,
+          autor_nome: perfil?.nome ?? perfil?.email ?? null,
+        },
+        { onConflict: "equipe_id,fonte_id" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Anotação salva.");
+      void qc.invalidateQueries({ queryKey: ["anotacoes-pesquisa"] });
+    },
+    onError: () => toast.error("Não foi possível salvar a anotação."),
+  });
+
 
   const { data: vistas } = useQuery({
     queryKey: ["visualizacoes-pesquisa", equipeId],
@@ -193,6 +236,8 @@ function Pesquisa() {
           proximo_evento_data: l.encerramento_proposta,
           fonte: "PNCP",
           fonte_id: l.fonte_id,
+          observacoes: anotacaoDe(l.fonte_id) || null,
+
         })
         .select("id")
         .single();
@@ -497,8 +542,9 @@ function Pesquisa() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-display text-sm font-semibold">{l.numero}</span>
                     <span className="text-xs opacity-90">
-                      {l.modalidade} · {l.natureza}
+                      {modalidadeDe(l)} · {l.natureza}
                     </span>
+
                     {situacaoDe(l) && (
                       <span className="rounded border border-secondary-foreground/30 px-1.5 py-0.5 text-[10px] uppercase">
                         {situacaoDe(l)}
@@ -547,11 +593,17 @@ function Pesquisa() {
                       </p>
                       <p className="mt-2">
                         <span className="font-semibold">Publicado: </span>
-                        {fData(l.data_publicacao)}
+                        {fData(publicacaoDe(l))}
                       </p>
                       <p className="mt-2">
-                        <span className="font-semibold">Cidade: </span>
-                        {l.cidade ?? "—"}/{l.uf ?? "—"}
+                        <span className="font-semibold">Cidade/Estado: </span>
+                        {(detalheDe(l)?.cidade ?? l.cidade) ?? "—"}/
+                        {(detalheDe(l)?.uf ?? l.uf) ?? "—"}
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold">Processo: </span>
+                        {processoDe(l) ?? "—"}
+                        {qtdItensDe(l) != null ? ` · ${qtdItensDe(l)} item(ns)` : ""}
                       </p>
                     </div>
                     <div>
@@ -562,16 +614,20 @@ function Pesquisa() {
                             ? moeda(valorDe(l) as number)
                             : pendenteDe(l)
                               ? "consultando valor…"
-                              : "valor não informado"}
+                              : sigilosoDe(l)
+                                ? "orçamento sigiloso (só no edital)"
+                                : "não publicado pelo órgão"}
                         </span>
                       </p>
                       <p className="mt-2">
                         <span className="font-semibold">Órgão: </span>
-                        {l.orgao}
+                        {detalheDe(l)?.orgao ?? l.orgao}
+                        {unidadeDe(l) ? ` — ${unidadeDe(l)}` : ""}
                       </p>
                       <p className="mt-2">
-                        <span className="font-semibold">Portal: </span>
+                        <span className="font-semibold">Portal da disputa: </span>
                         {portalDe(l)}
+                        {disputaDe(l) ? ` · ${disputaDe(l)}` : ""}
                         {l.plataforma ? ` · Esfera: ${l.plataforma}` : ""}
                       </p>
                       {quem.length > 0 && (
@@ -581,6 +637,23 @@ function Pesquisa() {
                       )}
                     </div>
                   </div>
+
+                  {/* Anotações da equipe */}
+                  <div className="space-y-1 border-t pt-3">
+                    <Label className="text-xs">Anotações da equipe sobre este edital</Label>
+                    <Textarea
+                      rows={2}
+                      defaultValue={anotacaoDe(l.fonte_id)}
+                      placeholder="ex.: exige atestado de pavimentação; conferir garantia de proposta"
+                      onBlur={(e) => {
+                        const texto = e.target.value.trim();
+                        if (texto !== anotacaoDe(l.fonte_id)) {
+                          salvarAnotacao.mutate({ fonteId: l.fonte_id, texto });
+                        }
+                      }}
+                    />
+                  </div>
+
 
                   {/* Ações */}
                   <div className="flex flex-wrap items-center gap-2 border-t pt-3">
@@ -598,8 +671,16 @@ function Pesquisa() {
                         </a>
                       </Button>
                     )}
+                    {linkProcessoDe(l) && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={linkProcessoDe(l) as string} target="_blank" rel="noreferrer">
+                          Processo eletrônico <ExternalLink className="ml-1 h-3 w-3" />
+                        </a>
+                      </Button>
+                    )}
                     <Button
                       size="sm"
+
                       disabled={importar.isPending || importadas.includes(l.fonte_id)}
                       onClick={() => importar.mutate(l)}
                     >

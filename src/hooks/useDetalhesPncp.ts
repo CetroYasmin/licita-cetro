@@ -57,11 +57,20 @@ export function useDetalhesPncp(licitacoes: LicitacaoPncp[], chave: string) {
     pendenteDe: pendente,
     detalheDe,
     valorDe: (l: LicitacaoPncp) => l.valor_estimado ?? detalheDe(l)?.valor_estimado ?? null,
+    sigilosoDe: (l: LicitacaoPncp) => Boolean(detalheDe(l)?.orcamento_sigiloso),
     portalDe: (l: LicitacaoPncp) => detalheDe(l)?.portal ?? l.portal,
     linkOrigemDe: (l: LicitacaoPncp) => detalheDe(l)?.link_origem ?? null,
+    linkProcessoDe: (l: LicitacaoPncp) => detalheDe(l)?.link_processo ?? null,
     aberturaDe: (l: LicitacaoPncp) => detalheDe(l)?.data_abertura_proposta ?? l.data_abertura,
     encerramentoDe: (l: LicitacaoPncp) =>
       detalheDe(l)?.data_encerramento_proposta ?? l.encerramento_proposta,
     situacaoDe: (l: LicitacaoPncp) => detalheDe(l)?.situacao ?? l.situacao,
+    modalidadeDe: (l: LicitacaoPncp) => detalheDe(l)?.modalidade ?? l.modalidade,
+    disputaDe: (l: LicitacaoPncp) => detalheDe(l)?.disputa ?? null,
+    processoDe: (l: LicitacaoPncp) => detalheDe(l)?.processo ?? l.processo_administrativo ?? null,
+    unidadeDe: (l: LicitacaoPncp) => detalheDe(l)?.unidade ?? null,
+    qtdItensDe: (l: LicitacaoPncp) => detalheDe(l)?.qtd_itens ?? null,
+    publicacaoDe: (l: LicitacaoPncp) => detalheDe(l)?.data_publicacao ?? l.data_publicacao,
   };
 }
+

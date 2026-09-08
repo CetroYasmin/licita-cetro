@@ -546,14 +546,25 @@ export const buscarValoresPncp = createServerFn({ method: "POST" })
 
 export type DetalhePncp = {
   valor_estimado: number | null;
+  orcamento_sigiloso: boolean;
   portal: string;
   link_origem: string | null;
+  link_processo: string | null;
   data_abertura_proposta: string | null;
   data_encerramento_proposta: string | null;
+  data_publicacao: string | null;
   situacao: string | null;
   processo: string | null;
   modalidade: string | null;
+  disputa: string | null;
+  unidade: string | null;
+  cidade: string | null;
+  uf: string | null;
+  orgao: string | null;
+  informacao_complementar: string | null;
+  qtd_itens: number | null;
 };
+
 
 const cacheDetalhes = new Map<string, { em: number; valor: DetalhePncp }>();
 
@@ -604,20 +615,37 @@ async function detalheDaContratacao(
 
   if (!bruto && valor == null) return null;
 
+  const codigoSigilo = Number(bruto?.orcamentoSigilosoCodigo ?? 1);
+  const sigiloso = valor == null && (codigoSigilo === 2 || codigoSigilo === 3);
+
   const link = bruto?.linkSistemaOrigem ? String(bruto.linkSistemaOrigem) : null;
+  const unidade = bruto?.unidadeOrgao ?? {};
   const detalhe: DetalhePncp = {
     valor_estimado: valor,
+    orcamento_sigiloso: sigiloso,
     portal: nomePortal(link) === "Não informado" ? "PNCP" : nomePortal(link),
     link_origem: link,
+    link_processo: bruto?.linkProcessoEletronico ? String(bruto.linkProcessoEletronico) : null,
     data_abertura_proposta: bruto?.dataAberturaProposta ?? null,
     data_encerramento_proposta: bruto?.dataEncerramentoProposta ?? null,
+    data_publicacao: bruto?.dataPublicacaoPncp ?? null,
     situacao: bruto?.situacaoCompraNome ?? null,
     processo: bruto?.processo ?? null,
     modalidade: bruto?.modalidadeNome ?? null,
+    disputa: bruto?.modoDisputaNome ?? null,
+    unidade: unidade?.nomeUnidade ? String(unidade.nomeUnidade).trim() : null,
+    cidade: unidade?.municipioNome ?? null,
+    uf: unidade?.ufSigla ?? null,
+    orgao: bruto?.orgaoEntidade?.razaoSocial ?? null,
+    informacao_complementar: bruto?.informacaoComplementar ?? null,
+    qtd_itens: Number.isFinite(Number(bruto?.quantidadeItens))
+      ? Number(bruto?.quantidadeItens)
+      : null,
   };
   cacheDetalhes.set(chave, { em: Date.now(), valor: detalhe });
   return detalhe;
 }
+
 
 /**
  * Enriquece os resultados da pesquisa com valor estimado, portal de origem e as
