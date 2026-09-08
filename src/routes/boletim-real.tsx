@@ -58,6 +58,8 @@ type Consulta = {
 function BoletimReal() {
   const buscar = useServerFn(buscarPropostasUf);
   const testar = useServerFn(testarConexaoPncp);
+  const { equipeId, user, perfil } = useAuth();
+  const qc = useQueryClient();
 
   const [ufs, setUfs] = useState<string[]>([...ESTADOS_PADRAO]);
   const [modalidades, setModalidades] = useState<number[]>([...MODALIDADES_PADRAO]);
@@ -65,8 +67,52 @@ function BoletimReal() {
   const [valorMinimo, setValorMinimo] = useState("0");
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
+  const [ocultarVistas, setOcultarVistas] = useState(false);
+
+  const { data: vistas } = useQuery({
+    queryKey: ["visualizacoes-boletim-real", equipeId],
+    enabled: Boolean(equipeId),
+    queryFn: async () =>
+      (
+        await supabase
+          .from("visualizacoes")
+          .select("fonte_id,user_id,user_nome")
+          .not("fonte_id", "is", null)
+          .limit(5000)
+      ).data ?? [],
+  });
+
+  const vistaPor = (fonteId: string) =>
+    (vistas ?? []).filter((v) => v.fonte_id === fonteId).map((v) => v.user_nome ?? "membro");
+  const euVi = (fonteId: string) =>
+    (vistas ?? []).some((v) => v.fonte_id === fonteId && v.user_id === user?.id);
+
+  const marcarVista = useMutation({
+    mutationFn: async ({ fonteId, remover }: { fonteId: string; remover: boolean }) => {
+      if (!equipeId || !user) throw new Error("sem equipe");
+      if (remover) {
+        const { error } = await supabase
+          .from("visualizacoes")
+          .delete()
+          .eq("fonte_id", fonteId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("visualizacoes").insert({
+        equipe_id: equipeId,
+        user_id: user.id,
+        user_nome: perfil?.nome ?? perfil?.email ?? "membro",
+        fonte_id: fonteId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["visualizacoes-boletim-real"] }),
+    onError: () => toast.error("Não foi possível registrar a visualização."),
+  });
 
   const teste = useMutation({ mutationFn: async () => testar() });
+
 
   const alternarUf = (uf: string) =>
     setUfs((v) => (v.includes(uf) ? v.filter((x) => x !== uf) : [...v, uf]));
