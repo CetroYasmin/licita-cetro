@@ -100,7 +100,7 @@ function Pesquisa() {
     disputaDe,
     processoDe,
     unidadeDe,
-    itensDe,
+    qtdItensDe,
     publicacaoDe,
   } = useDetalhesPncp(resultados, "pesquisa");
 
@@ -603,7 +603,7 @@ function Pesquisa() {
                       <p className="mt-2">
                         <span className="font-semibold">Processo: </span>
                         {processoDe(l) ?? "—"}
-                        {itensDe(l) != null ? ` · ${itensDe(l)} item(ns)` : ""}
+                        {qtdItensDe(l) != null ? ` · ${qtdItensDe(l)} item(ns)` : ""}
                       </p>
                     </div>
                     <div>

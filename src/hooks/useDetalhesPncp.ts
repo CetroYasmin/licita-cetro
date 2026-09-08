@@ -69,7 +69,7 @@ export function useDetalhesPncp(licitacoes: LicitacaoPncp[], chave: string) {
     disputaDe: (l: LicitacaoPncp) => detalheDe(l)?.disputa ?? null,
     processoDe: (l: LicitacaoPncp) => detalheDe(l)?.processo ?? l.processo_administrativo ?? null,
     unidadeDe: (l: LicitacaoPncp) => detalheDe(l)?.unidade ?? null,
-    itensDe: (l: LicitacaoPncp) => detalheDe(l)?.qtd_itens ?? null,
+    qtdItensDe: (l: LicitacaoPncp) => detalheDe(l)?.qtd_itens ?? null,
     publicacaoDe: (l: LicitacaoPncp) => detalheDe(l)?.data_publicacao ?? l.data_publicacao,
   };
 }
