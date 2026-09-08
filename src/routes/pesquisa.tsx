@@ -538,8 +538,9 @@ function Pesquisa() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-display text-sm font-semibold">{l.numero}</span>
                     <span className="text-xs opacity-90">
-                      {l.modalidade} · {l.natureza}
+                      {modalidadeDe(l)} · {l.natureza}
                     </span>
+
                     {situacaoDe(l) && (
                       <span className="rounded border border-secondary-foreground/30 px-1.5 py-0.5 text-[10px] uppercase">
                         {situacaoDe(l)}
