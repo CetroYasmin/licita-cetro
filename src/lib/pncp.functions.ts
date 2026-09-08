@@ -546,14 +546,25 @@ export const buscarValoresPncp = createServerFn({ method: "POST" })
 
 export type DetalhePncp = {
   valor_estimado: number | null;
+  orcamento_sigiloso: boolean;
   portal: string;
   link_origem: string | null;
+  link_processo: string | null;
   data_abertura_proposta: string | null;
   data_encerramento_proposta: string | null;
+  data_publicacao: string | null;
   situacao: string | null;
   processo: string | null;
   modalidade: string | null;
+  disputa: string | null;
+  unidade: string | null;
+  cidade: string | null;
+  uf: string | null;
+  orgao: string | null;
+  informacao_complementar: string | null;
+  qtd_itens: number | null;
 };
+
 
 const cacheDetalhes = new Map<string, { em: number; valor: DetalhePncp }>();
 
