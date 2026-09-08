@@ -61,7 +61,7 @@ function BoletimReal() {
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
 
-  const teste = useMutation({ mutationFn: async () => testar({ data: {} }) });
+  const teste = useMutation({ mutationFn: async () => testar() });
 
   const alternarUf = (uf: string) =>
     setUfs((v) => (v.includes(uf) ? v.filter((x) => x !== uf) : [...v, uf]));
