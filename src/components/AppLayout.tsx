@@ -27,6 +27,7 @@ const NAV = [
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/monitoramento", label: "Monitoramento", icon: Radio },
   { to: "/boletins", label: "Boletins", icon: Mailbox },
+  { to: "/boletim-real", label: "Boletim real PNCP", icon: Radar },
   { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/portais", label: "Gerenciar portais", icon: Globe },
