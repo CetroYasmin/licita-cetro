@@ -676,8 +676,9 @@ function Pesquisa() {
                         </a>
                       </Button>
                     )}
-
+                    <Button
                       size="sm"
+
                       disabled={importar.isPending || importadas.includes(l.fonte_id)}
                       onClick={() => importar.mutate(l)}
                     >
