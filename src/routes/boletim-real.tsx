@@ -499,11 +499,8 @@ function BoletimReal() {
                       </div>
                     );
                   })}
-
-                    </div>
-                  </article>
-                ))}
               </div>
+
             </section>
           );
         })}
