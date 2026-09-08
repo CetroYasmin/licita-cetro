@@ -1,14 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useMutation, useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ExternalLink, Loader2, RefreshCw, Search } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Loader2, RefreshCw, Search } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { data as fData, moeda } from "@/lib/formato";
+import { data as fData, dataHora, moeda } from "@/lib/formato";
 import {
   ESTADOS_PADRAO,
   MODALIDADES_PADRAO,
@@ -18,6 +22,7 @@ import {
   buscarPropostasUf,
   testarConexaoPncp,
 } from "@/lib/pncp-proposta.functions";
+
 
 export const Route = createFileRoute("/boletim-real")({
   head: () => ({
@@ -53,6 +58,8 @@ type Consulta = {
 function BoletimReal() {
   const buscar = useServerFn(buscarPropostasUf);
   const testar = useServerFn(testarConexaoPncp);
+  const { equipeId, user, perfil } = useAuth();
+  const qc = useQueryClient();
 
   const [ufs, setUfs] = useState<string[]>([...ESTADOS_PADRAO]);
   const [modalidades, setModalidades] = useState<number[]>([...MODALIDADES_PADRAO]);
@@ -60,8 +67,52 @@ function BoletimReal() {
   const [valorMinimo, setValorMinimo] = useState("0");
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
+  const [ocultarVistas, setOcultarVistas] = useState(false);
+
+  const { data: vistas } = useQuery({
+    queryKey: ["visualizacoes-boletim-real", equipeId],
+    enabled: Boolean(equipeId),
+    queryFn: async () =>
+      (
+        await supabase
+          .from("visualizacoes")
+          .select("fonte_id,user_id,user_nome")
+          .not("fonte_id", "is", null)
+          .limit(5000)
+      ).data ?? [],
+  });
+
+  const vistaPor = (fonteId: string) =>
+    (vistas ?? []).filter((v) => v.fonte_id === fonteId).map((v) => v.user_nome ?? "membro");
+  const euVi = (fonteId: string) =>
+    (vistas ?? []).some((v) => v.fonte_id === fonteId && v.user_id === user?.id);
+
+  const marcarVista = useMutation({
+    mutationFn: async ({ fonteId, remover }: { fonteId: string; remover: boolean }) => {
+      if (!equipeId || !user) throw new Error("sem equipe");
+      if (remover) {
+        const { error } = await supabase
+          .from("visualizacoes")
+          .delete()
+          .eq("fonte_id", fonteId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.from("visualizacoes").insert({
+        equipe_id: equipeId,
+        user_id: user.id,
+        user_nome: perfil?.nome ?? perfil?.email ?? "membro",
+        fonte_id: fonteId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["visualizacoes-boletim-real"] }),
+    onError: () => toast.error("Não foi possível registrar a visualização."),
+  });
 
   const teste = useMutation({ mutationFn: async () => testar() });
+
 
   const alternarUf = (uf: string) =>
     setUfs((v) => (v.includes(uf) ? v.filter((x) => x !== uf) : [...v, uf]));
@@ -267,6 +318,15 @@ function BoletimReal() {
             orçamento sigiloso também são descartados, pois não há como confirmar o valor.
           </p>
         </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={ocultarVistas}
+            onCheckedChange={(v) => setOcultarVistas(Boolean(v))}
+          />
+          Ocultar as que eu já marquei como vistas
+        </label>
+
       </div>
 
       {consulta && (
@@ -315,72 +375,141 @@ function BoletimReal() {
                 </p>
               )}
 
-              <div className="space-y-2">
-                {itens.map((l) => (
-                  <article
-                    key={l.chave}
-                    className="rounded-md border border-border border-l-4 border-l-primary bg-card p-4"
-                  >
-                    <p className="mb-2 text-sm font-medium leading-snug">{l.objeto}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>
-                        Órgão: <span className="text-foreground">{l.orgao}</span>
-                      </span>
-                      <span>
-                        Local:{" "}
-                        <span className="text-foreground">
-                          {l.cidade}/{l.uf}
-                        </span>
-                      </span>
-                      <span>
-                        Modalidade: <span className="text-foreground">{l.modalidade}</span>
-                      </span>
-                      <span>
-                        Encerra propostas:{" "}
-                        <span className="text-foreground">{fData(l.encerramento_proposta)}</span>
-                      </span>
-                      <span>
-                        Publicação:{" "}
-                        <span className="text-foreground">{fData(l.data_publicacao)}</span>
-                      </span>
-                      <span>
-                        Valor estimado:{" "}
-                        <span className="text-foreground">
-                          {l.valor_estimado != null
-                            ? moeda(l.valor_estimado)
-                            : "sigiloso / não informado"}
-                        </span>
-                      </span>
-                      {l.processo && (
-                        <span>
-                          Processo: <span className="text-foreground">{l.processo}</span>
-                        </span>
-                      )}
-                      {l.unidade && (
-                        <span>
-                          Unidade: <span className="text-foreground">{l.unidade}</span>
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {l.link && (
-                        <Button asChild size="sm" variant="outline">
-                          <a href={l.link} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-4 w-4" /> Abrir edital no PNCP
-                          </a>
-                        </Button>
-                      )}
-                      {l.link_origem && (
-                        <Button asChild size="sm" variant="ghost">
-                          <a href={l.link_origem} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-4 w-4" /> Portal de origem
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </article>
-                ))}
+              <div className="space-y-4">
+                {itens
+                  .filter((l) => !(ocultarVistas && euVi(l.chave)))
+                  .map((l) => {
+                    const quem = vistaPor(l.chave);
+                    const vi = euVi(l.chave);
+                    const enc = l.encerramento_proposta;
+                    const venceHoje =
+                      Boolean(enc) &&
+                      new Date(enc as string).toDateString() === new Date().toDateString();
+                    const numero = l.chave.split("|")[0];
+                    return (
+                      <div key={l.chave} className="overflow-hidden rounded-md border shadow-sm">
+                        {/* Barra superior — azul institucional */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-secondary px-4 py-2 text-secondary-foreground">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-display text-sm font-semibold">{numero}</span>
+                            <span className="text-xs opacity-90">{l.modalidade}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {venceHoje && (
+                              <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                                Vencimento hoje
+                              </span>
+                            )}
+                            {!vi && (
+                              <button
+                                type="button"
+                                title="Marcar como vista"
+                                onClick={() =>
+                                  marcarVista.mutate({ fonteId: l.chave, remover: false })
+                                }
+                                className="rounded p-1 opacity-80 transition-opacity hover:bg-white/10 hover:opacity-100"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 p-4">
+                          <p className="text-sm">
+                            <span className="font-semibold">Objeto: </span>
+                            <span className="text-muted-foreground">{l.objeto}</span>
+                          </p>
+
+                          <div className="grid gap-x-8 gap-y-2 border-t pt-3 text-sm sm:grid-cols-2">
+                            <div>
+                              <p>
+                                <span className="font-semibold">Datas: </span>
+                                <span className="ml-1 inline-block rounded bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                                  Abertura: {dataHora(l.data_abertura_proposta)}
+                                </span>
+                                {enc && (
+                                  <span className="ml-1 inline-block rounded border px-2 py-0.5 text-xs">
+                                    Propostas até: {dataHora(enc)}
+                                  </span>
+                                )}
+                              </p>
+                              <p className="mt-2">
+                                <span className="font-semibold">Publicado: </span>
+                                {fData(l.data_publicacao)}
+                              </p>
+                              <p className="mt-2">
+                                <span className="font-semibold">Cidade/Estado: </span>
+                                {l.cidade}/{l.uf}
+                              </p>
+                              <p className="mt-2">
+                                <span className="font-semibold">Processo: </span>
+                                {l.processo ?? "—"}
+                              </p>
+                            </div>
+                            <div>
+                              <p>
+                                <span className="font-semibold">Valor estimado: </span>
+                                <span className="font-semibold text-primary">
+                                  {l.valor_estimado != null
+                                    ? moeda(l.valor_estimado)
+                                    : "orçamento sigiloso ou não publicado"}
+                                </span>
+                              </p>
+                              <p className="mt-2">
+                                <span className="font-semibold">Órgão: </span>
+                                {l.orgao}
+                                {l.unidade ? ` — ${l.unidade}` : ""}
+                              </p>
+                              <p className="mt-2">
+                                <span className="font-semibold">Origem: </span>
+                                {l.link_origem ? "portal do órgão" : "PNCP"}
+                              </p>
+                              {quem.length > 0 && (
+                                <p className="mt-2 text-xs text-secondary">
+                                  Vista por {quem.join(", ")}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                            {l.link && (
+                              <Button variant="secondary" size="sm" asChild>
+                                <a href={l.link} target="_blank" rel="noreferrer">
+                                  Ver edital <ExternalLink className="ml-1 h-3 w-3" />
+                                </a>
+                              </Button>
+                            )}
+                            {l.link_origem && (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={l.link_origem} target="_blank" rel="noreferrer">
+                                  Portal de origem <ExternalLink className="ml-1 h-3 w-3" />
+                                </a>
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => marcarVista.mutate({ fonteId: l.chave, remover: vi })}
+                            >
+                              {vi ? (
+                                <>
+                                  <EyeOff className="mr-1 h-3 w-3" /> Desmarcar
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="mr-1 h-3 w-3" /> Marcar como vista
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
+
             </section>
           );
         })}
