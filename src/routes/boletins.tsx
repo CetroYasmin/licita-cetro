@@ -3,11 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Download, ExternalLink, RefreshCw } from "lucide-react";
+import { Check, Download, ExternalLink, Eye, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -394,70 +394,126 @@ function Boletins() {
                 Marcar dia como lido
               </Button>
             </div>
-            <ul className="divide-y">
-              {itens.map((l) => (
-                <li key={l.fonte_id} className="flex flex-wrap items-start justify-between gap-3 p-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-display font-semibold">{l.numero}</span>
-                      <Badge variant="secondary">{l.modalidade}</Badge>
-                      <Badge variant="outline">{l.natureza}</Badge>
-                      {situacaoDe(l) && <Badge variant="outline">{situacaoDe(l)}</Badge>}
-                      <Badge variant="outline">{portalDe(l)}</Badge>
-                      {vistaPor(l.fonte_id).length > 0 && (
-                        <Badge variant="outline" className="border-secondary/40 text-secondary">
-                          Vista por {vistaPor(l.fonte_id).join(", ")}
-                        </Badge>
-                      )}
+            <ul className="space-y-4 p-4">
+              {itens.map((l) => {
+                const enc = encerramentoDe(l);
+                const venceHoje =
+                  Boolean(enc) && new Date(enc as string).toDateString() === new Date().toDateString();
+                return (
+                  <li key={l.fonte_id} className="overflow-hidden rounded-md border shadow-sm">
+                    {/* Barra superior — azul institucional */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-secondary px-4 py-2 text-secondary-foreground">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-display text-sm font-semibold">{l.numero}</span>
+                        <span className="text-xs opacity-90">
+                          {l.modalidade} · {l.natureza}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {venceHoje && (
+                          <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                            Vencimento hoje
+                          </span>
+                        )}
+                        {!euVi(l.fonte_id) && (
+                          <button
+                            type="button"
+                            title="Marcar como vista"
+                            onClick={() => marcarVista.mutate([l.fonte_id])}
+                            className="rounded p-1 opacity-80 transition-opacity hover:bg-white/10 hover:opacity-100"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <p className="mt-1 line-clamp-2 max-w-3xl text-sm text-muted-foreground">
-                      {l.objeto}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} ·{" "}
-                      {valorDe(l) != null
-                        ? moeda(valorDe(l) as number)
-                        : pendenteDe(l)
-                          ? "consultando valor…"
-                          : "valor não informado"}{" "}
-                      ·
-                      propostas até {dataHora(encerramentoDe(l))}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    {l.site_url && (
-                      <Button variant="secondary" size="sm" asChild>
-                        <a href={l.site_url} target="_blank" rel="noreferrer">
-                          Edital <ExternalLink className="ml-1 h-3 w-3" />
-                        </a>
-                      </Button>
-                    )}
-                    {linkOrigemDe(l) && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={linkOrigemDe(l) as string} target="_blank" rel="noreferrer">
-                          Portal <ExternalLink className="ml-1 h-3 w-3" />
-                        </a>
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      disabled={acompanhar.isPending}
-                      onClick={() => acompanhar.mutate(l)}
-                    >
-                      <Download className="mr-2 h-4 w-4" /> Acompanhar
-                    </Button>
-                    {!euVi(l.fonte_id) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => marcarVista.mutate([l.fonte_id])}
-                      >
-                        <Check className="mr-1 h-3 w-3" /> Vista
-                      </Button>
-                    )}
-                  </div>
-                </li>
-              ))}
+
+                    <div className="space-y-3 p-4">
+                      {/* Objeto */}
+                      <p className="text-sm">
+                        <span className="font-semibold">Objeto: </span>
+                        <span className="text-muted-foreground">{l.objeto}</span>
+                      </p>
+
+                      {/* Grade de informações */}
+                      <div className="grid gap-x-8 gap-y-2 border-t pt-3 text-sm sm:grid-cols-2">
+                        <div>
+                          <p>
+                            <span className="font-semibold">Datas: </span>
+                            <span className="ml-1 inline-block rounded bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                              Abertura: {dataHora(enc)}
+                            </span>
+                          </p>
+                          <p className="mt-2">
+                            <span className="font-semibold">Cidade: </span>
+                            {l.cidade ?? "—"}/{l.uf ?? "—"}
+                          </p>
+                          <p className="mt-2">
+                            <span className="font-semibold">Valor estimado: </span>
+                            <span className="font-semibold text-primary">
+                              {valorDe(l) != null
+                                ? moeda(valorDe(l) as number)
+                                : pendenteDe(l)
+                                  ? "consultando valor…"
+                                  : "valor não informado"}
+                            </span>
+                          </p>
+                        </div>
+                        <div>
+                          <p>
+                            <span className="font-semibold">Órgão: </span>
+                            {l.orgao}
+                          </p>
+                          <p className="mt-2">
+                            <span className="font-semibold">Portal: </span>
+                            {portalDe(l)}
+                            {situacaoDe(l) ? ` · ${situacaoDe(l)}` : ""}
+                          </p>
+                          {vistaPor(l.fonte_id).length > 0 && (
+                            <p className="mt-2 text-xs text-secondary">
+                              Vista por {vistaPor(l.fonte_id).join(", ")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Ações */}
+                      <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                        {l.site_url && (
+                          <Button variant="secondary" size="sm" asChild>
+                            <a href={l.site_url} target="_blank" rel="noreferrer">
+                              Ver edital <ExternalLink className="ml-1 h-3 w-3" />
+                            </a>
+                          </Button>
+                        )}
+                        {linkOrigemDe(l) && (
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={linkOrigemDe(l) as string} target="_blank" rel="noreferrer">
+                              Portal de origem <ExternalLink className="ml-1 h-3 w-3" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          disabled={acompanhar.isPending}
+                          onClick={() => acompanhar.mutate(l)}
+                        >
+                          <Download className="mr-2 h-4 w-4" /> Acompanhar
+                        </Button>
+                        {!euVi(l.fonte_id) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => marcarVista.mutate([l.fonte_id])}
+                          >
+                            <Check className="mr-1 h-3 w-3" /> Marcar como vista
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ))}
