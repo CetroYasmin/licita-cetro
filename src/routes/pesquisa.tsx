@@ -84,15 +84,56 @@ function Pesquisa() {
   const {
     detalhes,
     detalheDe,
-    
+
     pendenteDe,
     valorDe,
+    sigilosoDe,
     portalDe,
     linkOrigemDe,
+    linkProcessoDe,
     aberturaDe,
     encerramentoDe,
     situacaoDe,
+    modalidadeDe,
+    disputaDe,
+    processoDe,
+    unidadeDe,
+    itensDe,
+    publicacaoDe,
   } = useDetalhesPncp(resultados, "pesquisa");
+
+  const { data: anotacoes } = useQuery({
+    queryKey: ["anotacoes-pesquisa", equipeId],
+    enabled: Boolean(equipeId),
+    queryFn: async () =>
+      (await supabase.from("anotacoes_pesquisa").select("fonte_id,texto").limit(2000)).data ?? [],
+  });
+
+  const anotacaoDe = (fonteId: string) =>
+    (anotacoes ?? []).find((a) => a.fonte_id === fonteId)?.texto ?? "";
+
+  const salvarAnotacao = useMutation({
+    mutationFn: async ({ fonteId, texto }: { fonteId: string; texto: string }) => {
+      if (!equipeId) throw new Error("sem equipe");
+      const { error } = await supabase.from("anotacoes_pesquisa").upsert(
+        {
+          equipe_id: equipeId,
+          fonte_id: fonteId,
+          texto,
+          autor_id: user?.id ?? null,
+          autor_nome: perfil?.nome ?? perfil?.email ?? null,
+        },
+        { onConflict: "equipe_id,fonte_id" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Anotação salva.");
+      void qc.invalidateQueries({ queryKey: ["anotacoes-pesquisa"] });
+    },
+    onError: () => toast.error("Não foi possível salvar a anotação."),
+  });
+
 
   const { data: vistas } = useQuery({
     queryKey: ["visualizacoes-pesquisa", equipeId],
