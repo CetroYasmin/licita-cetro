@@ -589,11 +589,17 @@ function Pesquisa() {
                       </p>
                       <p className="mt-2">
                         <span className="font-semibold">Publicado: </span>
-                        {fData(l.data_publicacao)}
+                        {fData(publicacaoDe(l))}
                       </p>
                       <p className="mt-2">
-                        <span className="font-semibold">Cidade: </span>
-                        {l.cidade ?? "—"}/{l.uf ?? "—"}
+                        <span className="font-semibold">Cidade/Estado: </span>
+                        {(detalheDe(l)?.cidade ?? l.cidade) ?? "—"}/
+                        {(detalheDe(l)?.uf ?? l.uf) ?? "—"}
+                      </p>
+                      <p className="mt-2">
+                        <span className="font-semibold">Processo: </span>
+                        {processoDe(l) ?? "—"}
+                        {itensDe(l) != null ? ` · ${itensDe(l)} item(ns)` : ""}
                       </p>
                     </div>
                     <div>
@@ -604,16 +610,20 @@ function Pesquisa() {
                             ? moeda(valorDe(l) as number)
                             : pendenteDe(l)
                               ? "consultando valor…"
-                              : "valor não informado"}
+                              : sigilosoDe(l)
+                                ? "orçamento sigiloso (só no edital)"
+                                : "não publicado pelo órgão"}
                         </span>
                       </p>
                       <p className="mt-2">
                         <span className="font-semibold">Órgão: </span>
-                        {l.orgao}
+                        {detalheDe(l)?.orgao ?? l.orgao}
+                        {unidadeDe(l) ? ` — ${unidadeDe(l)}` : ""}
                       </p>
                       <p className="mt-2">
-                        <span className="font-semibold">Portal: </span>
+                        <span className="font-semibold">Portal da disputa: </span>
                         {portalDe(l)}
+                        {disputaDe(l) ? ` · ${disputaDe(l)}` : ""}
                         {l.plataforma ? ` · Esfera: ${l.plataforma}` : ""}
                       </p>
                       {quem.length > 0 && (
@@ -623,6 +633,23 @@ function Pesquisa() {
                       )}
                     </div>
                   </div>
+
+                  {/* Anotações da equipe */}
+                  <div className="space-y-1 border-t pt-3">
+                    <Label className="text-xs">Anotações da equipe sobre este edital</Label>
+                    <Textarea
+                      rows={2}
+                      defaultValue={anotacaoDe(l.fonte_id)}
+                      placeholder="ex.: exige atestado de pavimentação; conferir garantia de proposta"
+                      onBlur={(e) => {
+                        const texto = e.target.value.trim();
+                        if (texto !== anotacaoDe(l.fonte_id)) {
+                          salvarAnotacao.mutate({ fonteId: l.fonte_id, texto });
+                        }
+                      }}
+                    />
+                  </div>
+
 
                   {/* Ações */}
                   <div className="flex flex-wrap items-center gap-2 border-t pt-3">
