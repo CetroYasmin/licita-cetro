@@ -346,10 +346,12 @@ function BoletimReal() {
         </p>
       )}
 
-      <div className="space-y-6">
+              <div className="space-y-6">
         {(consulta?.ufs ?? []).map((uf, i) => {
           const r = resultados[i];
           const itens = r?.data?.licitacoes ?? [];
+          const itensVisiveis = itens.filter((l) => !(ocultarVistas && euVi(l.chave)));
+          const ocultosAqui = itens.length - itensVisiveis.length;
           return (
             <section key={uf}>
               <h2 className="mb-2 flex flex-wrap items-center gap-2 border-b border-border pb-1 text-sm font-semibold">
@@ -364,19 +366,26 @@ function BoletimReal() {
                   </span>
                 ) : (
                   <span className="text-xs font-normal text-muted-foreground">
-                    ✓ concluído — {itens.length} encontrada(s)
+                    ✓ concluído — {itensVisiveis.length} encontrada(s)
+                    {ocultosAqui > 0 && (
+                      <span className="ml-1 text-muted-foreground/70">
+                        ({ocultosAqui} oculta{ocultosAqui > 1 ? "s" : ""} porque você já viu)
+                      </span>
+                    )}
                   </span>
                 )}
               </h2>
 
-              {!r?.isPending && itens.length === 0 && !r?.isError && (
+              {!r?.isPending && itensVisiveis.length === 0 && !r?.isError && (
                 <p className="text-sm italic text-muted-foreground">
-                  Nenhuma licitação encontrada nesse estado com os filtros atuais.
+                  {itens.length > 0
+                    ? "Todas as licitações deste estado já foram marcadas como vistas por você."
+                    : "Nenhuma licitação encontrada nesse estado com os filtros atuais."}
                 </p>
               )}
 
               <div className="space-y-4">
-                {itens
+                {itensVisiveis
                   .filter((l) => !(ocultarVistas && euVi(l.chave)))
                   .map((l) => {
                     const quem = vistaPor(l.chave);
