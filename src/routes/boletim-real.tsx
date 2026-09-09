@@ -67,7 +67,7 @@ function BoletimReal() {
   const [valorMinimo, setValorMinimo] = useState("0");
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
-  const [ocultarVistas, setOcultarVistas] = useState(false);
+  const [ocultarVistas, setOcultarVistas] = useState(true);
 
   const { data: vistas } = useQuery({
     queryKey: ["visualizacoes-boletim-real", equipeId],
