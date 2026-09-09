@@ -434,19 +434,21 @@ function BoletimReal() {
           const itensVisiveis = itens.filter((l) => !(ocultarVistas && euVi(l.chave)));
           const ocultosAqui = itens.length - itensVisiveis.length;
           return (
-            <section key={uf}>
-              <h2 className="mb-2 flex flex-wrap items-center gap-2 border-b border-border pb-1 text-sm font-semibold">
-                <span className="text-primary">{uf}</span>
+            <section key={uf} className="scroll-mt-24">
+              <h2 className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-3 border-b border-border bg-background/95 py-3 backdrop-blur-sm text-base font-semibold shadow-sm">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+                  {uf}
+                </span>
                 {r?.isPending ? (
-                  <span className="text-xs font-normal italic text-muted-foreground">
+                  <span className="text-sm font-normal italic text-muted-foreground">
                     consultando…
                   </span>
                 ) : r?.isError ? (
-                  <span className="text-xs font-normal text-destructive">
+                  <span className="text-sm font-normal text-destructive">
                     falhou — use “Tentar de novo” abaixo
                   </span>
                 ) : (
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="text-sm font-normal text-muted-foreground">
                     ✓ concluído — {itensVisiveis.length} encontrada(s)
                     {ocultosAqui > 0 && (
                       <span className="ml-1 text-muted-foreground/70">
