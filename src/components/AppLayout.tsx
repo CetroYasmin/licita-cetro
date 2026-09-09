@@ -1,14 +1,11 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Globe,
   LayoutDashboard,
   Gavel,
   Search,
   CalendarDays,
   Bell,
-  Mailbox,
-  Radio,
   Radar,
   BarChart3,
   Users,
@@ -26,14 +23,12 @@ const NAV = [
   { to: "/licitacoes", label: "Licitações", icon: Gavel },
   { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
-  { to: "/monitoramento", label: "Monitoramento", icon: Radio },
-  { to: "/boletins", label: "Boletins", icon: Mailbox },
   { to: "/boletim-real", label: "Boletim real PNCP", icon: Radar },
   { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
-  { to: "/portais", label: "Gerenciar portais", icon: Globe },
   { to: "/equipe", label: "Equipe", icon: Users },
 ] as const;
+
 
 export function AppLayout({
   titulo,
