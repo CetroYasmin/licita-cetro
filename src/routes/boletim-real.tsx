@@ -344,7 +344,11 @@ function BoletimReal() {
           {consulta.valorMinimo > 0 ? moeda(consulta.valorMinimo) : "sem filtro"} ·{" "}
           {carregando
             ? `consultando ${concluidas}/${resultados.length} estados…`
-            : `${totalEncontrado} licitação(ões) em ${comResultado}/${resultados.length} estados`}
+            : `${totalEncontrado} licitação(ões) em ${comResultado}/${resultados.length} estados${
+                totalOculto > 0
+                  ? ` (${totalOculto} oculta${totalOculto > 1 ? "s" : ""} porque você já viu)`
+                  : ""
+              }`}
         </p>
       )}
 
