@@ -30,13 +30,13 @@ import {
 export const Route = createFileRoute("/boletim-real")({
   head: () => ({
     meta: [
-      { title: "Boletim real PNCP - Licitações Cetro" },
+      { title: "Boletim - Licitações Cetro" },
       {
         name: "description",
         content:
           "Consulta ao vivo na base pública do PNCP: apenas licitações com prazo de proposta ainda em aberto, filtradas por estado, modalidade, valor mínimo e palavras do objeto.",
       },
-      { property: "og:title", content: "Boletim real PNCP - Licitações Cetro" },
+      { property: "og:title", content: "Boletim - Licitações Cetro" },
       {
         property: "og:description",
         content:
@@ -285,7 +285,7 @@ function BoletimReal() {
 
   return (
     <AppLayout
-      titulo="Boletim real PNCP"
+      titulo="Boletim"
       descricao="Consulta ao vivo na base pública do PNCP — somente licitações com prazo de proposta ainda em aberto"
       acoes={
         <>
