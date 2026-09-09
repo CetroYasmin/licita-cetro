@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Download, ExternalLink, Eye, EyeOff, Loader2, RefreshCw, Search } from "lucide-react";
@@ -258,6 +258,30 @@ function BoletimReal() {
     d.setDate(d.getDate() + (Number(dias) || 180));
     return d.toISOString();
   }, [dias]);
+
+  // Rolagem automática: ao esvaziar um estado (tudo marcado como visto),
+  // a página desliza sozinha para o próximo estado que ainda tem licitações.
+  const secoesRef = useRef<Record<string, HTMLElement | null>>({});
+  const contagemAnterior = useRef<number[]>([]);
+  const assinatura = visiveisPorUf.map((a) => a.length).join(",");
+
+  const irPara = (uf: string) =>
+    secoesRef.current[uf]?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  useEffect(() => {
+    const ufsAtuais = consulta?.ufs ?? [];
+    const atual = visiveisPorUf.map((a) => a.length);
+    const antes = contagemAnterior.current;
+    contagemAnterior.current = atual;
+    if (antes.length !== atual.length) return;
+    const esvaziou = atual.findIndex((n, i) => n === 0 && (antes[i] ?? 0) > 0);
+    if (esvaziou < 0) return;
+    const proximo = atual.findIndex((n, i) => i > esvaziou && n > 0);
+    if (proximo < 0) return;
+    const alvo = ufsAtuais[proximo];
+    if (alvo) window.setTimeout(() => irPara(alvo), 250);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assinatura]);
 
   return (
     <AppLayout
