@@ -67,7 +67,7 @@ function BoletimReal() {
   const [valorMinimo, setValorMinimo] = useState("0");
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
-  const [ocultarVistas, setOcultarVistas] = useState(false);
+  const [ocultarVistas, setOcultarVistas] = useState(true);
 
   const { data: vistas } = useQuery({
     queryKey: ["visualizacoes-boletim-real", equipeId],
@@ -152,8 +152,16 @@ function BoletimReal() {
 
   const concluidas = resultados.filter((r) => !r.isPending).length;
   const carregando = consulta != null && concluidas < resultados.length;
-  const totalEncontrado = resultados.reduce((s, r) => s + (r.data?.licitacoes.length ?? 0), 0);
-  const comResultado = resultados.filter((r) => (r.data?.licitacoes.length ?? 0) > 0).length;
+
+  const visiveisPorUf = resultados.map((r) =>
+    (r.data?.licitacoes ?? []).filter((l) => !(ocultarVistas && euVi(l.chave))),
+  );
+  const totalEncontrado = visiveisPorUf.reduce((s, arr) => s + arr.length, 0);
+  const totalOculto = resultados.reduce(
+    (s, r) => s + (r.data?.licitacoes.length ?? 0),
+    0,
+  ) - totalEncontrado;
+  const comResultado = visiveisPorUf.filter((arr) => arr.length > 0).length;
   const falhas = resultados.flatMap((r, i) =>
     r.isError ? [consulta!.ufs[i]] : (r.data?.erros ?? []),
   );
@@ -336,7 +344,11 @@ function BoletimReal() {
           {consulta.valorMinimo > 0 ? moeda(consulta.valorMinimo) : "sem filtro"} ·{" "}
           {carregando
             ? `consultando ${concluidas}/${resultados.length} estados…`
-            : `${totalEncontrado} licitação(ões) em ${comResultado}/${resultados.length} estados`}
+            : `${totalEncontrado} licitação(ões) em ${comResultado}/${resultados.length} estados${
+                totalOculto > 0
+                  ? ` (${totalOculto} oculta${totalOculto > 1 ? "s" : ""} porque você já viu)`
+                  : ""
+              }`}
         </p>
       )}
 
@@ -346,10 +358,12 @@ function BoletimReal() {
         </p>
       )}
 
-      <div className="space-y-6">
+              <div className="space-y-6">
         {(consulta?.ufs ?? []).map((uf, i) => {
           const r = resultados[i];
           const itens = r?.data?.licitacoes ?? [];
+          const itensVisiveis = itens.filter((l) => !(ocultarVistas && euVi(l.chave)));
+          const ocultosAqui = itens.length - itensVisiveis.length;
           return (
             <section key={uf}>
               <h2 className="mb-2 flex flex-wrap items-center gap-2 border-b border-border pb-1 text-sm font-semibold">
@@ -364,19 +378,26 @@ function BoletimReal() {
                   </span>
                 ) : (
                   <span className="text-xs font-normal text-muted-foreground">
-                    ✓ concluído — {itens.length} encontrada(s)
+                    ✓ concluído — {itensVisiveis.length} encontrada(s)
+                    {ocultosAqui > 0 && (
+                      <span className="ml-1 text-muted-foreground/70">
+                        ({ocultosAqui} oculta{ocultosAqui > 1 ? "s" : ""} porque você já viu)
+                      </span>
+                    )}
                   </span>
                 )}
               </h2>
 
-              {!r?.isPending && itens.length === 0 && !r?.isError && (
+              {!r?.isPending && itensVisiveis.length === 0 && !r?.isError && (
                 <p className="text-sm italic text-muted-foreground">
-                  Nenhuma licitação encontrada nesse estado com os filtros atuais.
+                  {itens.length > 0
+                    ? "Todas as licitações deste estado já foram marcadas como vistas por você."
+                    : "Nenhuma licitação encontrada nesse estado com os filtros atuais."}
                 </p>
               )}
 
               <div className="space-y-4">
-                {itens
+                {itensVisiveis
                   .filter((l) => !(ocultarVistas && euVi(l.chave)))
                   .map((l) => {
                     const quem = vistaPor(l.chave);
