@@ -43,8 +43,12 @@ export const PALAVRAS_OBRAS_PADRAO =
 
 export type PropostaPncp = {
   chave: string;
+  numero: string;
   objeto: string;
   orgao: string;
+  orgao_cnpj: string | null;
+  ano: number | null;
+  sequencial: number | null;
   cidade: string;
   uf: string;
   modalidade: string;
@@ -57,6 +61,7 @@ export type PropostaPncp = {
   link: string | null;
   link_origem: string | null;
 };
+
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -73,10 +78,17 @@ function mapear(item: any, modalidadeId: number, ufPadrao: string): PropostaPncp
   const valor = Number(item.valorTotalEstimado ?? 0);
   return {
     chave: `${item.numeroControlePNCP ?? `${cnpj}-${ano}-${seq}`}|${modalidadeId}`,
+    numero: item.numeroCompra
+      ? `${item.numeroCompra}${ano ? `/${ano}` : ""}`
+      : String(item.numeroControlePNCP ?? `${cnpj}-${ano}-${seq}`),
     objeto: String(item.objetoCompra ?? "Objeto não informado"),
     orgao: String(
       orgaoInfo.razaosocial ?? orgaoInfo.razaoSocial ?? orgaoInfo.razaoSocialFormatada ?? "—",
     ),
+    orgao_cnpj: cnpj ? String(cnpj) : null,
+    ano: ano != null ? Number(ano) : null,
+    sequencial: seq != null ? Number(seq) : null,
+
     cidade: unidade.municipioNome ?? "—",
     uf: unidade.ufSigla ?? ufPadrao,
     modalidade: nomeModalidade(modalidadeId),

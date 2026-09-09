@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ExternalLink, Eye, EyeOff, Loader2, RefreshCw, Search } from "lucide-react";
+import { Download, ExternalLink, Eye, EyeOff, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { data as fData, dataHora, moeda } from "@/lib/formato";
+import { buscarItensPncp } from "@/lib/pncp.functions";
 import {
   ESTADOS_PADRAO,
   MODALIDADES_PADRAO,
@@ -21,7 +22,9 @@ import {
   TODOS_ESTADOS,
   buscarPropostasUf,
   testarConexaoPncp,
+  type PropostaPncp,
 } from "@/lib/pncp-proposta.functions";
+
 
 
 export const Route = createFileRoute("/boletim-real")({
@@ -58,6 +61,7 @@ type Consulta = {
 function BoletimReal() {
   const buscar = useServerFn(buscarPropostasUf);
   const testar = useServerFn(testarConexaoPncp);
+  const itensDe = useServerFn(buscarItensPncp);
   const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
 
@@ -68,6 +72,71 @@ function BoletimReal() {
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [ocultarVistas, setOcultarVistas] = useState(true);
+  const [acompanhadas, setAcompanhadas] = useState<string[]>([]);
+
+  const acompanhar = useMutation({
+    mutationFn: async (l: PropostaPncp) => {
+      if (!equipeId) throw new Error("Equipe não definida");
+      const { data: lic, error } = await supabase
+        .from("licitacoes")
+        .insert({
+          equipe_id: equipeId,
+          created_by: user?.id ?? null,
+          numero: l.numero,
+          modalidade: l.modalidade,
+          orgao: l.unidade ? `${l.orgao} — ${l.unidade}` : l.orgao,
+          objeto: l.objeto,
+          data_publicacao: l.data_publicacao ? l.data_publicacao.slice(0, 10) : null,
+          data_abertura: l.data_abertura_proposta ? l.data_abertura_proposta.slice(0, 10) : null,
+          data_sessao: l.data_abertura_proposta,
+          site_url: l.link,
+          processo_administrativo: l.processo,
+          valor_estimado: l.valor_estimado,
+          cidade: l.cidade,
+          uf: l.uf,
+          status: "publicada",
+          proximo_evento: "Encerramento do envio de propostas",
+          proximo_evento_data: l.encerramento_proposta,
+          fonte: "PNCP",
+          fonte_id: l.chave,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      if (l.orgao_cnpj && l.ano && l.sequencial) {
+        try {
+          const { itens } = await itensDe({
+            data: { cnpj: l.orgao_cnpj, ano: l.ano, sequencial: l.sequencial },
+          });
+          if (itens.length > 0) {
+            await supabase.from("licitacao_itens").insert(
+              itens.map((i: any) => ({
+                licitacao_id: lic.id,
+                equipe_id: equipeId,
+                numero_item: i.numero_item,
+                lote: i.lote,
+                descricao: i.descricao,
+                quantidade: i.quantidade,
+                unidade: i.unidade,
+                valor_unitario_estimado: i.valor_unitario_estimado,
+                valor_total_estimado: i.valor_total_estimado,
+              })),
+            );
+          }
+        } catch {
+          /* itens são complemento opcional */
+        }
+      }
+      return l.chave;
+    },
+    onSuccess: (chave) => {
+      setAcompanhadas((v) => [...v, chave]);
+      toast.success("Licitação adicionada ao acompanhamento.");
+    },
+    onError: () => toast.error("Não foi possível adicionar ao acompanhamento."),
+  });
+
 
   const { data: vistas } = useQuery({
     queryKey: ["visualizacoes-boletim-real", equipeId],
@@ -307,7 +376,7 @@ function BoletimReal() {
             />
           </div>
           <div className="space-y-1">
-            <Label>Valor estimado mínimo (R$)</Label>
+            <Label>Maior que (R$)</Label>
             <Input
               type="number"
               min={0}
@@ -510,6 +579,15 @@ function BoletimReal() {
                               </Button>
                             )}
                             <Button
+                              size="sm"
+                              disabled={acompanhar.isPending || acompanhadas.includes(l.chave)}
+                              onClick={() => acompanhar.mutate(l)}
+                            >
+                              <Download className="mr-1 h-3 w-3" />
+                              {acompanhadas.includes(l.chave) ? "Acompanhando" : "Acompanhar"}
+                            </Button>
+                            <Button
+
                               variant="outline"
                               size="sm"
                               onClick={() => marcarVista.mutate({ fonteId: l.chave, remover: vi })}
