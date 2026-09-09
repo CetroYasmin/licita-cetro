@@ -475,7 +475,13 @@ function BoletimReal() {
           const itensVisiveis = itens.filter((l) => !(ocultarVistas && euVi(l.chave)));
           const ocultosAqui = itens.length - itensVisiveis.length;
           return (
-            <section key={uf} className="scroll-mt-24">
+            <section
+              key={uf}
+              ref={(el) => {
+                secoesRef.current[uf] = el;
+              }}
+              className="scroll-mt-24"
+            >
               <h2 className="sticky top-16 z-20 -mx-4 mb-3 flex flex-wrap items-center gap-3 border-b border-border bg-background px-4 py-3 lg:-mx-8 lg:px-8 text-base font-semibold shadow-sm">
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-sm">
                   {uf}
@@ -652,6 +658,19 @@ function BoletimReal() {
                   })}
               </div>
 
+              {(() => {
+                const proximo = (consulta?.ufs ?? []).find(
+                  (_, j) => j > i && (visiveisPorUf[j]?.length ?? 0) > 0,
+                );
+                if (!proximo) return null;
+                return (
+                  <div className="mt-3 flex justify-end">
+                    <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
+                      Ir para {proximo} ↓
+                    </Button>
+                  </div>
+                );
+              })()}
             </section>
           );
         })}
