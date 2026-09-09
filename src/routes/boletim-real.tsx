@@ -213,7 +213,7 @@ function BoletimReal() {
       ufs: TODOS_ESTADOS.filter((u) => ufs.includes(u)),
       modalidades: MODALIDADES_PROPOSTA.filter((m) => modalidades.includes(m.id)).map((m) => m.id),
       dias: Number(dias) || 180,
-      valorMinimo: Number(valorMinimo) || 0,
+      valorMinimo: valorEmReais(valorMinimo),
       palavras,
     });
   };
@@ -396,11 +396,10 @@ function BoletimReal() {
           <div className="space-y-1">
             <Label>Maior que (R$)</Label>
             <Input
-              type="number"
-              min={0}
-              step={1000}
+              inputMode="numeric"
+              placeholder="R$ 0,00"
               value={valorMinimo}
-              onChange={(e) => setValorMinimo(e.target.value)}
+              onChange={(e) => setValorMinimo(mascaraMoeda(e.target.value))}
             />
           </div>
         </div>
@@ -453,7 +452,7 @@ function BoletimReal() {
           const ocultosAqui = itens.length - itensVisiveis.length;
           return (
             <section key={uf} className="scroll-mt-24">
-              <h2 className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-3 border-b border-border bg-background/95 py-3 backdrop-blur-sm text-base font-semibold shadow-sm">
+              <h2 className="sticky top-16 z-20 -mx-4 mb-3 flex flex-wrap items-center gap-3 border-b border-border bg-background px-4 py-3 lg:-mx-8 lg:px-8 text-base font-semibold shadow-sm">
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-sm">
                   {uf}
                 </span>
