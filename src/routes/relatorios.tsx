@@ -121,22 +121,24 @@ function Relatorios() {
             variant="outline"
             size="sm"
             onClick={() =>
-              baixarCsv(
-                "planilha-acompanhamento",
+              exportarPlanilhaAcompanhamento(
+                "LICITACOES_ESPERANDO_REALIZACAO",
                 planilha.map((l) => ({
-                  orgao: l.orgao ?? "",
-                  "modalidade / nº": `${l.modalidade ?? ""} ${l.numero ?? ""}`.trim(),
+                  orgao: (l.orgao ?? "").toUpperCase(),
+                  modalidade: `${l.modalidade ?? ""}${l.numero ? ` Nº ${l.numero}` : ""}`.trim(),
                   objeto: l.objeto ?? "",
-                  "qualificação técnica": l.qualificacao_tecnica ?? "",
-                  "estado / município": [l.cidade, l.uf].filter(Boolean).join("/"),
-                  "valor global estimado": l.valor_estimado ?? "",
-                  "data / hora": l.data_sessao ? dataHora(l.data_sessao) : "",
+                  qualificacao: l.qualificacao_tecnica ?? "",
+                  localizacao: [l.cidade, l.uf].filter(Boolean).join("/"),
+                  valor: l.valor_estimado ?? null,
+                  sigiloso: Boolean(l.orcamento_sigiloso),
+                  dataSessao: l.data_sessao ?? null,
                 })),
               )
             }
           >
             <Download className="mr-2 h-4 w-4" /> Exportar planilha
           </Button>
+
         </div>
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
