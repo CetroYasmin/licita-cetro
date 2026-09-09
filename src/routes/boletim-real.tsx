@@ -579,6 +579,15 @@ function BoletimReal() {
                               </Button>
                             )}
                             <Button
+                              size="sm"
+                              disabled={acompanhar.isPending || acompanhadas.includes(l.chave)}
+                              onClick={() => acompanhar.mutate(l)}
+                            >
+                              <Download className="mr-1 h-3 w-3" />
+                              {acompanhadas.includes(l.chave) ? "Acompanhando" : "Acompanhar"}
+                            </Button>
+                            <Button
+
                               variant="outline"
                               size="sm"
                               onClick={() => marcarVista.mutate({ fonteId: l.chave, remover: vi })}
