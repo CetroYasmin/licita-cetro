@@ -7,6 +7,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { dataHora, moeda, numero } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
+import { exportarPlanilhaAcompanhamento } from "@/lib/planilha";
+
 
 export const Route = createFileRoute("/relatorios")({
   head: () => ({
