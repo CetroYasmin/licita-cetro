@@ -58,6 +58,24 @@ type Consulta = {
   palavras: string;
 };
 
+/** Converte o texto digitado em centavos e devolve o valor em reais. */
+function valorEmReais(mascara: string): number {
+  const digitos = mascara.replace(/\D/g, "");
+  return digitos ? Number(digitos) / 100 : 0;
+}
+
+/** Formata o que foi digitado como moeda brasileira enquanto o usuário escreve. */
+function mascaraMoeda(bruto: string): string {
+  const digitos = bruto.replace(/\D/g, "").replace(/^0+/, "");
+  if (!digitos) return "";
+  return (Number(digitos) / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+}
+
+
 function BoletimReal() {
   const buscar = useServerFn(buscarPropostasUf);
   const testar = useServerFn(testarConexaoPncp);
