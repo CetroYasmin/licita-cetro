@@ -43,8 +43,12 @@ export const PALAVRAS_OBRAS_PADRAO =
 
 export type PropostaPncp = {
   chave: string;
+  numero: string;
   objeto: string;
   orgao: string;
+  orgao_cnpj: string | null;
+  ano: number | null;
+  sequencial: number | null;
   cidade: string;
   uf: string;
   modalidade: string;
@@ -57,6 +61,7 @@ export type PropostaPncp = {
   link: string | null;
   link_origem: string | null;
 };
+
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
