@@ -376,7 +376,7 @@ function BoletimReal() {
             />
           </div>
           <div className="space-y-1">
-            <Label>Valor estimado mínimo (R$)</Label>
+            <Label>Maior que (R$)</Label>
             <Input
               type="number"
               min={0}
