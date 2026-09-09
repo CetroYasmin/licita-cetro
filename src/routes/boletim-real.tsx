@@ -68,7 +68,7 @@ function BoletimReal() {
   const [ufs, setUfs] = useState<string[]>([...ESTADOS_PADRAO]);
   const [modalidades, setModalidades] = useState<number[]>([...MODALIDADES_PADRAO]);
   const [dias, setDias] = useState("180");
-  const [valorMinimo, setValorMinimo] = useState("0");
+  const [valorMinimo, setValorMinimo] = useState("");
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
   const [ocultarVistas, setOcultarVistas] = useState(true);
