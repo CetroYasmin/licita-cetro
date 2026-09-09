@@ -40,7 +40,7 @@ function altura(texto: string, largura: number) {
   return Math.max(42, Math.min(400, linhas * 21));
 }
 
-const LARGURAS: Record<string, number> = {
+const LARGURAS = {
   A: 1.55,
   B: 30,
   C: 42.45,
@@ -49,7 +49,7 @@ const LARGURAS: Record<string, number> = {
   F: 43.1,
   G: 26.66,
   H: 17.9,
-};
+} as const;
 
 export async function exportarPlanilhaAcompanhamento(nome: string, linhas: LinhaPlanilha[]) {
   const { Workbook } = await import("exceljs");
@@ -151,8 +151,8 @@ export async function exportarPlanilhaAcompanhamento(nome: string, linhas: Linha
       }
     }
 
-    ws.getRow(topo).height = altura(l.objeto ?? "", LARGURAS.D);
-    ws.getRow(base).height = altura(l.qualificacao || " ", LARGURAS.D);
+    ws.getRow(topo).height = altura(l.objeto ?? "", LARGURAS["D"]);
+    ws.getRow(base).height = altura(l.qualificacao || " ", LARGURAS["D"]);
     r += 2;
   }
 
