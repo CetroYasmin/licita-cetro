@@ -23,7 +23,7 @@ const NAV = [
   { to: "/licitacoes", label: "Licitações", icon: Gavel },
   { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
-  { to: "/boletim-real", label: "Boletim real PNCP", icon: Radar },
+  { to: "/boletim-real", label: "Boletim", icon: Radar },
   { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/equipe", label: "Equipe", icon: Users },
