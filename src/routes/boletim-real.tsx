@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { data as fData, dataHora, moeda } from "@/lib/formato";
+import { buscarItensPncp } from "@/lib/pncp.functions";
 import {
   ESTADOS_PADRAO,
   MODALIDADES_PADRAO,
@@ -21,7 +22,9 @@ import {
   TODOS_ESTADOS,
   buscarPropostasUf,
   testarConexaoPncp,
+  type PropostaPncp,
 } from "@/lib/pncp-proposta.functions";
+
 
 
 export const Route = createFileRoute("/boletim-real")({
