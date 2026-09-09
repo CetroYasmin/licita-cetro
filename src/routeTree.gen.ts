@@ -14,17 +14,11 @@ import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoletimRealRouteImport } from './routes/boletim-real'
-import { Route as BoletinsRouteImport } from './routes/boletins'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
-import { Route as PortaisRouteImport } from './routes/portais'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
-import { Route as MonitoramentoIndexRouteImport } from './routes/monitoramento.index'
-import { Route as MonitoramentoLicitacoesRouteImport } from './routes/monitoramento.licitacoes'
-import { Route as MonitoramentoPalavrasRouteImport } from './routes/monitoramento.palavras'
-import { Route as MonitoramentoChatIdRouteImport } from './routes/monitoramento.chat.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,11 +45,6 @@ const BoletimRealRoute = BoletimRealRouteImport.update({
   path: '/boletim-real',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BoletinsRoute = BoletinsRouteImport.update({
-  id: '/boletins',
-  path: '/boletins',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EquipeRoute = EquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
@@ -64,11 +53,6 @@ const EquipeRoute = EquipeRouteImport.update({
 const PesquisaRoute = PesquisaRouteImport.update({
   id: '/pesquisa',
   path: '/pesquisa',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PortaisRoute = PortaisRouteImport.update({
-  id: '/portais',
-  path: '/portais',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -86,26 +70,6 @@ const LicitacoesIdRoute = LicitacoesIdRouteImport.update({
   path: '/licitacoes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MonitoramentoIndexRoute = MonitoramentoIndexRouteImport.update({
-  id: '/monitoramento/',
-  path: '/monitoramento/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonitoramentoLicitacoesRoute = MonitoramentoLicitacoesRouteImport.update({
-  id: '/monitoramento/licitacoes',
-  path: '/monitoramento/licitacoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonitoramentoPalavrasRoute = MonitoramentoPalavrasRouteImport.update({
-  id: '/monitoramento/palavras',
-  path: '/monitoramento/palavras',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonitoramentoChatIdRoute = MonitoramentoChatIdRouteImport.update({
-  id: '/monitoramento/chat/$id',
-  path: '/monitoramento/chat/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -113,17 +77,11 @@ export interface FileRoutesByFullPath {
   '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
-  '/boletins': typeof BoletinsRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
-  '/portais': typeof PortaisRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
-  '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
-  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
-  '/monitoramento/': typeof MonitoramentoIndexRoute
-  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,17 +89,11 @@ export interface FileRoutesByTo {
   '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
-  '/boletins': typeof BoletinsRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
-  '/portais': typeof PortaisRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
-  '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
-  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes': typeof LicitacoesIndexRoute
-  '/monitoramento': typeof MonitoramentoIndexRoute
-  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -150,17 +102,11 @@ export interface FileRoutesById {
   '/alertas': typeof AlertasRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
-  '/boletins': typeof BoletinsRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
-  '/portais': typeof PortaisRoute
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
-  '/monitoramento/licitacoes': typeof MonitoramentoLicitacoesRoute
-  '/monitoramento/palavras': typeof MonitoramentoPalavrasRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
-  '/monitoramento/': typeof MonitoramentoIndexRoute
-  '/monitoramento/chat/$id': typeof MonitoramentoChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,17 +116,11 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auth'
     | '/boletim-real'
-    | '/boletins'
     | '/equipe'
     | '/pesquisa'
-    | '/portais'
     | '/relatorios'
     | '/licitacoes/$id'
-    | '/monitoramento/licitacoes'
-    | '/monitoramento/palavras'
     | '/licitacoes/'
-    | '/monitoramento/'
-    | '/monitoramento/chat/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,17 +128,11 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auth'
     | '/boletim-real'
-    | '/boletins'
     | '/equipe'
     | '/pesquisa'
-    | '/portais'
     | '/relatorios'
     | '/licitacoes/$id'
-    | '/monitoramento/licitacoes'
-    | '/monitoramento/palavras'
     | '/licitacoes'
-    | '/monitoramento'
-    | '/monitoramento/chat/$id'
   id:
     | '__root__'
     | '/'
@@ -206,17 +140,11 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auth'
     | '/boletim-real'
-    | '/boletins'
     | '/equipe'
     | '/pesquisa'
-    | '/portais'
     | '/relatorios'
     | '/licitacoes/$id'
-    | '/monitoramento/licitacoes'
-    | '/monitoramento/palavras'
     | '/licitacoes/'
-    | '/monitoramento/'
-    | '/monitoramento/chat/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -225,17 +153,11 @@ export interface RootRouteChildren {
   AlertasRoute: typeof AlertasRoute
   AuthRoute: typeof AuthRoute
   BoletimRealRoute: typeof BoletimRealRoute
-  BoletinsRoute: typeof BoletinsRoute
   EquipeRoute: typeof EquipeRoute
   PesquisaRoute: typeof PesquisaRoute
-  PortaisRoute: typeof PortaisRoute
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
-  MonitoramentoLicitacoesRoute: typeof MonitoramentoLicitacoesRoute
-  MonitoramentoPalavrasRoute: typeof MonitoramentoPalavrasRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
-  MonitoramentoIndexRoute: typeof MonitoramentoIndexRoute
-  MonitoramentoChatIdRoute: typeof MonitoramentoChatIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -275,13 +197,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoletimRealRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/boletins': {
-      id: '/boletins'
-      path: '/boletins'
-      fullPath: '/boletins'
-      preLoaderRoute: typeof BoletinsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/equipe': {
       id: '/equipe'
       path: '/equipe'
@@ -294,13 +209,6 @@ declare module '@tanstack/react-router' {
       path: '/pesquisa'
       fullPath: '/pesquisa'
       preLoaderRoute: typeof PesquisaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/portais': {
-      id: '/portais'
-      path: '/portais'
-      fullPath: '/portais'
-      preLoaderRoute: typeof PortaisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -324,34 +232,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LicitacoesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/monitoramento/': {
-      id: '/monitoramento/'
-      path: '/monitoramento'
-      fullPath: '/monitoramento/'
-      preLoaderRoute: typeof MonitoramentoIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/monitoramento/licitacoes': {
-      id: '/monitoramento/licitacoes'
-      path: '/monitoramento/licitacoes'
-      fullPath: '/monitoramento/licitacoes'
-      preLoaderRoute: typeof MonitoramentoLicitacoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/monitoramento/palavras': {
-      id: '/monitoramento/palavras'
-      path: '/monitoramento/palavras'
-      fullPath: '/monitoramento/palavras'
-      preLoaderRoute: typeof MonitoramentoPalavrasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/monitoramento/chat/$id': {
-      id: '/monitoramento/chat/$id'
-      path: '/monitoramento/chat/$id'
-      fullPath: '/monitoramento/chat/$id'
-      preLoaderRoute: typeof MonitoramentoChatIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -361,17 +241,11 @@ const rootRouteChildren: RootRouteChildren = {
   AlertasRoute: AlertasRoute,
   AuthRoute: AuthRoute,
   BoletimRealRoute: BoletimRealRoute,
-  BoletinsRoute: BoletinsRoute,
   EquipeRoute: EquipeRoute,
   PesquisaRoute: PesquisaRoute,
-  PortaisRoute: PortaisRoute,
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
-  MonitoramentoLicitacoesRoute: MonitoramentoLicitacoesRoute,
-  MonitoramentoPalavrasRoute: MonitoramentoPalavrasRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
-  MonitoramentoIndexRoute: MonitoramentoIndexRoute,
-  MonitoramentoChatIdRoute: MonitoramentoChatIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
