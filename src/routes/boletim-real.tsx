@@ -152,8 +152,16 @@ function BoletimReal() {
 
   const concluidas = resultados.filter((r) => !r.isPending).length;
   const carregando = consulta != null && concluidas < resultados.length;
-  const totalEncontrado = resultados.reduce((s, r) => s + (r.data?.licitacoes.length ?? 0), 0);
-  const comResultado = resultados.filter((r) => (r.data?.licitacoes.length ?? 0) > 0).length;
+
+  const visiveisPorUf = resultados.map((r) =>
+    (r.data?.licitacoes ?? []).filter((l) => !(ocultarVistas && euVi(l.chave))),
+  );
+  const totalEncontrado = visiveisPorUf.reduce((s, arr) => s + arr.length, 0);
+  const totalOculto = resultados.reduce(
+    (s, r) => s + (r.data?.licitacoes.length ?? 0),
+    0,
+  ) - totalEncontrado;
+  const comResultado = visiveisPorUf.filter((arr) => arr.length > 0).length;
   const falhas = resultados.flatMap((r, i) =>
     r.isError ? [consulta!.ufs[i]] : (r.data?.erros ?? []),
   );
