@@ -157,9 +157,9 @@ export async function exportarPlanilhaAcompanhamento(nome: string, linhas: Linha
         const partes = Object.fromEntries(
           fmt.formatToParts(d).map((p) => [p.type, p.value]),
         );
-        dataCel.value = `${partes.day}/${partes.month}/${partes.year}`;
-        const hora = partes.hour === "24" ? "00" : partes.hour;
-        horaCel.value = `${hora}:${partes.minute}`;
+        dataCel.value = `${partes["day"]}/${partes["month"]}/${partes["year"]}`;
+        const hora = partes["hour"] === "24" ? "00" : partes["hour"];
+        horaCel.value = `${hora}:${partes["minute"]}`;
       }
     }
 
