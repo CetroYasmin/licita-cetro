@@ -83,9 +83,9 @@ function BoletimReal() {
   const { equipeId, user, perfil } = useAuth();
   const qc = useQueryClient();
 
-  const [ufs, setUfs] = useState<string[]>([...ESTADOS_PADRAO]);
-  const [modalidades, setModalidades] = useState<number[]>([...MODALIDADES_PADRAO]);
-  const [dias, setDias] = useState("180");
+  const [ufs, setUfs] = useState<string[]>([]);
+  const [modalidades, setModalidades] = useState<number[]>([]);
+  const [dias, setDias] = useState("90");
   const [valorMinimo, setValorMinimo] = useState("");
   const [palavras, setPalavras] = useState(PALAVRAS_OBRAS_PADRAO);
   const [consulta, setConsulta] = useState<Consulta | null>(null);
