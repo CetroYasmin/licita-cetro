@@ -140,7 +140,7 @@ function Relatorios() {
                   localizacao: [l.cidade, l.uf].filter(Boolean).join("/"),
                   valor: l.valor_estimado ?? null,
                   sigiloso: Boolean(l.orcamento_sigiloso),
-                  dataSessao: l.data_sessao ?? null,
+                  dataSessao: sessaoDe(l),
                 })),
               )
             }
@@ -180,7 +180,7 @@ function Relatorios() {
                 <td className="p-3 text-right">
                   {l.valor_estimado != null ? moeda(l.valor_estimado) : "—"}
                 </td>
-                <td className="p-3">{l.data_sessao ? dataHora(l.data_sessao) : "—"}</td>
+                <td className="p-3">{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</td>
               </tr>
             ))}
             {planilha.length === 0 && (
