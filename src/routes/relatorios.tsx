@@ -52,14 +52,35 @@ function Relatorios() {
   /** Data/hora real da sessão de disputa (próximo evento tem prioridade). */
   const sessaoDe = (l: any): string | null => l.proximo_evento_data ?? l.data_sessao ?? null;
 
+  /** Remove duplicadas: mesmo objeto e mesmo valor estimado.
+   *  Mantém a que já tem qualificação técnica preenchida. */
+  const chaveDuplicada = (l: any) =>
+    `${(l.objeto ?? "").trim().toLowerCase()}|${l.valor_estimado ?? ""}`;
+
+  const unicas = (() => {
+    const mapa = new Map<string, any>();
+    for (const l of lics) {
+      const k = chaveDuplicada(l);
+      const atual = mapa.get(k);
+      if (!atual) {
+        mapa.set(k, l);
+        continue;
+      }
+      const temQual = (x: any) => Boolean((x.qualificacao_tecnica ?? "").trim());
+      if (!temQual(atual) && temQual(l)) mapa.set(k, l);
+    }
+    return [...mapa.values()];
+  })();
+
   /** Planilha operacional: sessões mais próximas primeiro. */
-  const planilha = [...lics].sort((a, b) => {
+  const planilha = [...unicas].sort((a, b) => {
     const sa = sessaoDe(a);
     const sb = sessaoDe(b);
     const ta = sa ? new Date(sa).getTime() : Number.POSITIVE_INFINITY;
     const tb = sb ? new Date(sb).getTime() : Number.POSITIVE_INFINITY;
     return ta - tb;
   });
+
 
   const porOrgao = new Map<string, { total: number; vencidas: number; valor: number }>();
   for (const l of lics) {
