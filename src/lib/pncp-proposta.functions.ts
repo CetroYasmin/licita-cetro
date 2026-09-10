@@ -103,6 +103,29 @@ function mapear(item: any, modalidadeId: number, ufPadrao: string): PropostaPncp
   };
 }
 
+/**
+ * Fila global: o PNCP responde 429 ("Limite de requisições excedido") quando
+ * recebe consultas em rajada. Todas as chamadas passam por aqui, uma por vez,
+ * com intervalo mínimo entre elas.
+ */
+const INTERVALO_MINIMO = 1100;
+let ultimaChamada = 0;
+let fila: Promise<unknown> = Promise.resolve();
+
+function enfileirar<T>(tarefa: () => Promise<T>): Promise<T> {
+  const proxima = fila.then(async () => {
+    const espera_ms = ultimaChamada + INTERVALO_MINIMO - Date.now();
+    if (espera_ms > 0) await espera(espera_ms);
+    try {
+      return await tarefa();
+    } finally {
+      ultimaChamada = Date.now();
+    }
+  });
+  fila = proxima.catch(() => undefined);
+  return proxima as Promise<T>;
+}
+
 /** Uma consulta (UF + modalidade), com novas tentativas espaçadas contra o bloqueio do PNCP. */
 async function consultar(
   uf: string,
@@ -110,28 +133,41 @@ async function consultar(
   dataFinal: string,
 ): Promise<{ itens: any[]; erro: string | null }> {
   const url = `${BASE}?dataFinal=${dataFinal}&codigoModalidadeContratacao=${modalidadeId}&uf=${uf}&pagina=1&tamanhoPagina=50`;
-  for (let tentativa = 1; tentativa <= 5; tentativa++) {
+  const TENTATIVAS = 6;
+  for (let tentativa = 1; tentativa <= TENTATIVAS; tentativa++) {
     try {
-      const resp = await fetch(url, {
-        headers: CABECALHOS,
-        signal: AbortSignal.timeout(20000),
-      });
+      const resp = await enfileirar(() =>
+        fetch(url, { headers: CABECALHOS, signal: AbortSignal.timeout(20000) }),
+      );
       if (resp.status === 204) return { itens: [], erro: null };
+      if (resp.status === 429 || resp.status === 503) {
+        const cabecalho = Number(resp.headers.get("retry-after") ?? 0);
+        const pausa = cabecalho > 0 ? cabecalho * 1000 : 1500 * 2 ** (tentativa - 1);
+        if (tentativa === TENTATIVAS) {
+          return {
+            itens: [],
+            erro: `${uf} / ${nomeModalidade(modalidadeId)}: limite de consultas do PNCP — tente novamente em instantes`,
+          };
+        }
+        await espera(Math.min(pausa, 12000) + Math.floor(Math.random() * 400));
+        continue;
+      }
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const json = (await resp.json()) as { data?: unknown[] };
       return { itens: (json.data ?? []) as any[], erro: null };
     } catch (e: any) {
-      if (tentativa === 5) {
+      if (tentativa === TENTATIVAS) {
         return {
           itens: [],
           erro: `${uf} / ${nomeModalidade(modalidadeId)}: ${String(e?.message ?? "falha")}`,
         };
       }
-      await espera(700 * tentativa + Math.floor(Math.random() * 400));
+      await espera(900 * tentativa + Math.floor(Math.random() * 400));
     }
   }
   return { itens: [], erro: null };
 }
+
 
 function bate(texto: string, termos: string[]): boolean {
   if (termos.length === 0) return true;
