@@ -49,10 +49,15 @@ function Relatorios() {
   const totalDisputado = participadas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
+  /** Data/hora real da sessão de disputa (próximo evento tem prioridade). */
+  const sessaoDe = (l: any): string | null => l.proximo_evento_data ?? l.data_sessao ?? null;
+
   /** Planilha operacional: sessões mais próximas primeiro. */
   const planilha = [...lics].sort((a, b) => {
-    const ta = a.data_sessao ? new Date(a.data_sessao).getTime() : Number.POSITIVE_INFINITY;
-    const tb = b.data_sessao ? new Date(b.data_sessao).getTime() : Number.POSITIVE_INFINITY;
+    const sa = sessaoDe(a);
+    const sb = sessaoDe(b);
+    const ta = sa ? new Date(sa).getTime() : Number.POSITIVE_INFINITY;
+    const tb = sb ? new Date(sb).getTime() : Number.POSITIVE_INFINITY;
     return ta - tb;
   });
 
