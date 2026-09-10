@@ -49,10 +49,15 @@ function Relatorios() {
   const totalDisputado = participadas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
+  /** Data/hora real da sessão de disputa (próximo evento tem prioridade). */
+  const sessaoDe = (l: any): string | null => l.proximo_evento_data ?? l.data_sessao ?? null;
+
   /** Planilha operacional: sessões mais próximas primeiro. */
   const planilha = [...lics].sort((a, b) => {
-    const ta = a.data_sessao ? new Date(a.data_sessao).getTime() : Number.POSITIVE_INFINITY;
-    const tb = b.data_sessao ? new Date(b.data_sessao).getTime() : Number.POSITIVE_INFINITY;
+    const sa = sessaoDe(a);
+    const sb = sessaoDe(b);
+    const ta = sa ? new Date(sa).getTime() : Number.POSITIVE_INFINITY;
+    const tb = sb ? new Date(sb).getTime() : Number.POSITIVE_INFINITY;
     return ta - tb;
   });
 
@@ -135,7 +140,7 @@ function Relatorios() {
                   localizacao: [l.cidade, l.uf].filter(Boolean).join("/"),
                   valor: l.valor_estimado ?? null,
                   sigiloso: Boolean(l.orcamento_sigiloso),
-                  dataSessao: l.data_sessao ?? null,
+                  dataSessao: sessaoDe(l),
                 })),
               )
             }
@@ -175,7 +180,7 @@ function Relatorios() {
                 <td className="p-3 text-right">
                   {l.valor_estimado != null ? moeda(l.valor_estimado) : "—"}
                 </td>
-                <td className="p-3">{l.data_sessao ? dataHora(l.data_sessao) : "—"}</td>
+                <td className="p-3">{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</td>
               </tr>
             ))}
             {planilha.length === 0 && (
