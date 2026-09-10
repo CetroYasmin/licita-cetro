@@ -145,9 +145,21 @@ export async function exportarPlanilhaAcompanhamento(nome: string, linhas: Linha
     if (l.dataSessao) {
       const d = new Date(l.dataSessao);
       if (!Number.isNaN(d.getTime())) {
-        dataCel.value = d;
-        dataCel.numFmt = "dd/mm/yyyy";
-        horaCel.value = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        const fmt = new Intl.DateTimeFormat("pt-BR", {
+          timeZone: "America/Sao_Paulo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        const partes = Object.fromEntries(
+          fmt.formatToParts(d).map((p) => [p.type, p.value]),
+        );
+        dataCel.value = `${partes["day"]}/${partes["month"]}/${partes["year"]}`;
+        const hora = partes["hour"] === "24" ? "00" : partes["hour"];
+        horaCel.value = `${hora}:${partes["minute"]}`;
       }
     }
 
