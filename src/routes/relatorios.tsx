@@ -50,9 +50,11 @@ function Relatorios() {
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
   /** Planilha operacional: sessões mais próximas primeiro. */
-  const planilha = [...lics].sort((a, b) =>
-    String(a.data_sessao ?? "9999").localeCompare(String(b.data_sessao ?? "9999")),
-  );
+  const planilha = [...lics].sort((a, b) => {
+    const ta = a.data_sessao ? new Date(a.data_sessao).getTime() : Number.POSITIVE_INFINITY;
+    const tb = b.data_sessao ? new Date(b.data_sessao).getTime() : Number.POSITIVE_INFINITY;
+    return ta - tb;
+  });
 
   const porOrgao = new Map<string, { total: number; vencidas: number; valor: number }>();
   for (const l of lics) {
