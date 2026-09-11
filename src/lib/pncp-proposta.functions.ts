@@ -182,13 +182,24 @@ export const testarConexaoPncp = createServerFn({ method: "POST" }).handler(asyn
   const dataFinal = d.toISOString().slice(0, 10).replace(/-/g, "");
   const inicio = Date.now();
   try {
-    const resp = await fetch(
-      `${BASE}?dataFinal=${dataFinal}&codigoModalidadeContratacao=6&uf=DF&pagina=1&tamanhoPagina=5`,
-      { headers: CABECALHOS, signal: AbortSignal.timeout(20000) },
+    const resp = await enfileirar(() =>
+      fetch(
+        `${BASE}?dataFinal=${dataFinal}&codigoModalidadeContratacao=6&uf=DF&pagina=1&tamanhoPagina=5`,
+        { headers: CABECALHOS, signal: AbortSignal.timeout(20000) },
+      ),
     );
     const ms = Date.now() - inicio;
     if (resp.status === 204) return { ok: true, ms, registros: 0, status: 204, mensagem: null };
+    if (resp.status === 429)
+      return {
+        ok: false,
+        ms,
+        registros: 0,
+        status: 429,
+        mensagem: "limite de consultas do PNCP; aguarde alguns instantes",
+      };
     if (!resp.ok) return { ok: false, ms, registros: 0, status: resp.status, mensagem: null };
+
     const json = (await resp.json()) as { totalRegistros?: number; data?: unknown[] };
     return {
       ok: true,

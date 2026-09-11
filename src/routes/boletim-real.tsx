@@ -208,6 +208,7 @@ function BoletimReal() {
 
   const gerar = () => {
     if (ufs.length === 0 || modalidades.length === 0) return;
+    setLiberados(2);
     setConsulta({
       chave: Date.now(),
       ufs: TODOS_ESTADOS.filter((u) => ufs.includes(u)),
@@ -218,10 +219,14 @@ function BoletimReal() {
     });
   };
 
+  // O PNCP recusa rajadas de consultas (HTTP 429). Os estados entram em fila:
+  // no máximo dois de cada vez, liberando o próximo conforme os anteriores terminam.
+  const [liberados, setLiberados] = useState(2);
+
   const resultados = useQueries({
-    queries: (consulta?.ufs ?? []).map((uf) => ({
+    queries: (consulta?.ufs ?? []).map((uf, i) => ({
       queryKey: ["boletim-real", consulta?.chave, uf],
-      enabled: Boolean(consulta),
+      enabled: Boolean(consulta) && i < liberados,
       staleTime: 5 * 60 * 1000,
       retry: 1,
       queryFn: async () =>
@@ -237,8 +242,16 @@ function BoletimReal() {
     })),
   });
 
-  const concluidas = resultados.filter((r) => !r.isPending).length;
-  const carregando = consulta != null && concluidas < resultados.length;
+  const finalizadas = resultados.filter((r) => r.isSuccess || r.isError).length;
+  const concluidas = finalizadas;
+  const carregando = consulta != null && finalizadas < resultados.length;
+
+  useEffect(() => {
+    if (!consulta) return;
+    const alvo = Math.min(finalizadas + 2, consulta.ufs.length);
+    setLiberados((v) => (alvo > v ? alvo : v));
+  }, [finalizadas, consulta]);
+
 
   const visiveisPorUf = resultados.map((r) =>
     (r.data?.licitacoes ?? []).filter((l) => !(ocultarVistas && euVi(l.chave))),
