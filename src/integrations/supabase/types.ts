@@ -434,6 +434,10 @@ export type Database = {
           aprovacao_autor_nome: string | null
           aprovacao_em: string | null
           aprovacao_observacao: string | null
+          aprovacao_resposta: string | null
+          aprovacao_resposta_autor_nome: string | null
+          aprovacao_resposta_em: string | null
+          aprovacao_resposta_solicitada: boolean
           aprovacao_status: string
           cidade: string | null
           created_at: string
@@ -483,6 +487,10 @@ export type Database = {
           aprovacao_autor_nome?: string | null
           aprovacao_em?: string | null
           aprovacao_observacao?: string | null
+          aprovacao_resposta?: string | null
+          aprovacao_resposta_autor_nome?: string | null
+          aprovacao_resposta_em?: string | null
+          aprovacao_resposta_solicitada?: boolean
           aprovacao_status?: string
           cidade?: string | null
           created_at?: string
@@ -532,6 +540,10 @@ export type Database = {
           aprovacao_autor_nome?: string | null
           aprovacao_em?: string | null
           aprovacao_observacao?: string | null
+          aprovacao_resposta?: string | null
+          aprovacao_resposta_autor_nome?: string | null
+          aprovacao_resposta_em?: string | null
+          aprovacao_resposta_solicitada?: boolean
           aprovacao_status?: string
           cidade?: string | null
           created_at?: string
