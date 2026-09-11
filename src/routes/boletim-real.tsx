@@ -208,6 +208,7 @@ function BoletimReal() {
 
   const gerar = () => {
     if (ufs.length === 0 || modalidades.length === 0) return;
+    setLiberados(2);
     setConsulta({
       chave: Date.now(),
       ufs: TODOS_ESTADOS.filter((u) => ufs.includes(u)),
