@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AlertasRouteImport } from './routes/alertas'
+import { Route as AprovacaoRouteImport } from './routes/aprovacao'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoletimRealRouteImport } from './routes/boletim-real'
 import { Route as EquipeRouteImport } from './routes/equipe'
@@ -33,6 +34,11 @@ const AgendaRoute = AgendaRouteImport.update({
 const AlertasRoute = AlertasRouteImport.update({
   id: '/alertas',
   path: '/alertas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AprovacaoRoute = AprovacaoRouteImport.update({
+  id: '/aprovacao',
+  path: '/aprovacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
+  '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
   '/equipe': typeof EquipeRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
+  '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
   '/equipe': typeof EquipeRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
+  '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
   '/equipe': typeof EquipeRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/alertas'
+    | '/aprovacao'
     | '/auth'
     | '/boletim-real'
     | '/equipe'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/alertas'
+    | '/aprovacao'
     | '/auth'
     | '/boletim-real'
     | '/equipe'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/agenda'
     | '/alertas'
+    | '/aprovacao'
     | '/auth'
     | '/boletim-real'
     | '/equipe'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   AlertasRoute: typeof AlertasRoute
+  AprovacaoRoute: typeof AprovacaoRoute
   AuthRoute: typeof AuthRoute
   BoletimRealRoute: typeof BoletimRealRoute
   EquipeRoute: typeof EquipeRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/alertas'
       fullPath: '/alertas'
       preLoaderRoute: typeof AlertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aprovacao': {
+      id: '/aprovacao'
+      path: '/aprovacao'
+      fullPath: '/aprovacao'
+      preLoaderRoute: typeof AprovacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   AlertasRoute: AlertasRoute,
+  AprovacaoRoute: AprovacaoRoute,
   AuthRoute: AuthRoute,
   BoletimRealRoute: BoletimRealRoute,
   EquipeRoute: EquipeRoute,

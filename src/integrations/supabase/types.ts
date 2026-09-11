@@ -430,6 +430,11 @@ export type Database = {
       }
       licitacoes: {
         Row: {
+          aprovacao_autor_id: string | null
+          aprovacao_autor_nome: string | null
+          aprovacao_em: string | null
+          aprovacao_observacao: string | null
+          aprovacao_status: string
           cidade: string | null
           created_at: string
           created_by: string | null
@@ -474,6 +479,11 @@ export type Database = {
           valor_ofertado: number | null
         }
         Insert: {
+          aprovacao_autor_id?: string | null
+          aprovacao_autor_nome?: string | null
+          aprovacao_em?: string | null
+          aprovacao_observacao?: string | null
+          aprovacao_status?: string
           cidade?: string | null
           created_at?: string
           created_by?: string | null
@@ -518,6 +528,11 @@ export type Database = {
           valor_ofertado?: number | null
         }
         Update: {
+          aprovacao_autor_id?: string | null
+          aprovacao_autor_nome?: string | null
+          aprovacao_em?: string | null
+          aprovacao_observacao?: string | null
+          aprovacao_status?: string
           cidade?: string | null
           created_at?: string
           created_by?: string | null

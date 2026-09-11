@@ -8,6 +8,7 @@ import {
   Bell,
   Radar,
   BarChart3,
+  BadgeCheck,
   Users,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ const NAV = [
   { to: "/boletim-real", label: "Boletim", icon: Radar },
   { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { to: "/aprovacao", label: "Aprovação", icon: BadgeCheck },
   { to: "/equipe", label: "Equipe", icon: Users },
 ] as const;
 
