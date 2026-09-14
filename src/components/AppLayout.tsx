@@ -49,6 +49,7 @@ export function AppLayout({
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
+  const [recolhida, setRecolhida] = useState(false);
 
   const { data: naoLidas } = useQuery({
     queryKey: ["alertas-nao-lidas", equipeId],
