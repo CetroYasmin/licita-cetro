@@ -401,6 +401,17 @@ function ListaLicitacoes() {
                         {l.numero}
                       </Link>
                       <Badge variant="outline" className={corDoStatus(l.status)}>{l.status}</Badge>
+                      {l.aprovacao_status === "aprovada" && (
+                        <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+                          Diretoria: aprovada
+                        </Badge>
+                      )}
+                      {l.aprovacao_status === "reprovada" && (
+                        <Badge variant="destructive">Diretoria: reprovada</Badge>
+                      )}
+                      {l.aprovacao_resposta_solicitada && (
+                        <Badge variant="secondary">Diretoria aguarda resposta</Badge>
+                      )}
                       {l.modalidade && <Badge variant="secondary">{l.modalidade}</Badge>}
                       {l.natureza && <Badge variant="outline">{l.natureza}</Badge>}
                       {(l.tags ?? []).map((t: string) => (

@@ -179,6 +179,7 @@ function Relatorios() {
               <th className="p-3">Estado / Município</th>
               <th className="p-3 text-right">Valor global estimado</th>
               <th className="p-3">Data / Hora</th>
+              <th className="p-3">Diretoria</th>
             </tr>
           </thead>
           <tbody className="divide-y align-top">
