@@ -179,6 +179,7 @@ function Relatorios() {
               <th className="p-3">Estado / Município</th>
               <th className="p-3 text-right">Valor global estimado</th>
               <th className="p-3">Data / Hora</th>
+              <th className="p-3">Diretoria</th>
             </tr>
           </thead>
           <tbody className="divide-y align-top">
@@ -202,11 +203,21 @@ function Relatorios() {
                   {l.valor_estimado != null ? moeda(l.valor_estimado) : "—"}
                 </td>
                 <td className="p-3">{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</td>
+                <td className="p-3 text-xs">
+                  {l.aprovacao_status === "aprovada"
+                    ? "Aprovada"
+                    : l.aprovacao_status === "reprovada"
+                      ? "Reprovada"
+                      : "Aguardando"}
+                  {l.aprovacao_resposta_solicitada && (
+                    <span className="block text-primary">Pede nossa resposta</span>
+                  )}
+                </td>
               </tr>
             ))}
             {planilha.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-4 text-muted-foreground">
+                <td colSpan={7} className="p-4 text-muted-foreground">
                   Nenhuma licitação em acompanhamento ainda.
                 </td>
               </tr>
