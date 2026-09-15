@@ -171,7 +171,7 @@ export function AppLayout({
                       recolhida && "absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center p-0",
                     )}
                   >
-                    {recolhida ? (naoLidas > 9 ? "9+" : naoLidas) : naoLidas}
+                    {recolhida ? ((naoLidas ?? 0) > 9 ? "9+" : naoLidas ?? 0) : naoLidas}
                   </span>
                 )}
               </Link>
