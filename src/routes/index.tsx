@@ -420,7 +420,9 @@ function Dashboard() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="surface-panel lg:col-span-2">
+            <div className="space-y-6 lg:col-span-2">
+              <CalendarioLicitacoes licitacoes={acompanhando} />
+            <div className="surface-panel">
               <div className="flex items-center justify-between border-b p-4">
                 <h2 className="text-sm font-semibold">Sessões e próximos eventos</h2>
                 <Link to="/licitacoes" className="text-xs text-secondary hover:underline">
