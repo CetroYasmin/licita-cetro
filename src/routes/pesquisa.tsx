@@ -382,6 +382,20 @@ function Pesquisa() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ocultarVistas, ordenar, resultados, user?.id, vistas, detalhes, somentePortaisAtivos]);
 
+  const grupos = useMemo(() => {
+    const mapa = new Map<string, LicitacaoPncp[]>();
+    for (const l of visiveis) {
+      const uf = (detalheDe(l)?.uf ?? l.uf ?? "??").toUpperCase();
+      mapa.set(uf, [...(mapa.get(uf) ?? []), l]);
+    }
+    return [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visiveis, detalhes]);
+
+  const secoesRef = useRef<Record<string, HTMLElement | null>>({});
+  const irPara = (uf: string) =>
+    secoesRef.current[uf]?.scrollIntoView({ behavior: "smooth", block: "start" });
+
 
   return (
     <AppLayout
