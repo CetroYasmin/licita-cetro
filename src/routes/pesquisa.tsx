@@ -566,7 +566,7 @@ function Pesquisa() {
             const venceHoje =
               Boolean(enc) && new Date(enc as string).toDateString() === new Date().toDateString();
             return (
-              <li key={l.fonte_id} className="overflow-hidden rounded-md border shadow-sm">
+              <div key={l.fonte_id} className="overflow-hidden rounded-md border shadow-sm">
                 {/* Barra superior — azul institucional */}
                 <div className="flex flex-wrap items-center justify-between gap-2 bg-secondary px-4 py-2 text-secondary-foreground">
                   <div className="flex flex-wrap items-center gap-2">
