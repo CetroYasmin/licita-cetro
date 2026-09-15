@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Download, ExternalLink, Eye, EyeOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +77,7 @@ function Pesquisa() {
   const [valorMaximo, setValorMaximo] = useState("");
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
-  const [ocultarVistas, setOcultarVistas] = useState(false);
+  const [ocultarVistas, setOcultarVistas] = useState(true);
   const [somentePortaisAtivos, setSomentePortaisAtivos] = useState(false);
   const [resultados, setResultados] = useState<LicitacaoPncp[]>([]);
   const [importadas, setImportadas] = useState<string[]>([]);
@@ -382,6 +382,20 @@ function Pesquisa() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ocultarVistas, ordenar, resultados, user?.id, vistas, detalhes, somentePortaisAtivos]);
 
+  const grupos = useMemo(() => {
+    const mapa = new Map<string, LicitacaoPncp[]>();
+    for (const l of visiveis) {
+      const uf = (detalheDe(l)?.uf ?? l.uf ?? "??").toUpperCase();
+      mapa.set(uf, [...(mapa.get(uf) ?? []), l]);
+    }
+    return [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visiveis, detalhes]);
+
+  const secoesRef = useRef<Record<string, HTMLElement | null>>({});
+  const irPara = (uf: string) =>
+    secoesRef.current[uf]?.scrollIntoView({ behavior: "smooth", block: "start" });
+
 
   return (
     <AppLayout
@@ -528,15 +542,31 @@ function Pesquisa() {
           </p>
         )}
 
-        <div className="space-y-4">
-          {visiveis.map((l) => {
+        <div className="space-y-8">
+          {grupos.map(([uf, lista], gi) => (
+            <section
+              key={uf}
+              ref={(el) => {
+                secoesRef.current[uf] = el;
+              }}
+              className="scroll-mt-24 space-y-4"
+            >
+              <h2 className="sticky top-16 z-20 -mx-4 flex flex-wrap items-center gap-3 border-b border-border bg-background px-4 py-3 text-base font-semibold shadow-sm lg:-mx-8 lg:px-8">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+                  {uf}
+                </span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {lista.length} licitação(ões) neste estado
+                </span>
+              </h2>
+              {lista.map((l) => {
             const quem = vistaPor(l.fonte_id);
             const vi = euVi(l.fonte_id);
             const enc = encerramentoDe(l);
             const venceHoje =
               Boolean(enc) && new Date(enc as string).toDateString() === new Date().toDateString();
             return (
-              <li key={l.fonte_id} className="overflow-hidden rounded-md border shadow-sm">
+              <div key={l.fonte_id} className="overflow-hidden rounded-md border shadow-sm">
                 {/* Barra superior — azul institucional */}
                 <div className="flex flex-wrap items-center justify-between gap-2 bg-secondary px-4 py-2 text-secondary-foreground">
                   <div className="flex flex-wrap items-center gap-2">
@@ -704,9 +734,22 @@ function Pesquisa() {
                     </Button>
                   </div>
                 </div>
-              </li>
+              </div>
             );
           })}
+              {(() => {
+                const proximo = grupos[gi + 1]?.[0];
+                if (!proximo) return null;
+                return (
+                  <div className="flex justify-end">
+                    <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
+                      Ir para {proximo} ↓
+                    </Button>
+                  </div>
+                );
+              })()}
+            </section>
+          ))}
           {resultados.length === 0 && !pesquisa.isPending && (
             <div className="surface-panel p-10 text-center text-sm text-muted-foreground">
               Informe o objeto e os filtros e clique em “Pesquisar licitações” para trazer editais dos
