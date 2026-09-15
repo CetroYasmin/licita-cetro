@@ -542,8 +542,24 @@ function Pesquisa() {
           </p>
         )}
 
-        <div className="space-y-4">
-          {visiveis.map((l) => {
+        <div className="space-y-8">
+          {grupos.map(([uf, lista], gi) => (
+            <section
+              key={uf}
+              ref={(el) => {
+                secoesRef.current[uf] = el;
+              }}
+              className="scroll-mt-24 space-y-4"
+            >
+              <h2 className="sticky top-16 z-20 -mx-4 flex flex-wrap items-center gap-3 border-b border-border bg-background px-4 py-3 text-base font-semibold shadow-sm lg:-mx-8 lg:px-8">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+                  {uf}
+                </span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {lista.length} licitação(ões) neste estado
+                </span>
+              </h2>
+              {lista.map((l) => {
             const quem = vistaPor(l.fonte_id);
             const vi = euVi(l.fonte_id);
             const enc = encerramentoDe(l);
