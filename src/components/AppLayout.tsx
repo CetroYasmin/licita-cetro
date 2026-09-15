@@ -153,36 +153,52 @@ export function AppLayout({
                 key={item.to}
                 to={item.to}
                 onClick={() => setAberto(false)}
+                title={item.label}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                  "relative flex items-center rounded-md px-3 py-2 text-sm transition-colors",
+                  recolhida ? "justify-center" : "gap-3",
                   ativo
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
                     : "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
-                <item.icon className="h-4 w-4" />
-                <span className="flex-1">{item.label}</span>
+                <item.icon className="h-4 w-4 shrink-0" />
+                {!recolhida && <span className="flex-1">{item.label}</span>}
                 {item.to === "/alertas" && (naoLidas ?? 0) > 0 && (
-                  <span className="rounded-full bg-sidebar-primary px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary-foreground">
-                    {naoLidas}
+                  <span
+                    className={cn(
+                      "rounded-full bg-sidebar-primary px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-primary-foreground",
+                      recolhida && "absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center p-0",
+                    )}
+                  >
+                    {recolhida ? (naoLidas > 9 ? "9+" : naoLidas) : naoLidas}
                   </span>
                 )}
               </Link>
             );
           })}
         </nav>
-        <div className="border-t border-sidebar-border p-3">
-          <p className="truncate px-2 text-xs text-sidebar-foreground/70">{perfil?.email}</p>
-          <p className="truncate px-2 text-xs text-sidebar-foreground/50">
-            {perfil?.empresa_nome ?? "Empresa não informada"}
-          </p>
+        <div className={cn("border-t border-sidebar-border", recolhida ? "p-2" : "p-3")}>
+          {!recolhida && (
+            <>
+              <p className="truncate px-2 text-xs text-sidebar-foreground/70">{perfil?.email}</p>
+              <p className="truncate px-2 text-xs text-sidebar-foreground/50">
+                {perfil?.empresa_nome ?? "Empresa não informada"}
+              </p>
+            </>
+          )}
           <Button
             variant="ghost"
-            size="sm"
-            className="mt-2 w-full justify-start text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            size={recolhida ? "icon" : "sm"}
+            className={cn(
+              "text-sidebar-foreground/85 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              recolhida ? "mt-1 h-8 w-full" : "mt-2 w-full justify-start",
+            )}
             onClick={() => void signOut()}
+            title="Sair"
           >
-            <LogOut className="mr-2 h-4 w-4" /> Sair
+            <LogOut className={cn("h-4 w-4", !recolhida && "mr-2")} />
+            {!recolhida && "Sair"}
           </Button>
         </div>
       </aside>
