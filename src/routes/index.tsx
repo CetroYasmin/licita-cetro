@@ -142,6 +142,167 @@ function CardIndicador({
   return <div className="surface-panel p-5">{conteudo}</div>;
 }
 
+const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+const chaveLocal = (d: Date) =>
+  new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+function CalendarioLicitacoes({ licitacoes }: { licitacoes: Lic[] }) {
+  const [ref, setRef] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [selecionado, setSelecionado] = useState<string | null>(() => chaveLocal(new Date()));
+
+  const porDia = useMemo(() => {
+    const mapa = new Map<string, Array<Lic & { quando: string }>>();
+    for (const l of licitacoes) {
+      const quando = l.proximo_evento_data ?? l.data_sessao;
+      if (!quando) continue;
+      const d = new Date(quando);
+      if (Number.isNaN(d.getTime())) continue;
+      const chave = chaveLocal(d);
+      mapa.set(chave, [...(mapa.get(chave) ?? []), { ...l, quando }]);
+    }
+    for (const lista of mapa.values()) lista.sort((a, b) => a.quando.localeCompare(b.quando));
+    return mapa;
+  }, [licitacoes]);
+
+  const celulas = useMemo(() => {
+    const inicio = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const totalDias = new Date(ref.getFullYear(), ref.getMonth() + 1, 0).getDate();
+    return [
+      ...Array.from({ length: inicio.getDay() }, () => null),
+      ...Array.from(
+        { length: totalDias },
+        (_, i) => new Date(ref.getFullYear(), ref.getMonth(), i + 1),
+      ),
+    ];
+  }, [ref]);
+
+  const hoje = chaveLocal(new Date());
+  const doDia = selecionado ? porDia.get(selecionado) ?? [] : [];
+
+  return (
+    <div className="surface-panel p-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="font-display text-lg font-semibold capitalize">
+            {ref.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Sessões das licitações em acompanhamento
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setRef(new Date(ref.getFullYear(), ref.getMonth() - 1, 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const d = new Date();
+              setRef(new Date(d.getFullYear(), d.getMonth(), 1));
+              setSelecionado(chaveLocal(d));
+            }}
+          >
+            Hoje
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setRef(new Date(ref.getFullYear(), ref.getMonth() + 1, 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+        {DIAS_SEMANA.map((d) => (
+          <div key={d} className="pb-2">
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {celulas.map((dia, i) => {
+          if (!dia) return <div key={`v${i}`} className="min-h-24 rounded-md bg-muted/30" />;
+          const chave = chaveLocal(dia);
+          const lista = porDia.get(chave) ?? [];
+          return (
+            <button
+              key={chave}
+              type="button"
+              onClick={() => setSelecionado(chave)}
+              className={`min-h-24 rounded-md border p-1.5 text-left transition-colors hover:bg-accent ${
+                chave === hoje ? "border-primary bg-primary/5" : ""
+              } ${selecionado === chave ? "ring-2 ring-secondary" : ""}`}
+            >
+              <span className="text-xs font-semibold">{dia.getDate()}</span>
+              <div className="mt-1 space-y-1">
+                {lista.slice(0, 3).map((l) => (
+                  <p
+                    key={l.id}
+                    className="truncate rounded bg-secondary/15 px-1 py-0.5 text-[10px] text-secondary"
+                    title={`${l.numero} — ${l.orgao ?? ""}`}
+                  >
+                    {l.numero}
+                  </p>
+                ))}
+                {lista.length > 3 && (
+                  <p className="text-[10px] text-muted-foreground">+{lista.length - 3} mais</p>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 border-t pt-3">
+        <h3 className="text-sm font-semibold">
+          {selecionado
+            ? `Licitações de ${new Date(`${selecionado}T12:00:00`).toLocaleDateString("pt-BR")}`
+            : "Selecione um dia"}
+        </h3>
+        <div className="mt-2 divide-y">
+          {doDia.map((l) => (
+            <Link
+              key={l.id}
+              to="/licitacoes/$id"
+              params={{ id: l.id }}
+              className="block py-2 transition-colors hover:bg-muted/60"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium">{l.numero}</span>
+                <Badge variant="outline" className={corDoStatus(l.status)}>
+                  {l.status}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {dataHora(l.quando)} · {contagemRegressiva(l.quando)}
+                </span>
+              </div>
+              <p className="line-clamp-1 text-xs text-muted-foreground">
+                {l.orgao} — {l.objeto}
+              </p>
+            </Link>
+          ))}
+          {doDia.length === 0 && (
+            <p className="py-3 text-sm text-muted-foreground">
+              Nenhuma sessão marcada nesse dia.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const { equipeId } = useAuth();
 
