@@ -734,9 +734,22 @@ function Pesquisa() {
                     </Button>
                   </div>
                 </div>
-              </li>
+              </div>
             );
           })}
+              {(() => {
+                const proximo = grupos[gi + 1]?.[0];
+                if (!proximo) return null;
+                return (
+                  <div className="flex justify-end">
+                    <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
+                      Ir para {proximo} ↓
+                    </Button>
+                  </div>
+                );
+              })()}
+            </section>
+          ))}
           {resultados.length === 0 && !pesquisa.isPending && (
             <div className="surface-panel p-10 text-center text-sm text-muted-foreground">
               Informe o objeto e os filtros e clique em “Pesquisar licitações” para trazer editais dos
