@@ -77,7 +77,7 @@ function Pesquisa() {
   const [valorMaximo, setValorMaximo] = useState("");
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
-  const [ocultarVistas, setOcultarVistas] = useState(false);
+  const [ocultarVistas, setOcultarVistas] = useState(true);
   const [somentePortaisAtivos, setSomentePortaisAtivos] = useState(false);
   const [resultados, setResultados] = useState<LicitacaoPncp[]>([]);
   const [importadas, setImportadas] = useState<string[]>([]);
