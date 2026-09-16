@@ -66,8 +66,7 @@ export function EditarSessaoValor({
   const salvar = useMutation({
     mutationFn: async () => {
       const iso = quando ? new Date(quando).toISOString() : null;
-      const numeroValor = valor.trim() === "" ? null : Number(valor.replace(",", "."));
-      if (numeroValor != null && Number.isNaN(numeroValor)) throw new Error("Valor inválido.");
+      const numeroValor = numeroDaMoeda(valor);
       const { error } = await supabase
         .from("licitacoes")
         .update({
