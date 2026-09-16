@@ -19,6 +19,26 @@ export function sessaoJaOcorreu(l: any): boolean {
   return Number.isFinite(t) && t < Date.now();
 }
 
+/** Converte número para texto mascarado em R$ (pt-BR). */
+function mascaraMoeda(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return "";
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/** Aplica máscara R$ enquanto digita: só dígitos, últimos 2 são centavos. */
+function aoDigitarMoeda(texto: string): string {
+  const digitos = texto.replace(/\D/g, "").slice(0, 13);
+  if (!digitos) return "";
+  return mascaraMoeda(Number(digitos) / 100);
+}
+
+/** Texto mascarado -> número. */
+function numeroDaMoeda(texto: string): number | null {
+  const digitos = texto.replace(/\D/g, "");
+  if (!digitos) return null;
+  return Number(digitos) / 100;
+}
+
 /** ISO -> valor de <input type="datetime-local"> no fuso local. */
 function paraInputLocal(iso: string | null): string {
   if (!iso) return "";
