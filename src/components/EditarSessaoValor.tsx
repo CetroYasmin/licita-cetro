@@ -61,9 +61,7 @@ export function EditarSessaoValor({
 }) {
   const qc = useQueryClient();
   const [quando, setQuando] = useState(paraInputLocal(sessaoDeLicitacao(licitacao)));
-  const [valor, setValor] = useState(
-    licitacao.valor_estimado != null ? String(licitacao.valor_estimado) : "",
-  );
+  const [valor, setValor] = useState(mascaraMoeda(licitacao.valor_estimado));
 
   const salvar = useMutation({
     mutationFn: async () => {
