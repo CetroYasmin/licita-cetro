@@ -10,6 +10,7 @@ import {
   BarChart3,
   BadgeCheck,
   Users,
+  Timer,
   LogOut,
   Menu,
   ChevronLeft,
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/licitacoes", label: "Licitações", icon: Gavel },
+  { to: "/em-andamento", label: "Em andamento", icon: Timer },
   { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/boletim-real", label: "Boletim", icon: Radar },

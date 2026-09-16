@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { dataHora, moeda, numero } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
 import { exportarPlanilhaAcompanhamento } from "@/lib/planilha";
+import {
+  EditarSessaoValor,
+  sessaoDeLicitacao,
+  sessaoJaOcorreu,
+} from "@/components/EditarSessaoValor";
 
 
 export const Route = createFileRoute("/relatorios")({
@@ -50,7 +55,7 @@ function Relatorios() {
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
   /** Data/hora real da sessão de disputa (próximo evento tem prioridade). */
-  const sessaoDe = (l: any): string | null => l.proximo_evento_data ?? l.data_sessao ?? null;
+  const sessaoDe = sessaoDeLicitacao;
 
   /** Remove duplicadas: mesmo objeto e mesmo valor estimado.
    *  Mantém a que já tem qualificação técnica preenchida. */
@@ -60,6 +65,7 @@ function Relatorios() {
   const unicas = (() => {
     const mapa = new Map<string, any>();
     for (const l of lics) {
+      if (sessaoJaOcorreu(l)) continue; // já realizadas ficam na aba "Em andamento"
       const k = chaveDuplicada(l);
       const atual = mapa.get(k);
       if (!atual) {
@@ -202,7 +208,12 @@ function Relatorios() {
                 <td className="p-3 text-right">
                   {l.valor_estimado != null ? moeda(l.valor_estimado) : "—"}
                 </td>
-                <td className="p-3">{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</td>
+                <td className="p-3">
+                  <p>{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</p>
+                  <div className="mt-2">
+                    <EditarSessaoValor licitacao={l} compacto />
+                  </div>
+                </td>
                 <td className="p-3 text-xs">
                   {l.aprovacao_status === "aprovada"
                     ? "Aprovada"
