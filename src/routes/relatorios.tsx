@@ -65,6 +65,7 @@ function Relatorios() {
   const unicas = (() => {
     const mapa = new Map<string, any>();
     for (const l of lics) {
+      if (sessaoJaOcorreu(l)) continue; // já realizadas ficam na aba "Em andamento"
       const k = chaveDuplicada(l);
       const atual = mapa.get(k);
       if (!atual) {
