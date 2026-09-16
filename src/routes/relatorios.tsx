@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { dataHora, moeda, numero } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
 import { exportarPlanilhaAcompanhamento } from "@/lib/planilha";
+import {
+  EditarSessaoValor,
+  sessaoDeLicitacao,
+  sessaoJaOcorreu,
+} from "@/components/EditarSessaoValor";
 
 
 export const Route = createFileRoute("/relatorios")({
@@ -50,7 +55,7 @@ function Relatorios() {
   const totalVencido = vencidas.reduce((s, l) => s + (l.valor_ofertado ?? 0), 0);
 
   /** Data/hora real da sessão de disputa (próximo evento tem prioridade). */
-  const sessaoDe = (l: any): string | null => l.proximo_evento_data ?? l.data_sessao ?? null;
+  const sessaoDe = sessaoDeLicitacao;
 
   /** Remove duplicadas: mesmo objeto e mesmo valor estimado.
    *  Mantém a que já tem qualificação técnica preenchida. */
