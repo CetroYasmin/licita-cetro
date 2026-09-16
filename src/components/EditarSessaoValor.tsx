@@ -89,7 +89,7 @@ export function EditarSessaoValor({
 
   const alterado =
     quando !== paraInputLocal(sessaoDeLicitacao(licitacao)) ||
-    valor !== (licitacao.valor_estimado != null ? String(licitacao.valor_estimado) : "");
+    valor !== mascaraMoeda(licitacao.valor_estimado);
 
   return (
     <div className={compacto ? "flex flex-wrap items-end gap-2" : "grid gap-2 sm:grid-cols-3"}>
