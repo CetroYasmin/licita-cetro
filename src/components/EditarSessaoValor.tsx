@@ -106,12 +106,12 @@ export function EditarSessaoValor({
       <div className="space-y-1">
         {!compacto && <Label className="text-xs">Valor estimado (R$)</Label>}
         <Input
-          type="number"
-          step="0.01"
+          type="text"
+          inputMode="numeric"
           className="h-8 w-[160px] text-xs"
           value={valor}
-          onChange={(e) => setValor(e.target.value)}
-          placeholder="0,00"
+          onChange={(e) => setValor(aoDigitarMoeda(e.target.value))}
+          placeholder="R$ 0,00"
           aria-label="Valor estimado"
         />
       </div>
