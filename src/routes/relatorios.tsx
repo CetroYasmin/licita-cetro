@@ -208,7 +208,12 @@ function Relatorios() {
                 <td className="p-3 text-right">
                   {l.valor_estimado != null ? moeda(l.valor_estimado) : "—"}
                 </td>
-                <td className="p-3">{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</td>
+                <td className="p-3">
+                  <p>{sessaoDe(l) ? dataHora(sessaoDe(l)!) : "—"}</p>
+                  <div className="mt-2">
+                    <EditarSessaoValor licitacao={l} compacto />
+                  </div>
+                </td>
                 <td className="p-3 text-xs">
                   {l.aprovacao_status === "aprovada"
                     ? "Aprovada"
