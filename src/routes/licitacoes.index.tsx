@@ -189,6 +189,7 @@ function ListaLicitacoes() {
       if (dataDe && (!l.data_sessao || new Date(l.data_sessao) < new Date(dataDe))) return false;
       if (somenteParticipando && l.valor_ofertado == null) return false;
       if (somenteFavoritos && !l.favorito) return false;
+      if (sessaoJaOcorreu(l)) return false;
       if (ocultarVistas && (vistas ?? []).some((v: any) => v.licitacao_id === l.id && v.user_id === user?.id))
         return false;
       return true;
@@ -196,7 +197,14 @@ function ListaLicitacoes() {
 
     const texto = (v?: string | null) => v ?? "";
     const ordenadores: Record<string, (a: any, b: any) => number> = {
-      sessao: (a, b) => texto(a.data_sessao ?? "9999").localeCompare(texto(b.data_sessao ?? "9999")),
+      sessao: (a, b) => {
+        const q = (l: any) => {
+          const s = l.proximo_evento_data ?? l.data_sessao;
+          const t = s ? new Date(s).getTime() : NaN;
+          return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+        };
+        return q(a) - q(b);
+      },
       publicacao: (a, b) => texto(b.data_publicacao).localeCompare(texto(a.data_publicacao)),
       atualizacao: (a, b) => texto(b.ultima_atualizacao).localeCompare(texto(a.ultima_atualizacao)),
       valor_desc: (a, b) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0),
@@ -427,7 +435,8 @@ function ListaLicitacoes() {
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.objeto}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicação: {fData(l.data_publicacao)} ·
-                      Sessão: {dataHora(l.data_sessao)} · Portal: {l.portal ?? "—"}
+                      Sessão: {dataHora(l.proximo_evento_data ?? l.data_sessao)} · Portal:{" "}
+                      {l.portal ?? "—"}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs">
                       <span>Estimado: <strong>{moeda(l.valor_estimado)}</strong></span>
