@@ -15,6 +15,7 @@ import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AprovacaoRouteImport } from './routes/aprovacao'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoletimRealRouteImport } from './routes/boletim-real'
+import { Route as EmAndamentoRouteImport } from './routes/em-andamento'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
@@ -51,6 +52,11 @@ const BoletimRealRoute = BoletimRealRouteImport.update({
   path: '/boletim-real',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmAndamentoRoute = EmAndamentoRouteImport.update({
+  id: '/em-andamento',
+  path: '/em-andamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EquipeRoute = EquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
+  '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
+  '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
   '/boletim-real': typeof BoletimRealRoute
+  '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/aprovacao'
     | '/auth'
     | '/boletim-real'
+    | '/em-andamento'
     | '/equipe'
     | '/pesquisa'
     | '/relatorios'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/aprovacao'
     | '/auth'
     | '/boletim-real'
+    | '/em-andamento'
     | '/equipe'
     | '/pesquisa'
     | '/relatorios'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/aprovacao'
     | '/auth'
     | '/boletim-real'
+    | '/em-andamento'
     | '/equipe'
     | '/pesquisa'
     | '/relatorios'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   AprovacaoRoute: typeof AprovacaoRoute
   AuthRoute: typeof AuthRoute
   BoletimRealRoute: typeof BoletimRealRoute
+  EmAndamentoRoute: typeof EmAndamentoRoute
   EquipeRoute: typeof EquipeRoute
   PesquisaRoute: typeof PesquisaRoute
   RelatoriosRoute: typeof RelatoriosRoute
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoletimRealRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/em-andamento': {
+      id: '/em-andamento'
+      path: '/em-andamento'
+      fullPath: '/em-andamento'
+      preLoaderRoute: typeof EmAndamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/equipe': {
       id: '/equipe'
       path: '/equipe'
@@ -262,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   AprovacaoRoute: AprovacaoRoute,
   AuthRoute: AuthRoute,
   BoletimRealRoute: BoletimRealRoute,
+  EmAndamentoRoute: EmAndamentoRoute,
   EquipeRoute: EquipeRoute,
   PesquisaRoute: PesquisaRoute,
   RelatoriosRoute: RelatoriosRoute,

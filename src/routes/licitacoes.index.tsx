@@ -42,6 +42,7 @@ import {
 } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
 import { combina } from "@/lib/busca";
+import { EditarSessaoValor, sessaoJaOcorreu } from "@/components/EditarSessaoValor";
 
 export const Route = createFileRoute("/licitacoes/")({
   head: () => ({
