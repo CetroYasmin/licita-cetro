@@ -447,6 +447,12 @@ function ListaLicitacoes() {
                       </span>
                     </div>
                     <div className="mt-3 space-y-1">
+                      <Label className="text-xs">
+                        Atualizar data da sessão (adiamento) e valor estimado
+                      </Label>
+                      <EditarSessaoValor licitacao={l} compacto />
+                    </div>
+                    <div className="mt-3 space-y-1">
                       <Label className="text-xs">Qualificação técnica exigida pelo edital</Label>
                       <Textarea
                         defaultValue={l.qualificacao_tecnica ?? ""}
