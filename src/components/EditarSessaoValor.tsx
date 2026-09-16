@@ -19,6 +19,26 @@ export function sessaoJaOcorreu(l: any): boolean {
   return Number.isFinite(t) && t < Date.now();
 }
 
+/** Converte número para texto mascarado em R$ (pt-BR). */
+function mascaraMoeda(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return "";
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/** Aplica máscara R$ enquanto digita: só dígitos, últimos 2 são centavos. */
+function aoDigitarMoeda(texto: string): string {
+  const digitos = texto.replace(/\D/g, "").slice(0, 13);
+  if (!digitos) return "";
+  return mascaraMoeda(Number(digitos) / 100);
+}
+
+/** Texto mascarado -> número. */
+function numeroDaMoeda(texto: string): number | null {
+  const digitos = texto.replace(/\D/g, "");
+  if (!digitos) return null;
+  return Number(digitos) / 100;
+}
+
 /** ISO -> valor de <input type="datetime-local"> no fuso local. */
 function paraInputLocal(iso: string | null): string {
   if (!iso) return "";
@@ -41,15 +61,12 @@ export function EditarSessaoValor({
 }) {
   const qc = useQueryClient();
   const [quando, setQuando] = useState(paraInputLocal(sessaoDeLicitacao(licitacao)));
-  const [valor, setValor] = useState(
-    licitacao.valor_estimado != null ? String(licitacao.valor_estimado) : "",
-  );
+  const [valor, setValor] = useState(mascaraMoeda(licitacao.valor_estimado));
 
   const salvar = useMutation({
     mutationFn: async () => {
       const iso = quando ? new Date(quando).toISOString() : null;
-      const numeroValor = valor.trim() === "" ? null : Number(valor.replace(",", "."));
-      if (numeroValor != null && Number.isNaN(numeroValor)) throw new Error("Valor inválido.");
+      const numeroValor = numeroDaMoeda(valor);
       const { error } = await supabase
         .from("licitacoes")
         .update({
@@ -72,7 +89,7 @@ export function EditarSessaoValor({
 
   const alterado =
     quando !== paraInputLocal(sessaoDeLicitacao(licitacao)) ||
-    valor !== (licitacao.valor_estimado != null ? String(licitacao.valor_estimado) : "");
+    valor !== mascaraMoeda(licitacao.valor_estimado);
 
   return (
     <div className={compacto ? "flex flex-wrap items-end gap-2" : "grid gap-2 sm:grid-cols-3"}>
@@ -89,12 +106,12 @@ export function EditarSessaoValor({
       <div className="space-y-1">
         {!compacto && <Label className="text-xs">Valor estimado (R$)</Label>}
         <Input
-          type="number"
-          step="0.01"
+          type="text"
+          inputMode="numeric"
           className="h-8 w-[160px] text-xs"
           value={valor}
-          onChange={(e) => setValor(e.target.value)}
-          placeholder="0,00"
+          onChange={(e) => setValor(aoDigitarMoeda(e.target.value))}
+          placeholder="R$ 0,00"
           aria-label="Valor estimado"
         />
       </div>
