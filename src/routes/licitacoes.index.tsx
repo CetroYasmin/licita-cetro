@@ -64,7 +64,7 @@ export const Route = createFileRoute("/licitacoes/")({
 });
 
 function ListaLicitacoes() {
-  const { equipeId, user, perfil } = useAuth();
+  const { equipeId, user, perfil, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("todos");
