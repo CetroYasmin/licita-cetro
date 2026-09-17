@@ -13,12 +13,16 @@ export type Perfil = {
   equipe_id: string | null;
 };
 
+export type Papel = "admin" | "diretor" | "membro";
+
 type AuthState = {
   loading: boolean;
   session: Session | null;
   user: User | null;
   perfil: Perfil | null;
   isAdmin: boolean;
+  isDiretor: boolean;
+  papel: Papel;
   equipeId: string | null;
   aprovado: boolean;
   refresh: () => Promise<void>;
