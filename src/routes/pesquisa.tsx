@@ -826,3 +826,41 @@ function Pesquisa() {
     </AppLayout>
   );
 }
+
+/**
+ * Marca o fim da lista de um estado: quando o usuário termina de ver os editais
+ * daquele estado, a página se ajusta sozinha para o próximo (uma vez por estado).
+ */
+function FimDoEstado({
+  chave,
+  jaRolou,
+  aoTerminar,
+}: {
+  chave: string;
+  jaRolou: RefObject<Set<string>>;
+  aoTerminar: () => void;
+}) {
+  const alvo = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = alvo.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        for (const e of entradas) {
+          if (!e.isIntersecting) continue;
+          const vistos = jaRolou.current;
+          if (!vistos || vistos.has(chave)) continue;
+          vistos.add(chave);
+          aoTerminar();
+        }
+      },
+      { rootMargin: "0px 0px -20% 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chave]);
+
+  return <div ref={alvo} aria-hidden className="h-px" />;
+}
