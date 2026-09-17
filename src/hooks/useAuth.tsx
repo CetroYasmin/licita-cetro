@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else {
       setPerfil(null);
       setIsAdmin(false);
+      setIsDiretor(false);
     }
     setLoading(false);
   }, [carregarPerfil]);
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setPerfil(null);
         setIsAdmin(false);
+      setIsDiretor(false);
       }
       setLoading(false);
     });
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setPerfil(null);
     setIsAdmin(false);
+      setIsDiretor(false);
     setSession(null);
   }, []);
 
