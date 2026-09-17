@@ -55,13 +55,16 @@ export function AppLayout({
   const [recolhida, setRecolhida] = useState(false);
 
   const { data: naoLidas } = useQuery({
-    queryKey: ["alertas-nao-lidas", equipeId],
+    queryKey: ["alertas-nao-lidas", equipeId, papel],
     enabled: Boolean(equipeId),
     queryFn: async () => {
-      const { count } = await supabase
+      let q = supabase
         .from("alertas")
         .select("id", { count: "exact", head: true })
         .eq("lida", false);
+      // Diretores só são avisados quando a administração pede uma análise.
+      if (papel === "diretor") q = q.eq("tipo", "aprovacao");
+      const { count } = await q;
       return count ?? 0;
     },
     refetchInterval: 60000,
@@ -149,7 +152,7 @@ export function AppLayout({
           </Button>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {NAV.map((item) => {
+          {NAV.filter((item) => podeVer(papel, item.to)).map((item) => {
             const ativo = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return (
               <Link
@@ -232,7 +235,18 @@ export function AppLayout({
           </div>
           <div className="flex items-center gap-2">{acoes}</div>
         </header>
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 lg:p-8">
+          {podeVer(papel, pathname) ? (
+            children
+          ) : (
+            <div className="surface-panel mx-auto max-w-md p-8 text-center">
+              <h2 className="text-lg font-semibold">Página não disponível</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Seu perfil de acesso não inclui esta página. Use o menu ao lado para navegar.
+              </p>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );
