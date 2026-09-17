@@ -361,6 +361,15 @@ function Pesquisa() {
         return !d || portalAtivo(d.portal);
       });
     }
+    if (propostaAte) {
+      const limite = new Date(`${propostaAte}T23:59:59`).getTime();
+      lista = lista.filter((l) => {
+        const fim = encerramentoDe(l);
+        if (!fim) return true;
+        const t = new Date(fim).getTime();
+        return Number.isNaN(t) || t <= limite;
+      });
+    }
     const dataValida = (valor: string | null) => {
       if (!valor) return Number.POSITIVE_INFINITY;
       const tempo = new Date(valor).getTime();
@@ -474,12 +483,41 @@ function Pesquisa() {
           </div>
           <div className="space-y-1">
             <Label>Valor mínimo</Label>
-            <Input type="number" value={valorMinimo} onChange={(e) => setValorMinimo(e.target.value)} />
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              value={valorMinimo}
+              onChange={(e) => setValorMinimo(aoDigitarMoeda(e.target.value))}
+            />
           </div>
           <div className="space-y-1">
-            <Label>Valor máximo</Label>
-            <Input type="number" value={valorMaximo} onChange={(e) => setValorMaximo(e.target.value)} />
+            <Label>Período de publicação</Label>
+            <Select value={dias} onValueChange={setDias}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Qualquer data</SelectItem>
+                <SelectItem value="1">Publicadas hoje</SelectItem>
+                <SelectItem value="3">Últimos 3 dias</SelectItem>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="15">Últimos 15 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          <div className="space-y-1">
+            <Label>Data limite de proposta até</Label>
+            <Input
+              type="date"
+              value={propostaAte}
+              onChange={(e) => setPropostaAte(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Mostra apenas editais cujo prazo de envio de proposta termina até essa data.
+            </p>
+          </div>
+
 
           <div className="space-y-2 md:col-span-3 xl:col-span-4">
             <div className="flex flex-wrap items-center gap-3">
