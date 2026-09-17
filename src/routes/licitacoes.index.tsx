@@ -501,6 +501,7 @@ function ListaLicitacoes() {
                         className={`h-4 w-4 ${l.favorito ? "fill-warning text-warning" : "text-muted-foreground"}`}
                       />
                     </Button>
+                    {(isAdmin || l.created_by === user?.id) && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" aria-label="Excluir licitação">
@@ -523,6 +524,7 @@ function ListaLicitacoes() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    )}
                   </div>
                 </div>
               </div>

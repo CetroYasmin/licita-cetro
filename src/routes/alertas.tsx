@@ -29,12 +29,12 @@ export const Route = createFileRoute("/alertas")({
 });
 
 function Alertas() {
-  const { equipeId } = useAuth();
+  const { equipeId, papel } = useAuth();
   const qc = useQueryClient();
   const [filtro, setFiltro] = useState<"todos" | "nao_lidos">("nao_lidos");
 
   const { data } = useQuery({
-    queryKey: ["alertas", filtro],
+    queryKey: ["alertas", filtro, papel],
     enabled: Boolean(equipeId),
     queryFn: async () => {
       let q = supabase
@@ -43,6 +43,8 @@ function Alertas() {
         .order("created_at", { ascending: false })
         .limit(200);
       if (filtro === "nao_lidos") q = q.eq("lida", false);
+      // Diretores recebem apenas os avisos enviados pela administração.
+      if (papel === "diretor") q = q.eq("tipo", "aprovacao");
       const { data } = await q;
       return data ?? [];
     },
