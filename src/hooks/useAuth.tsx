@@ -13,12 +13,16 @@ export type Perfil = {
   equipe_id: string | null;
 };
 
+export type Papel = "admin" | "diretor" | "membro";
+
 type AuthState = {
   loading: boolean;
   session: Session | null;
   user: User | null;
   perfil: Perfil | null;
   isAdmin: boolean;
+  isDiretor: boolean;
+  papel: Papel;
   equipeId: string | null;
   aprovado: boolean;
   refresh: () => Promise<void>;
@@ -32,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDiretor, setIsDiretor] = useState(false);
 
   const carregarPerfil = useCallback(async (userId: string) => {
     const [{ data: p }, { data: roles }] = await Promise.all([
@@ -40,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
     setPerfil((p as Perfil) ?? null);
     setIsAdmin(Boolean(roles?.some((r) => r.role === "admin")));
+    setIsDiretor(Boolean(roles?.some((r) => r.role === "diretor")));
   }, []);
 
   const refresh = useCallback(async () => {
@@ -49,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else {
       setPerfil(null);
       setIsAdmin(false);
+      setIsDiretor(false);
     }
     setLoading(false);
   }, [carregarPerfil]);
@@ -61,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setPerfil(null);
         setIsAdmin(false);
+        setIsDiretor(false);
       }
       setLoading(false);
     });
@@ -72,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setPerfil(null);
     setIsAdmin(false);
+    setIsDiretor(false);
     setSession(null);
   }, []);
 
@@ -83,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         perfil,
         isAdmin,
+        isDiretor,
+        papel: isAdmin ? "admin" : isDiretor ? "diretor" : "membro",
         equipeId: perfil?.equipe_id ?? null,
         aprovado: perfil?.status === "aprovado",
         refresh,

@@ -6,6 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { dataHora } from "@/lib/formato";
 
 export const Route = createFileRoute("/equipe")({
@@ -67,23 +74,14 @@ function Equipe() {
   });
 
   const papel = useMutation({
-    mutationFn: async ({ id, tornarAdmin }: { id: string; tornarAdmin: boolean }) => {
-      if (tornarAdmin) {
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: id, role: "admin" });
-        if (error) throw error;
-        return;
-      }
-      const { error } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", id)
-        .eq("role", "admin");
+    mutationFn: async ({ id, novo }: { id: string; novo: "admin" | "diretor" | "membro" }) => {
+      const { error: erroRemover } = await supabase.from("user_roles").delete().eq("user_id", id);
+      if (erroRemover) throw erroRemover;
+      const { error } = await supabase.from("user_roles").insert({ user_id: id, role: novo });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Permissão de administrador atualizada.");
+      toast.success("Tipo de acesso atualizado.");
       void qc.invalidateQueries({ queryKey: ["equipe"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -91,6 +89,13 @@ function Equipe() {
 
   const roles = (data?.roles ?? []) as any[];
   const ehAdmin = (id: string) => roles.some((r) => r.user_id === id && r.role === "admin");
+  const papelDe = (id: string): "admin" | "diretor" | "membro" =>
+    ehAdmin(id)
+      ? "admin"
+      : roles.some((r) => r.user_id === id && r.role === "diretor")
+        ? "diretor"
+        : "membro";
+  const nomePapel = { admin: "Administrador", diretor: "Diretor", membro: "Usuário comum" } as const;
 
   const membros = (data?.membros ?? []) as any[];
   const pendentes = (data?.pendentes ?? []) as any[];
@@ -163,15 +168,23 @@ function Equipe() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{m.status}</Badge>
-                {ehAdmin(m.id) && <Badge variant="secondary">administrador</Badge>}
+                <Badge variant="secondary">{nomePapel[papelDe(m.id)]}</Badge>
                 {isAdmin && m.status === "aprovado" && m.id !== perfil?.id && (
-                  <Button
-                    size="sm"
-                    variant={ehAdmin(m.id) ? "outline" : "default"}
-                    onClick={() => papel.mutate({ id: m.id, tornarAdmin: !ehAdmin(m.id) })}
+                  <Select
+                    value={papelDe(m.id)}
+                    onValueChange={(v) =>
+                      papel.mutate({ id: m.id, novo: v as "admin" | "diretor" | "membro" })
+                    }
                   >
-                    {ehAdmin(m.id) ? "Remover admin" : "Tornar administrador"}
-                  </Button>
+                    <SelectTrigger className="h-9 w-[190px]">
+                      <SelectValue placeholder="Tipo de acesso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="membro">Usuário comum</SelectItem>
+                      <SelectItem value="diretor">Diretor</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
                 {isAdmin && m.status === "aprovado" && (
                   <Button
