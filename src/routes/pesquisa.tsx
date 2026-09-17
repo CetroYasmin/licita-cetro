@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { Download, ExternalLink, Eye, EyeOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -799,11 +799,18 @@ function Pesquisa() {
                 const proximo = grupos[gi + 1]?.[0];
                 if (!proximo) return null;
                 return (
-                  <div className="flex justify-end">
-                    <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
-                      Ir para {proximo} ↓
-                    </Button>
-                  </div>
+                  <>
+                    <FimDoEstado
+                      chave={`${uf}-${proximo}`}
+                      jaRolou={jaRolou}
+                      aoTerminar={() => irPara(proximo)}
+                    />
+                    <div className="flex justify-end">
+                      <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
+                        Ir para {proximo} ↓
+                      </Button>
+                    </div>
+                  </>
                 );
               })()}
             </section>
