@@ -45,7 +45,8 @@ const FILTROS: { valor: Filtro; label: string }[] = [
 ];
 
 function Aprovacao() {
-  const { equipeId, perfil, user, isAdmin } = useAuth();
+  const { equipeId, perfil, user, isAdmin, isDiretor } = useAuth();
+  const podeAprovar = isAdmin || isDiretor;
   const queryClient = useQueryClient();
   const [filtro, setFiltro] = useState<Filtro>("pendente");
 
@@ -220,9 +221,9 @@ function Aprovacao() {
         ))}
       </div>
 
-      {!isAdmin && (
+      {!podeAprovar && (
         <p className="mt-4 rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
-          Somente administradores podem aprovar, reprovar ou pedir resposta. Você pode consultar as
+          Somente a diretoria e administradores podem aprovar, reprovar ou pedir resposta. Você pode consultar as
           decisões, responder o que a diretoria pediu e anexar arquivos de análise.
         </p>
       )}
@@ -242,7 +243,7 @@ function Aprovacao() {
             licitacao={l}
             sessao={sessaoDe(l)}
             equipeId={equipeId}
-            podeDecidir={isAdmin}
+            podeDecidir={podeAprovar}
             salvando={salvarObs.isPending || decidir.isPending || pedirResposta.isPending}
             onDecidir={(status) => decidir.mutate({ licitacao: l, status })}
             onSalvarObs={(observacao) => salvarObs.mutate({ id: l.id, observacao })}
