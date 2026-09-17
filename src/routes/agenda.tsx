@@ -98,7 +98,7 @@ function Agenda() {
           });
       }
       for (const t of (tarefas.data ?? []) as any[]) {
-        if (t.prazo && !t.concluida)
+        if (t.prazo && !t.concluida && t.licitacao_id && aptas.has(t.licitacao_id))
           eventos.push({
             id: `t-${t.id}`,
             quando: t.prazo,
