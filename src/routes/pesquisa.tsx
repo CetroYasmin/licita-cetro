@@ -399,7 +399,16 @@ function Pesquisa() {
     };
     return lista.sort(comparadores[ordenar] ?? comparadores["relevancia"]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ocultarVistas, ordenar, resultados, user?.id, vistas, detalhes, somentePortaisAtivos]);
+  }, [
+    ocultarVistas,
+    ordenar,
+    resultados,
+    user?.id,
+    vistas,
+    detalhes,
+    somentePortaisAtivos,
+    propostaAte,
+  ]);
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, LicitacaoPncp[]>();
@@ -414,6 +423,7 @@ function Pesquisa() {
   const secoesRef = useRef<Record<string, HTMLElement | null>>({});
   const irPara = (uf: string) =>
     secoesRef.current[uf]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const jaRolou = useRef<Set<string>>(new Set());
 
 
   return (
