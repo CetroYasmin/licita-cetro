@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { podeVer } from "@/lib/permissoes";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -47,7 +48,7 @@ export function AppLayout({
   acoes?: ReactNode;
   children: ReactNode;
 }) {
-  const { loading, session, perfil, aprovado, signOut, equipeId } = useAuth();
+  const { loading, session, perfil, aprovado, signOut, equipeId, papel } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
