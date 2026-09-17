@@ -446,6 +446,7 @@ export type Database = {
           data_publicacao: string | null
           data_sessao: string | null
           equipe_id: string
+          fase: string | null
           favorito: boolean
           fonte: string | null
           fonte_id: string | null
@@ -499,6 +500,7 @@ export type Database = {
           data_publicacao?: string | null
           data_sessao?: string | null
           equipe_id: string
+          fase?: string | null
           favorito?: boolean
           fonte?: string | null
           fonte_id?: string | null
@@ -552,6 +554,7 @@ export type Database = {
           data_publicacao?: string | null
           data_sessao?: string | null
           equipe_id?: string
+          fase?: string | null
           favorito?: boolean
           fonte?: string | null
           fonte_id?: string | null

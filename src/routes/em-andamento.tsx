@@ -24,6 +24,7 @@ import {
   sessaoDeLicitacao,
   sessaoJaOcorreu,
 } from "@/components/EditarSessaoValor";
+import { ResultadoDisputa } from "@/components/ResultadoDisputa";
 
 export const Route = createFileRoute("/em-andamento")({
   head: () => ({
@@ -151,11 +152,19 @@ function EmAndamento() {
                         Posição: <strong>{l.posicao_empresa ? `${l.posicao_empresa}º` : "—"}</strong>
                       </span>
                     </div>
+                    {l.fase && (
+                      <p className="mt-2 text-xs">
+                        Fase: <strong>{l.fase}</strong>
+                      </p>
+                    )}
                     <div className="mt-3">
                       <p className="mb-1 text-xs text-muted-foreground">
                         Se a licitação foi adiada, corrija a data para voltar ao acompanhamento.
                       </p>
                       <EditarSessaoValor licitacao={l} compacto />
+                    </div>
+                    <div className="mt-3">
+                      <ResultadoDisputa licitacao={l} />
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">

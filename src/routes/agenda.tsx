@@ -52,16 +52,34 @@ function Agenda() {
     enabled: Boolean(equipeId),
     queryFn: async () => {
       const [lics, prazos, tarefas] = await Promise.all([
-        supabase.from("licitacoes").select("id,numero,orgao,data_sessao,plataforma,portal"),
+        supabase
+          .from("licitacoes")
+          .select(
+            "id,numero,orgao,data_sessao,proximo_evento_data,plataforma,portal,status,aprovacao_status",
+          ),
         supabase.from("prazos").select("*,licitacoes(numero)"),
         supabase.from("tarefas").select("*,licitacoes(numero)"),
       ]);
+      // Somente licitações acompanhadas, já aprovadas pela diretoria e ainda em disputa.
+      const encerradas = [
+        "encerrada",
+        "perdida",
+        "vencida",
+        "homologada",
+        "deserta",
+        "fracassada",
+      ];
+      const participando = (lics.data ?? []).filter(
+        (l: any) => l.aprovacao_status === "aprovada" && !encerradas.includes(l.status),
+      );
+      const aptas = new Set(participando.map((l: any) => l.id));
       const eventos: Evento[] = [];
-      for (const l of lics.data ?? []) {
-        if (l.data_sessao)
+      for (const l of participando as any[]) {
+        const quando = l.proximo_evento_data ?? l.data_sessao;
+        if (quando)
           eventos.push({
             id: `s-${l.id}`,
-            quando: l.data_sessao,
+            quando,
             titulo: `Sessão · ${l.numero}`,
             detalhe: `${l.orgao ?? ""} — ${l.portal ?? l.plataforma ?? "portal"}`,
             tipo: "sessão",
@@ -69,7 +87,7 @@ function Agenda() {
           });
       }
       for (const p of (prazos.data ?? []) as any[]) {
-        if (!p.concluido)
+        if (!p.concluido && aptas.has(p.licitacao_id))
           eventos.push({
             id: `p-${p.id}`,
             quando: p.data_limite,
@@ -80,7 +98,7 @@ function Agenda() {
           });
       }
       for (const t of (tarefas.data ?? []) as any[]) {
-        if (t.prazo && !t.concluida)
+        if (t.prazo && !t.concluida && t.licitacao_id && aptas.has(t.licitacao_id))
           eventos.push({
             id: `t-${t.id}`,
             quando: t.prazo,

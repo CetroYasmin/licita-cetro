@@ -5,6 +5,37 @@ export const moeda = (v?: number | null) =>
 
 export const numero = (v?: number | null) => (v == null ? "—" : v.toLocaleString("pt-BR"));
 
+/** Aplica máscara em R$ enquanto digita: só dígitos, os 2 últimos são centavos. */
+export function aoDigitarMoeda(texto: string): string {
+  const digitos = texto.replace(/\D/g, "").slice(0, 13);
+  if (!digitos) return "";
+  return (Number(digitos) / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+/** Texto mascarado em R$ -> número. */
+export function numeroDaMoeda(texto: string): number | null {
+  const digitos = texto.replace(/\D/g, "");
+  if (!digitos) return null;
+  return Number(digitos) / 100;
+}
+
+/**
+ * Nome do órgão sem a duplicação do ente federativo.
+ * "MUNICIPIO DE SERRINHA — Prefeitura Municipal de Serrinha" -> "Prefeitura Municipal de Serrinha".
+ */
+export function nomeOrgao(v?: string | null): string {
+  const bruto = (v ?? "").trim();
+  if (!bruto) return "—";
+  const partes = bruto.split(/\s+[—–-]\s+/).map((p) => p.trim()).filter(Boolean);
+  if (partes.length < 2) return bruto;
+  const ente = /^(munic[íi]pio|estado|prefeitura municipal|governo)\s+d[oe]s?\s+/i;
+  if (ente.test(partes[0]!)) return partes.slice(1).join(" — ");
+  return bruto;
+}
+
 export const data = (v?: string | null) => {
   if (!v) return "—";
   const d = new Date(v);

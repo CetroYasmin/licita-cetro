@@ -6,7 +6,7 @@ import {
   Search,
   CalendarDays,
   Bell,
-  Radar,
+  
   BarChart3,
   BadgeCheck,
   Users,
@@ -29,7 +29,7 @@ const NAV = [
   { to: "/em-andamento", label: "Em andamento", icon: Timer },
   { to: "/pesquisa", label: "Pesquisa", icon: Search },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
-  { to: "/boletim-real", label: "Boletim", icon: Radar },
+  
   { to: "/alertas", label: "Alertas", icon: Bell },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/aprovacao", label: "Aprovação", icon: BadgeCheck },

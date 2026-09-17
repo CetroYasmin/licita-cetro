@@ -14,7 +14,6 @@ import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AprovacaoRouteImport } from './routes/aprovacao'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BoletimRealRouteImport } from './routes/boletim-real'
 import { Route as EmAndamentoRouteImport } from './routes/em-andamento'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
@@ -45,11 +44,6 @@ const AprovacaoRoute = AprovacaoRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BoletimRealRoute = BoletimRealRouteImport.update({
-  id: '/boletim-real',
-  path: '/boletim-real',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmAndamentoRoute = EmAndamentoRouteImport.update({
@@ -89,7 +83,6 @@ export interface FileRoutesByFullPath {
   '/alertas': typeof AlertasRoute
   '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
-  '/boletim-real': typeof BoletimRealRoute
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
@@ -103,7 +96,6 @@ export interface FileRoutesByTo {
   '/alertas': typeof AlertasRoute
   '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
-  '/boletim-real': typeof BoletimRealRoute
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
@@ -118,7 +110,6 @@ export interface FileRoutesById {
   '/alertas': typeof AlertasRoute
   '/aprovacao': typeof AprovacaoRoute
   '/auth': typeof AuthRoute
-  '/boletim-real': typeof BoletimRealRoute
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/pesquisa': typeof PesquisaRoute
@@ -134,7 +125,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/aprovacao'
     | '/auth'
-    | '/boletim-real'
     | '/em-andamento'
     | '/equipe'
     | '/pesquisa'
@@ -148,7 +138,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/aprovacao'
     | '/auth'
-    | '/boletim-real'
     | '/em-andamento'
     | '/equipe'
     | '/pesquisa'
@@ -162,7 +151,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/aprovacao'
     | '/auth'
-    | '/boletim-real'
     | '/em-andamento'
     | '/equipe'
     | '/pesquisa'
@@ -177,7 +165,6 @@ export interface RootRouteChildren {
   AlertasRoute: typeof AlertasRoute
   AprovacaoRoute: typeof AprovacaoRoute
   AuthRoute: typeof AuthRoute
-  BoletimRealRoute: typeof BoletimRealRoute
   EmAndamentoRoute: typeof EmAndamentoRoute
   EquipeRoute: typeof EquipeRoute
   PesquisaRoute: typeof PesquisaRoute
@@ -221,13 +208,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/boletim-real': {
-      id: '/boletim-real'
-      path: '/boletim-real'
-      fullPath: '/boletim-real'
-      preLoaderRoute: typeof BoletimRealRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/em-andamento': {
@@ -281,7 +261,6 @@ const rootRouteChildren: RootRouteChildren = {
   AlertasRoute: AlertasRoute,
   AprovacaoRoute: AprovacaoRoute,
   AuthRoute: AuthRoute,
-  BoletimRealRoute: BoletimRealRoute,
   EmAndamentoRoute: EmAndamentoRoute,
   EquipeRoute: EquipeRoute,
   PesquisaRoute: PesquisaRoute,

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { Download, ExternalLink, Eye, EyeOff, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MODALIDADES, NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/lib/formato";
+import {
+  MODALIDADES,
+  NATUREZAS,
+  UFS,
+  aoDigitarMoeda,
+  data as fData,
+  dataHora,
+  moeda,
+  numeroDaMoeda,
+} from "@/lib/formato";
 import {
   buscarItensPncp,
   buscarLicitacoesPncp,
@@ -74,7 +83,8 @@ function Pesquisa() {
   const [modalidade, setModalidade] = useState("todas");
   const [natureza, setNatureza] = useState("todas");
   const [valorMinimo, setValorMinimo] = useState("");
-  const [valorMaximo, setValorMaximo] = useState("");
+  const [dias, setDias] = useState("todos");
+  const [propostaAte, setPropostaAte] = useState("");
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
   const [ocultarVistas, setOcultarVistas] = useState(true);
@@ -189,8 +199,8 @@ function Pesquisa() {
            modalidade: modalidade === "todas" ? "" : modalidade,
            natureza: natureza === "todas" ? "" : natureza,
            portal: "",
-           valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
-           valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
+           valorMinimo: numeroDaMoeda(valorMinimo) ?? undefined,
+           diasPublicacao: dias === "todos" ? undefined : Number(dias),
            incluirEncerradas,
            ordenar,
          },
@@ -351,6 +361,15 @@ function Pesquisa() {
         return !d || portalAtivo(d.portal);
       });
     }
+    if (propostaAte) {
+      const limite = new Date(`${propostaAte}T23:59:59`).getTime();
+      lista = lista.filter((l) => {
+        const fim = encerramentoDe(l);
+        if (!fim) return true;
+        const t = new Date(fim).getTime();
+        return Number.isNaN(t) || t <= limite;
+      });
+    }
     const dataValida = (valor: string | null) => {
       if (!valor) return Number.POSITIVE_INFINITY;
       const tempo = new Date(valor).getTime();
@@ -380,7 +399,16 @@ function Pesquisa() {
     };
     return lista.sort(comparadores[ordenar] ?? comparadores["relevancia"]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ocultarVistas, ordenar, resultados, user?.id, vistas, detalhes, somentePortaisAtivos]);
+  }, [
+    ocultarVistas,
+    ordenar,
+    resultados,
+    user?.id,
+    vistas,
+    detalhes,
+    somentePortaisAtivos,
+    propostaAte,
+  ]);
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, LicitacaoPncp[]>();
@@ -395,6 +423,7 @@ function Pesquisa() {
   const secoesRef = useRef<Record<string, HTMLElement | null>>({});
   const irPara = (uf: string) =>
     secoesRef.current[uf]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const jaRolou = useRef<Set<string>>(new Set());
 
 
   return (
@@ -464,12 +493,41 @@ function Pesquisa() {
           </div>
           <div className="space-y-1">
             <Label>Valor mínimo</Label>
-            <Input type="number" value={valorMinimo} onChange={(e) => setValorMinimo(e.target.value)} />
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              value={valorMinimo}
+              onChange={(e) => setValorMinimo(aoDigitarMoeda(e.target.value))}
+            />
           </div>
           <div className="space-y-1">
-            <Label>Valor máximo</Label>
-            <Input type="number" value={valorMaximo} onChange={(e) => setValorMaximo(e.target.value)} />
+            <Label>Período de publicação</Label>
+            <Select value={dias} onValueChange={setDias}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Qualquer data</SelectItem>
+                <SelectItem value="1">Publicadas hoje</SelectItem>
+                <SelectItem value="3">Últimos 3 dias</SelectItem>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="15">Últimos 15 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          <div className="space-y-1">
+            <Label>Data limite de proposta até</Label>
+            <Input
+              type="date"
+              value={propostaAte}
+              onChange={(e) => setPropostaAte(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Mostra apenas editais cujo prazo de envio de proposta termina até essa data.
+            </p>
+          </div>
+
 
           <div className="space-y-2 md:col-span-3 xl:col-span-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -741,11 +799,18 @@ function Pesquisa() {
                 const proximo = grupos[gi + 1]?.[0];
                 if (!proximo) return null;
                 return (
-                  <div className="flex justify-end">
-                    <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
-                      Ir para {proximo} ↓
-                    </Button>
-                  </div>
+                  <>
+                    <FimDoEstado
+                      chave={`${uf}-${proximo}`}
+                      jaRolou={jaRolou}
+                      aoTerminar={() => irPara(proximo)}
+                    />
+                    <div className="flex justify-end">
+                      <Button size="sm" variant="outline" onClick={() => irPara(proximo)}>
+                        Ir para {proximo} ↓
+                      </Button>
+                    </div>
+                  </>
                 );
               })()}
             </section>
@@ -760,4 +825,42 @@ function Pesquisa() {
       </div>
     </AppLayout>
   );
+}
+
+/**
+ * Marca o fim da lista de um estado: quando o usuário termina de ver os editais
+ * daquele estado, a página se ajusta sozinha para o próximo (uma vez por estado).
+ */
+function FimDoEstado({
+  chave,
+  jaRolou,
+  aoTerminar,
+}: {
+  chave: string;
+  jaRolou: RefObject<Set<string>>;
+  aoTerminar: () => void;
+}) {
+  const alvo = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = alvo.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        for (const e of entradas) {
+          if (!e.isIntersecting) continue;
+          const vistos = jaRolou.current;
+          if (!vistos || vistos.has(chave)) continue;
+          vistos.add(chave);
+          aoTerminar();
+        }
+      },
+      { rootMargin: "0px 0px -20% 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chave]);
+
+  return <div ref={alvo} aria-hidden className="h-px" />;
 }
