@@ -60,6 +60,7 @@ type Lic = {
   proximo_evento_data: string | null;
   portal: string | null;
   site_url: string | null;
+  aprovacao_status?: string | null;
 };
 
 function CardIndicador({
@@ -317,7 +318,7 @@ function Dashboard() {
         supabase
           .from("licitacoes")
           .select(
-            "id,numero,orgao,objeto,status,data_sessao,valor_estimado,valor_ofertado,posicao_empresa,proximo_evento,proximo_evento_data,portal,site_url",
+            "id,numero,orgao,objeto,status,data_sessao,valor_estimado,valor_ofertado,posicao_empresa,proximo_evento,proximo_evento_data,portal,site_url,aprovacao_status",
           )
           .order("data_sessao", { ascending: true }),
         supabase
@@ -421,7 +422,9 @@ function Dashboard() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
-              <CalendarioLicitacoes licitacoes={acompanhando} />
+              <CalendarioLicitacoes
+                licitacoes={acompanhando.filter((l) => l.aprovacao_status !== "reprovada")}
+              />
             <div className="surface-panel">
               <div className="flex items-center justify-between border-b p-4">
                 <h2 className="text-sm font-semibold">Sessões e próximos eventos</h2>

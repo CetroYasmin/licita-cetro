@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { dataHora, moeda, numero } from "@/lib/formato";
+import { dataHora, moeda, nomeOrgao, numero } from "@/lib/formato";
 import { baixarCsv } from "@/lib/registro";
 import { exportarPlanilhaAcompanhamento } from "@/lib/planilha";
 import {
@@ -90,7 +90,7 @@ function Relatorios() {
 
   const porOrgao = new Map<string, { total: number; vencidas: number; valor: number }>();
   for (const l of lics) {
-    const k = l.orgao ?? "—";
+    const k = nomeOrgao(l.orgao);
     const at = porOrgao.get(k) ?? { total: 0, vencidas: 0, valor: 0 };
     at.total += 1;
     if (l.status === "vencida") at.vencidas += 1;
@@ -160,7 +160,7 @@ function Relatorios() {
               exportarPlanilhaAcompanhamento(
                 "LICITACOES_ESPERANDO_REALIZACAO",
                 planilha.map((l) => ({
-                  orgao: (l.orgao ?? "").toUpperCase(),
+                  orgao: nomeOrgao(l.orgao).toUpperCase(),
                   modalidade: `${l.modalidade ?? ""}${l.numero ? ` Nº ${l.numero}` : ""}`.trim(),
                   objeto: l.objeto ?? "",
                   qualificacao: l.qualificacao_tecnica ?? "",
@@ -191,7 +191,7 @@ function Relatorios() {
           <tbody className="divide-y align-top">
             {planilha.map((l) => (
               <tr key={l.id}>
-                <td className="p-3 font-medium uppercase">{l.orgao ?? "—"}</td>
+                <td className="p-3 font-medium uppercase">{nomeOrgao(l.orgao)}</td>
                 <td className="p-3">
                   {l.modalidade ?? "—"}
                   {l.numero ? ` nº ${l.numero}` : ""}
