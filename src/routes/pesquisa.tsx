@@ -20,7 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MODALIDADES, NATUREZAS, UFS, data as fData, dataHora, moeda } from "@/lib/formato";
+import {
+  MODALIDADES,
+  NATUREZAS,
+  UFS,
+  aoDigitarMoeda,
+  data as fData,
+  dataHora,
+  moeda,
+  numeroDaMoeda,
+} from "@/lib/formato";
 import {
   buscarItensPncp,
   buscarLicitacoesPncp,
@@ -74,7 +83,8 @@ function Pesquisa() {
   const [modalidade, setModalidade] = useState("todas");
   const [natureza, setNatureza] = useState("todas");
   const [valorMinimo, setValorMinimo] = useState("");
-  const [valorMaximo, setValorMaximo] = useState("");
+  const [dias, setDias] = useState("todos");
+  const [propostaAte, setPropostaAte] = useState("");
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
   const [ocultarVistas, setOcultarVistas] = useState(true);
@@ -189,8 +199,8 @@ function Pesquisa() {
            modalidade: modalidade === "todas" ? "" : modalidade,
            natureza: natureza === "todas" ? "" : natureza,
            portal: "",
-           valorMinimo: valorMinimo ? Number(valorMinimo) : undefined,
-           valorMaximo: valorMaximo ? Number(valorMaximo) : undefined,
+           valorMinimo: numeroDaMoeda(valorMinimo) ?? undefined,
+           diasPublicacao: dias === "todos" ? undefined : Number(dias),
            incluirEncerradas,
            ordenar,
          },
