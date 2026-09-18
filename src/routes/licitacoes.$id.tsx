@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   STATUS_LICITACAO,
+  aoDigitarMoeda,
+
   contagemRegressiva,
   corDoStatus,
   data as fData,
