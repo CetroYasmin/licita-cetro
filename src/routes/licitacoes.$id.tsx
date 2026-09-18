@@ -707,12 +707,11 @@ function Detalhes() {
                     <td className="p-3">{moeda(i.valor_unitario_estimado)}</td>
                     <td className="p-3">{moeda(i.valor_total_estimado)}</td>
                     <td className="p-3">
-                      <Input
-                        className="h-8 w-28"
-                        type="number"
-                        defaultValue={i.valor_ofertado ?? ""}
-                        onBlur={async (e) => {
-                          const valor = e.target.value ? Number(e.target.value) : null;
+                      <InputMoeda
+                        className="h-8 w-32"
+                        valorInicial={i.valor_ofertado}
+                        aria-label="Valor ofertado do item"
+                        onConfirmar={async (valor) => {
                           await supabase
                             .from("licitacao_itens")
                             .update({ valor_ofertado: valor, participando: valor != null })
@@ -722,21 +721,20 @@ function Detalhes() {
                       />
                     </td>
                     <td className="p-3">
-                      <Input
-                        className="h-8 w-28"
-                        type="number"
-                        defaultValue={i.melhor_valor ?? ""}
-                        onBlur={async (e) => {
+                      <InputMoeda
+                        className="h-8 w-32"
+                        valorInicial={i.melhor_valor}
+                        aria-label="Melhor valor do item"
+                        onConfirmar={async (valor) => {
                           await supabase
                             .from("licitacao_itens")
-                            .update({
-                              melhor_valor: e.target.value ? Number(e.target.value) : null,
-                            })
+                            .update({ melhor_valor: valor })
                             .eq("id", i.id);
                           recarregar();
                         }}
                       />
                     </td>
+
                     <td className="p-3">
                       <Input
                         className="h-8 w-16"
