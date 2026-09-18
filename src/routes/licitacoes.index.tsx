@@ -39,7 +39,10 @@ import {
   data as fData,
   dataHora,
   moeda,
+  numeroDaMoeda,
 } from "@/lib/formato";
+import { InputMoeda } from "@/components/InputMoeda";
+
 import { baixarCsv } from "@/lib/registro";
 import { combina } from "@/lib/busca";
 import { EditarSessaoValor, sessaoJaOcorreu } from "@/components/EditarSessaoValor";
