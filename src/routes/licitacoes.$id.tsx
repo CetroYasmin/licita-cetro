@@ -32,13 +32,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   STATUS_LICITACAO,
+  aoDigitarMoeda,
+
   contagemRegressiva,
   corDoStatus,
   data as fData,
   dataHora,
   moeda,
   numero as fNumero,
+  numeroDaMoeda,
 } from "@/lib/formato";
+import { InputMoeda } from "@/components/InputMoeda";
+
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 import { partesDoFonteId, sincronizarLicitacaoPncp } from "@/lib/pncp.functions";
 
@@ -704,12 +709,11 @@ function Detalhes() {
                     <td className="p-3">{moeda(i.valor_unitario_estimado)}</td>
                     <td className="p-3">{moeda(i.valor_total_estimado)}</td>
                     <td className="p-3">
-                      <Input
-                        className="h-8 w-28"
-                        type="number"
-                        defaultValue={i.valor_ofertado ?? ""}
-                        onBlur={async (e) => {
-                          const valor = e.target.value ? Number(e.target.value) : null;
+                      <InputMoeda
+                        className="h-8 w-32"
+                        valorInicial={i.valor_ofertado}
+                        aria-label="Valor ofertado do item"
+                        onConfirmar={async (valor) => {
                           await supabase
                             .from("licitacao_itens")
                             .update({ valor_ofertado: valor, participando: valor != null })
@@ -719,21 +723,20 @@ function Detalhes() {
                       />
                     </td>
                     <td className="p-3">
-                      <Input
-                        className="h-8 w-28"
-                        type="number"
-                        defaultValue={i.melhor_valor ?? ""}
-                        onBlur={async (e) => {
+                      <InputMoeda
+                        className="h-8 w-32"
+                        valorInicial={i.melhor_valor}
+                        aria-label="Melhor valor do item"
+                        onConfirmar={async (valor) => {
                           await supabase
                             .from("licitacao_itens")
-                            .update({
-                              melhor_valor: e.target.value ? Number(e.target.value) : null,
-                            })
+                            .update({ melhor_valor: valor })
                             .eq("id", i.id);
                           recarregar();
                         }}
                       />
                     </td>
+
                     <td className="p-3">
                       <Input
                         className="h-8 w-16"
@@ -1173,30 +1176,21 @@ function FormularioEmpresa({
       </div>
       <div className="space-y-1">
         <Label>Valor ofertado</Label>
-        <Input
-          type="number"
-          defaultValue={lic.valor_ofertado ?? ""}
-          onBlur={(e) =>
-            onSalvar(
-              { valor_ofertado: e.target.value ? Number(e.target.value) : null },
-              "Valor ofertado atualizado",
-            )
-          }
+        <InputMoeda
+          valorInicial={lic.valor_ofertado}
+          aria-label="Valor ofertado"
+          onConfirmar={(valor) => onSalvar({ valor_ofertado: valor }, "Valor ofertado atualizado")}
         />
       </div>
       <div className="space-y-1">
         <Label>Melhor valor atual</Label>
-        <Input
-          type="number"
-          defaultValue={lic.melhor_valor ?? ""}
-          onBlur={(e) =>
-            onSalvar(
-              { melhor_valor: e.target.value ? Number(e.target.value) : null },
-              "Melhor valor atualizado",
-            )
-          }
+        <InputMoeda
+          valorInicial={lic.melhor_valor}
+          aria-label="Melhor valor atual"
+          onConfirmar={(valor) => onSalvar({ melhor_valor: valor }, "Melhor valor atualizado")}
         />
       </div>
+
       <div className="space-y-1">
         <Label>Situação da empresa</Label>
         <Input
@@ -1298,7 +1292,7 @@ function FormularioLance({
         e.preventDefault();
         const form = e.currentTarget;
         const fd = new FormData(form);
-        const valor = Number(fd.get("valor"));
+        const valor = numeroDaMoeda(String(fd.get("valor") ?? "")) ?? 0;
         const empresa = String(fd.get("empresa") ?? "").trim() || "Nossa empresa";
         if (!valor) return;
         await onEnviar(valor, empresa === "Nossa empresa", empresa);
@@ -1311,7 +1305,15 @@ function FormularioLance({
       </div>
       <div className="space-y-1">
         <Label>Valor do lance</Label>
-        <Input name="valor" type="number" step="0.01" />
+        <Input
+          name="valor"
+          inputMode="numeric"
+          placeholder="R$ 0,00"
+          onInput={(e) => {
+            e.currentTarget.value = aoDigitarMoeda(e.currentTarget.value);
+          }}
+        />
+
       </div>
       <Button type="submit">Registrar lance</Button>
     </form>
@@ -1342,7 +1344,7 @@ function FormularioConcorrente({
           nome,
           cnpj: String(fd.get("cnpj") ?? "") || null,
           posicao: fd.get("posicao") ? Number(fd.get("posicao")) : null,
-          valor_ofertado: fd.get("valor") ? Number(fd.get("valor")) : null,
+          valor_ofertado: numeroDaMoeda(String(fd.get("valor") ?? "")),
           vencedor: fd.get("vencedor") === "on",
         });
         form.reset();
@@ -1351,7 +1353,7 @@ function FormularioConcorrente({
       <div className="space-y-1"><Label>Empresa</Label><Input name="nome" /></div>
       <div className="space-y-1"><Label>CNPJ</Label><Input name="cnpj" /></div>
       <div className="space-y-1"><Label>Posição</Label><Input name="posicao" type="number" className="w-24" /></div>
-      <div className="space-y-1"><Label>Valor ofertado</Label><Input name="valor" type="number" step="0.01" /></div>
+      <div className="space-y-1"><Label>Valor ofertado</Label><Input name="valor" inputMode="numeric" placeholder="R$ 0,00" onInput={(e) => { e.currentTarget.value = aoDigitarMoeda(e.currentTarget.value); }} /></div>
       <label className="flex items-center gap-2 pb-2 text-sm">
         <input type="checkbox" name="vencedor" /> vencedora
       </label>

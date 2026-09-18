@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { InputMoeda, textoMoeda } from "@/components/InputMoeda";
 import { aoDigitarMoeda, numeroDaMoeda } from "@/lib/formato";
 
 export const FASES = [
@@ -28,16 +29,23 @@ export const FASES = [
   "Contratação",
 ] as const;
 
+const TOTAL = 20;
+const VISIVEIS = 5;
+
 type Linha = { nome: string; valor: string };
 
-const VAZIO: Linha[] = Array.from({ length: 5 }, () => ({ nome: "", valor: "" }));
+const VAZIO: Linha[] = Array.from({ length: TOTAL }, () => ({ nome: "", valor: "" }));
 
-const emReais = (v: number | null | undefined) =>
-  v == null ? "" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+/** Percentual de desconto sobre o valor estimado. */
+function percentualDesconto(estimado: number | null | undefined, ofertado: number | null): string {
+  if (!estimado || estimado <= 0 || ofertado == null) return "—";
+  const p = ((estimado - ofertado) / estimado) * 100;
+  return `${p.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+}
 
 /**
- * Registro manual do resultado da sessão: as 5 primeiras empresas colocadas,
- * a posição da nossa empresa e a fase atual da licitação.
+ * Registro manual do resultado da sessão: até 20 empresas colocadas, a posição
+ * e o valor da nossa empresa, o percentual de desconto de cada uma e a fase atual.
  */
 export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
   const { equipeId } = useAuth();
@@ -60,15 +68,18 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
   const [posicao, setPosicao] = useState(
     licitacao.posicao_empresa != null ? String(licitacao.posicao_empresa) : "",
   );
+  const [nossoValor, setNossoValor] = useState(textoMoeda(licitacao.valor_ofertado));
   const [fase, setFase] = useState<string>(licitacao.fase ?? "");
+  const [mostrarTodas, setMostrarTodas] = useState(false);
 
   useEffect(() => {
     if (!concorrentes) return;
-    const base = Array.from({ length: 5 }, (_, i) => {
-      const c = concorrentes.find((x: any) => x.posicao === i + 1);
-      return { nome: c?.nome ?? "", valor: emReais(c?.valor_ofertado) };
-    });
-    setLinhas(base);
+    setLinhas(
+      Array.from({ length: TOTAL }, (_, i) => {
+        const c = concorrentes.find((x: any) => x.posicao === i + 1);
+        return { nome: c?.nome ?? "", valor: textoMoeda(c?.valor_ofertado) };
+      }),
+    );
   }, [concorrentes]);
 
   const salvar = useMutation({
@@ -78,6 +89,7 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
         .from("licitacoes")
         .update({
           posicao_empresa: posicao ? Number(posicao) : null,
+          valor_ofertado: numeroDaMoeda(nossoValor),
           fase: fase || null,
           ultima_atualizacao: new Date().toISOString(),
         })
@@ -88,7 +100,7 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
         .from("concorrentes")
         .delete()
         .eq("licitacao_id", licitacao.id)
-        .lte("posicao", 5);
+        .lte("posicao", TOTAL);
       if (erroDelete) throw erroDelete;
 
       const novos = linhas
@@ -116,9 +128,14 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const visiveis = mostrarTodas ? TOTAL : VISIVEIS;
+  const preenchidasOcultas = linhas
+    .slice(VISIVEIS)
+    .filter((l) => l.nome.trim().length > 0).length;
+
   return (
     <div className="space-y-3 rounded-md border p-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label className="text-xs">Posição da nossa empresa</Label>
           <Input
@@ -129,6 +146,18 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
             onChange={(e) => setPosicao(e.target.value)}
             placeholder="ex.: 2"
           />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Nosso valor ofertado</Label>
+          <InputMoeda
+            className="h-8 text-xs"
+            value={nossoValor}
+            onChangeTexto={setNossoValor}
+            aria-label="Nosso valor ofertado"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Desconto: {percentualDesconto(licitacao.valor_estimado, numeroDaMoeda(nossoValor))}
+          </p>
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Fase atual da licitação</Label>
@@ -148,8 +177,8 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs">5 primeiras empresas colocadas</Label>
-        {linhas.map((l, i) => (
+        <Label className="text-xs">Empresas participantes (até {TOTAL})</Label>
+        {linhas.slice(0, visiveis).map((l, i) => (
           <div key={i} className="flex items-center gap-2">
             <span className="w-6 text-xs font-semibold text-muted-foreground">{i + 1}º</span>
             <Input
@@ -164,6 +193,7 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
             />
             <Input
               className="h-8 w-[150px] text-xs"
+              type="text"
               inputMode="numeric"
               value={l.valor}
               placeholder="R$ 0,00"
@@ -173,8 +203,23 @@ export function ResultadoDisputa({ licitacao }: { licitacao: any }) {
                 )
               }
             />
+            <span className="w-16 text-right text-[11px] text-muted-foreground">
+              {percentualDesconto(licitacao.valor_estimado, numeroDaMoeda(l.valor))}
+            </span>
           </div>
         ))}
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setMostrarTodas((v) => !v)}
+        >
+          {mostrarTodas
+            ? "Ocultar empresas da 6ª à 20ª"
+            : `Mostrar empresas da 6ª à 20ª${preenchidasOcultas ? ` (${preenchidasOcultas} preenchida(s))` : ""}`}
+        </Button>
       </div>
 
       <Button size="sm" className="h-8" disabled={salvar.isPending} onClick={() => salvar.mutate()}>
