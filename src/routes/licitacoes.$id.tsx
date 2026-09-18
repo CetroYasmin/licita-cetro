@@ -38,7 +38,10 @@ import {
   dataHora,
   moeda,
   numero as fNumero,
+  numeroDaMoeda,
 } from "@/lib/formato";
+import { InputMoeda } from "@/components/InputMoeda";
+
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 import { partesDoFonteId, sincronizarLicitacaoPncp } from "@/lib/pncp.functions";
 
