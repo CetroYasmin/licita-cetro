@@ -187,8 +187,9 @@ function ListaLicitacoes() {
       if (uf !== "todas" && l.uf !== uf) return false;
       if (natureza !== "todas" && l.natureza !== natureza) return false;
       if (pasta !== "todas" && l.pasta_id !== pasta) return false;
-      if (valorMin && (l.valor_estimado ?? 0) < Number(valorMin)) return false;
-      if (valorMax && (l.valor_estimado ?? 0) > Number(valorMax)) return false;
+      if (valorMin && (l.valor_estimado ?? 0) < (numeroDaMoeda(valorMin) ?? 0)) return false;
+      if (valorMax && (l.valor_estimado ?? 0) > (numeroDaMoeda(valorMax) ?? Infinity)) return false;
+
       if (dataDe && (!l.data_sessao || new Date(l.data_sessao) < new Date(dataDe))) return false;
       if (somenteParticipando && l.valor_ofertado == null) return false;
       if (somenteFavoritos && !l.favorito) return false;
@@ -360,11 +361,12 @@ function ListaLicitacoes() {
             </Select>
           </Campo>
           <Campo label="Valor mínimo">
-            <Input type="number" value={valorMin} onChange={(e) => setValorMin(e.target.value)} />
+            <InputMoeda value={valorMin} onChangeTexto={setValorMin} aria-label="Valor mínimo" />
           </Campo>
           <Campo label="Valor máximo">
-            <Input type="number" value={valorMax} onChange={(e) => setValorMax(e.target.value)} />
+            <InputMoeda value={valorMax} onChangeTexto={setValorMax} aria-label="Valor máximo" />
           </Campo>
+
           <Campo label="Sessão a partir de">
             <Input type="date" value={dataDe} onChange={(e) => setDataDe(e.target.value)} />
           </Campo>
