@@ -36,7 +36,6 @@ import {
   type LicitacaoPncp,
 } from "@/lib/pncp.functions";
 import { useDetalhesPncp } from "@/hooks/useDetalhesPncp";
-import { usePortais } from "@/hooks/usePortais";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 
 export const Route = createFileRoute("/pesquisa")({
