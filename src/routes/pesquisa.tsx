@@ -361,6 +361,17 @@ function Pesquisa() {
         return !d || portalAtivo(d.portal);
       });
     }
+    const minimo = numeroDaMoeda(valorMinimo);
+    if (minimo != null && minimo > 0) {
+      lista = lista.filter((l) => {
+        const v = valorDe(l);
+        if (v != null) return v >= minimo;
+        // Enquanto o valor ainda está sendo consultado, mantém o edital na lista.
+        if (pendenteDe(l)) return true;
+        // Orçamento sigiloso: não há valor para comparar, continua visível.
+        return sigilosoDe(l);
+      });
+    }
     if (propostaAte) {
       const limite = new Date(`${propostaAte}T23:59:59`).getTime();
       lista = lista.filter((l) => {
@@ -370,6 +381,7 @@ function Pesquisa() {
         return Number.isNaN(t) || t <= limite;
       });
     }
+
     const dataValida = (valor: string | null) => {
       if (!valor) return Number.POSITIVE_INFINITY;
       const tempo = new Date(valor).getTime();
