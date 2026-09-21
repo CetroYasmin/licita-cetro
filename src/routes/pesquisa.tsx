@@ -36,7 +36,6 @@ import {
   type LicitacaoPncp,
 } from "@/lib/pncp.functions";
 import { useDetalhesPncp } from "@/hooks/useDetalhesPncp";
-import { usePortais } from "@/hooks/usePortais";
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 
 export const Route = createFileRoute("/pesquisa")({
@@ -88,11 +87,10 @@ function Pesquisa() {
   const [ordenar, setOrdenar] = useState("relevancia");
   const [incluirEncerradas, setIncluirEncerradas] = useState(false);
   const [ocultarVistas, setOcultarVistas] = useState(true);
-  const [somentePortaisAtivos, setSomentePortaisAtivos] = useState(false);
+  const [ocultarVistasOutros, setOcultarVistasOutros] = useState(false);
   const [resultados, setResultados] = useState<LicitacaoPncp[]>([]);
   const [importadas, setImportadas] = useState<string[]>([]);
 
-  const { portalAtivo, desativados } = usePortais();
   const {
     detalhes,
     detalheDe,
@@ -354,12 +352,10 @@ function Pesquisa() {
 
   const visiveis = useMemo(() => {
     let lista = ocultarVistas ? resultados.filter((l) => !euVi(l.fonte_id)) : [...resultados];
-    if (somentePortaisAtivos) {
-      // Sem detalhe carregado ainda o edital continua visível (evita "sumir" resultado).
-      lista = lista.filter((l) => {
-        const d = detalheDe(l);
-        return !d || portalAtivo(d.portal);
-      });
+    if (ocultarVistasOutros) {
+      lista = lista.filter(
+        (l) => !(vistas ?? []).some((v) => v.fonte_id === l.fonte_id && v.user_id !== user?.id),
+      );
     }
     const minimo = numeroDaMoeda(valorMinimo);
     if (minimo != null && minimo > 0) {
@@ -418,7 +414,7 @@ function Pesquisa() {
     user?.id,
     vistas,
     detalhes,
-    somentePortaisAtivos,
+    ocultarVistasOutros,
     propostaAte,
     valorMinimo,
   ]);
@@ -594,13 +590,10 @@ function Pesquisa() {
             </label>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
-                checked={somentePortaisAtivos}
-                onCheckedChange={(v) => setSomentePortaisAtivos(Boolean(v))}
+                checked={ocultarVistasOutros}
+                onCheckedChange={(v) => setOcultarVistasOutros(Boolean(v))}
               />
-              Somente portais liberados em “Gerenciar portais”
-              {desativados.length > 0 && (
-                <span className="text-xs text-muted-foreground">({desativados.length} desligado[s])</span>
-              )}
+              Ocultar licitações vistas por outros usuários
             </label>
           </div>
           <div className="flex items-end md:col-span-1 xl:col-span-2">
