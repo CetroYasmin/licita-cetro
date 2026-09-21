@@ -345,9 +345,10 @@ function Dashboard() {
 
   const licitacoes = data?.licitacoes ?? [];
   const hoje = new Date().toDateString();
-  const sessoesHoje = licitacoes.filter(
-    (l) => l.data_sessao && new Date(l.data_sessao).toDateString() === hoje,
-  );
+  const sessoesHoje = licitacoes.filter((l) => {
+    const dataEvento = l.proximo_evento_data ?? l.data_sessao;
+    return dataEvento && new Date(dataEvento).toDateString() === hoje;
+  });
   const emDisputa = licitacoes.filter((l) => l.status === "em disputa");
   const vencidas = licitacoes.filter((l) => ["vencida", "homologada"].includes(l.status));
   const perdidas = licitacoes.filter((l) => ["perdida", "fracassada"].includes(l.status));
