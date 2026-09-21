@@ -420,7 +420,9 @@ function Pesquisa() {
     detalhes,
     somentePortaisAtivos,
     propostaAte,
+    valorMinimo,
   ]);
+
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, LicitacaoPncp[]>();
