@@ -83,6 +83,8 @@ function Aprovacao() {
           aprovacao_autor_nome: autor,
           aprovacao_autor_id: user?.id ?? null,
           aprovacao_em: new Date().toISOString(),
+          // Quando a diretoria reprova, a licitação já consta como declinada.
+          ...(input.status === "reprovada" ? { status: "declinada" } : {}),
         })
         .eq("id", input.licitacao.id);
       if (error) throw error;
