@@ -361,6 +361,17 @@ function Pesquisa() {
         return !d || portalAtivo(d.portal);
       });
     }
+    const minimo = numeroDaMoeda(valorMinimo);
+    if (minimo != null && minimo > 0) {
+      lista = lista.filter((l) => {
+        const v = valorDe(l);
+        if (v != null) return v >= minimo;
+        // Enquanto o valor ainda está sendo consultado, mantém o edital na lista.
+        if (pendenteDe(l)) return true;
+        // Orçamento sigiloso: não há valor para comparar, continua visível.
+        return sigilosoDe(l);
+      });
+    }
     if (propostaAte) {
       const limite = new Date(`${propostaAte}T23:59:59`).getTime();
       lista = lista.filter((l) => {
@@ -370,6 +381,7 @@ function Pesquisa() {
         return Number.isNaN(t) || t <= limite;
       });
     }
+
     const dataValida = (valor: string | null) => {
       if (!valor) return Number.POSITIVE_INFINITY;
       const tempo = new Date(valor).getTime();
@@ -408,7 +420,9 @@ function Pesquisa() {
     detalhes,
     somentePortaisAtivos,
     propostaAte,
+    valorMinimo,
   ]);
+
 
   const grupos = useMemo(() => {
     const mapa = new Map<string, LicitacaoPncp[]>();
@@ -500,7 +514,12 @@ function Pesquisa() {
               value={valorMinimo}
               onChange={(e) => setValorMinimo(aoDigitarMoeda(e.target.value))}
             />
+            <p className="text-[11px] text-muted-foreground">
+              Aplicado também depois que os valores terminam de carregar. Editais com orçamento
+              sigiloso continuam na lista.
+            </p>
           </div>
+
           <div className="space-y-1">
             <Label>Período de publicação</Label>
             <Select value={dias} onValueChange={setDias}>
