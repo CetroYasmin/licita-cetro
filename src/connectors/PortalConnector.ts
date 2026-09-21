@@ -22,10 +22,7 @@ export interface PortalConnector {
    * `context.monitoringStartedAt` permite que connectors sem histórico
    * (ou simulados) saibam desde quando a licitação está sendo acompanhada.
    */
-  getChatMessages(
-    auctionId: string,
-    context?: ChatFetchContext,
-  ): Promise<ChatMessage[]>;
+  getChatMessages(auctionId: string, context?: ChatFetchContext): Promise<ChatMessage[]>;
 
   /** Opcional: portais que permitem enviar mensagem pelo chat. */
   sendChatMessage?(auctionId: string, message: string): Promise<void>;
@@ -38,7 +35,16 @@ export type ChatFetchContext = {
   since?: string | null;
 };
 
-export type ConnectorFactory = (portal: {
-  slug: string;
-  base_url: string | null;
-}) => PortalConnector;
+/**
+ * Guarda o token de sessão renovado por um connector. O worker roda sem estado
+ * (uma execução por minuto): sem persistir, cada execução recomeçaria de um
+ * token que o portal já pode ter invalidado.
+ */
+export interface SessionStore {
+  carregar(slug: string): Promise<string | null>;
+  salvar(slug: string, token: string): Promise<void>;
+}
+
+export type ConnectorDeps = { sessoes?: SessionStore };
+
+export type ConnectorFactory = (deps: ConnectorDeps) => PortalConnector;

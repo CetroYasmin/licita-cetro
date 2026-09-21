@@ -20,12 +20,17 @@ export type MensagemNormalizada = Omit<ChatMessage, "external_message_id"> & {
 
 export function normalizarMensagem(auctionId: string, bruta: ChatMessage): MensagemNormalizada {
   const timestamp = paraIso(bruta.message_timestamp);
+  // Sem horário válido, paraIso devolve "agora"; entrar assim no hash geraria um
+  // id novo a cada coleta e duplicaria a mensagem.
+  const horaConfiavel = Number.isNaN(new Date(bruta.message_timestamp ?? "").getTime())
+    ? ""
+    : timestamp;
   const autor = (bruta.author ?? "").trim() || "Desconhecido";
   const mensagem = (bruta.message ?? "").trim();
   const tipo = TIPOS.has(bruta.author_type) ? bruta.author_type : "licitante";
   const id =
     bruta.external_message_id?.toString().trim() ||
-    hash(`${auctionId}|${autor}|${mensagem}|${timestamp}`);
+    hash(`${auctionId}|${autor}|${mensagem}|${horaConfiavel}`);
 
   return {
     external_message_id: id,
@@ -53,15 +58,18 @@ export function normalizarLote(auctionId: string, brutas: ChatMessage[]) {
 
 function paraIso(valor?: string | null): string {
   if (!valor) return new Date().toISOString();
-  const direto = new Date(valor);
-  if (!Number.isNaN(direto.getTime())) return direto.toISOString();
-  // "2026-09-01 11:19:10.361" (horário de Brasília)
-  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(valor);
+  // "2026-09-01 11:19:10.361" (sem fuso) chega em horário de Brasília. Precisa vir
+  // antes do parse direto, que o leria no fuso do servidor (UTC) e atrasaria 3 h.
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.(\d{1,3}))?$/.exec(
+    valor.trim(),
+  );
   if (m) {
     const iso = new Date(
-      `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6] ?? "00"}-03:00`,
+      `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6] ?? "00"}.${(m[7] ?? "0").padEnd(3, "0")}-03:00`,
     );
     if (!Number.isNaN(iso.getTime())) return iso.toISOString();
   }
+  const direto = new Date(valor);
+  if (!Number.isNaN(direto.getTime())) return direto.toISOString();
   return new Date().toISOString();
 }

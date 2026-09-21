@@ -58,7 +58,7 @@ function Alertas() {
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["alertas"] });
-      void qc.invalidateQueries({ queryKey: ["alertas-nao-lidos"] });
+      void qc.invalidateQueries({ queryKey: ["alertas-nao-lidas"] });
     },
   });
 

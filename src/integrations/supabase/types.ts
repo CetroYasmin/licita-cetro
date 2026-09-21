@@ -166,6 +166,38 @@ export type Database = {
           },
         ]
       }
+      chat_palavras_chave: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          equipe_id: string
+          id: string
+          palavra: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          equipe_id: string
+          id?: string
+          palavra: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          palavra?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_palavras_chave_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       concorrentes: {
         Row: {
           cnpj: string | null
@@ -219,6 +251,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      conector_sessoes: {
+        Row: {
+          atualizado_em: string
+          slug: string
+          token: string
+        }
+        Insert: {
+          atualizado_em?: string
+          slug: string
+          token: string
+        }
+        Update: {
+          atualizado_em?: string
+          slug?: string
+          token?: string
+        }
+        Relationships: []
       }
       documentos: {
         Row: {
@@ -439,6 +489,13 @@ export type Database = {
           aprovacao_resposta_em: string | null
           aprovacao_resposta_solicitada: boolean
           aprovacao_status: string
+          chat_conector: string | null
+          chat_erros_seguidos: number
+          chat_id_externo: string | null
+          chat_monitorar: boolean
+          chat_ultima_coleta: string | null
+          chat_ultima_msg_em: string | null
+          chat_ultimo_erro: string | null
           cidade: string | null
           created_at: string
           created_by: string | null
@@ -493,6 +550,13 @@ export type Database = {
           aprovacao_resposta_em?: string | null
           aprovacao_resposta_solicitada?: boolean
           aprovacao_status?: string
+          chat_conector?: string | null
+          chat_erros_seguidos?: number
+          chat_id_externo?: string | null
+          chat_monitorar?: boolean
+          chat_ultima_coleta?: string | null
+          chat_ultima_msg_em?: string | null
+          chat_ultimo_erro?: string | null
           cidade?: string | null
           created_at?: string
           created_by?: string | null
@@ -547,6 +611,13 @@ export type Database = {
           aprovacao_resposta_em?: string | null
           aprovacao_resposta_solicitada?: boolean
           aprovacao_status?: string
+          chat_conector?: string | null
+          chat_erros_seguidos?: number
+          chat_id_externo?: string | null
+          chat_monitorar?: boolean
+          chat_ultima_coleta?: string | null
+          chat_ultima_msg_em?: string | null
+          chat_ultimo_erro?: string | null
           cidade?: string | null
           created_at?: string
           created_by?: string | null

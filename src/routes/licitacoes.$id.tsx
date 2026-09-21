@@ -43,6 +43,7 @@ import {
   numeroDaMoeda,
 } from "@/lib/formato";
 import { InputMoeda } from "@/components/InputMoeda";
+import { MonitorChatPainel } from "@/components/MonitorChatPainel";
 
 import { registrarAlerta, registrarMovimentacao } from "@/lib/registro";
 import { partesDoFonteId, sincronizarLicitacaoPncp } from "@/lib/pncp.functions";
@@ -1013,6 +1014,8 @@ function Detalhes() {
               </form>
             </div>
 
+            <div className="space-y-4">
+            {data?.lic && <MonitorChatPainel licitacao={data.lic} />}
             <div className="surface-panel p-4">
               <h3 className="text-sm font-semibold">Importar chat do portal</h3>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -1082,6 +1085,7 @@ function Detalhes() {
                   Reproduzir chat na plataforma
                 </Button>
               </form>
+            </div>
             </div>
           </div>
         </TabsContent>

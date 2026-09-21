@@ -20,6 +20,7 @@ import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
+import { Route as ApiPublicHooksMonitorarChatsRouteImport } from './routes/api/public/hooks/monitorar-chats'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +77,12 @@ const LicitacoesIdRoute = LicitacoesIdRouteImport.update({
   path: '/licitacoes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksMonitorarChatsRoute =
+  ApiPublicHooksMonitorarChatsRouteImport.update({
+    id: '/api/public/hooks/monitorar-chats',
+    path: '/api/public/hooks/monitorar-chats',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +110,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes': typeof LicitacoesIndexRoute
+  '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +125,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
+    | '/api/public/hooks/monitorar-chats'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes'
+    | '/api/public/hooks/monitorar-chats'
   id:
     | '__root__'
     | '/'
@@ -157,6 +169,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
+    | '/api/public/hooks/monitorar-chats'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +184,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
+  ApiPublicHooksMonitorarChatsRoute: typeof ApiPublicHooksMonitorarChatsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LicitacoesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/monitorar-chats': {
+      id: '/api/public/hooks/monitorar-chats'
+      path: '/api/public/hooks/monitorar-chats'
+      fullPath: '/api/public/hooks/monitorar-chats'
+      preLoaderRoute: typeof ApiPublicHooksMonitorarChatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +288,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
+  ApiPublicHooksMonitorarChatsRoute: ApiPublicHooksMonitorarChatsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
