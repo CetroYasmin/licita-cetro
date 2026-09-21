@@ -415,7 +415,7 @@ function Pesquisa() {
     user?.id,
     vistas,
     detalhes,
-    somentePortaisAtivos,
+    ocultarVistasOutros,
     propostaAte,
     valorMinimo,
   ]);
