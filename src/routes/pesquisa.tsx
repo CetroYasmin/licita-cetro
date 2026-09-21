@@ -514,7 +514,12 @@ function Pesquisa() {
               value={valorMinimo}
               onChange={(e) => setValorMinimo(aoDigitarMoeda(e.target.value))}
             />
+            <p className="text-[11px] text-muted-foreground">
+              Aplicado também depois que os valores terminam de carregar. Editais com orçamento
+              sigiloso continuam na lista.
+            </p>
           </div>
+
           <div className="space-y-1">
             <Label>Período de publicação</Label>
             <Select value={dias} onValueChange={setDias}>
