@@ -366,7 +366,7 @@ function Dashboard() {
       valor: acompanhando.length,
       icon: Gavel,
       cor: "text-secondary",
-      to: "/licitacoes",
+      to: "/em-andamento",
     },
     {
       label: "Sessões hoje",
