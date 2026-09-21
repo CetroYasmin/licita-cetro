@@ -74,6 +74,7 @@ export const STATUS_LICITACAO = [
   "suspensa",
   "vencida",
   "perdida",
+  "declinada",
 ] as const;
 
 export const MODALIDADES = [
@@ -112,6 +113,7 @@ export function corDoStatus(status?: string | null) {
     case "perdida":
     case "fracassada":
     case "deserta":
+    case "declinada":
       return "bg-destructive/10 text-destructive border-destructive/30";
     case "suspensa":
       return "bg-muted text-muted-foreground border-border";

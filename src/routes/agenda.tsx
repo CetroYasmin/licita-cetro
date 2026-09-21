@@ -68,6 +68,7 @@ function Agenda() {
         "homologada",
         "deserta",
         "fracassada",
+        "declinada",
       ];
       const participando = (lics.data ?? []).filter(
         (l: any) => l.aprovacao_status === "aprovada" && !encerradas.includes(l.status),
