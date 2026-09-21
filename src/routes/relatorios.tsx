@@ -66,6 +66,7 @@ function Relatorios() {
     const mapa = new Map<string, any>();
     for (const l of lics) {
       if (sessaoJaOcorreu(l)) continue; // já realizadas ficam na aba "Em andamento"
+      if (l.status === "declinada" || l.aprovacao_status === "reprovada") continue; // declinadas pela diretoria saem do relatório
       const k = chaveDuplicada(l);
       const atual = mapa.get(k);
       if (!atual) {
