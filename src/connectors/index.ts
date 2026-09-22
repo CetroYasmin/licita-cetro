@@ -16,7 +16,8 @@ type Registro = {
 const REGISTRO: Record<string, Registro> = {
   comprasnet: {
     nome: "Compras.gov.br",
-    ajuda: "Número/ano (118/2026) ou UASG-modalidade-número-ano (981547-5-118-2026).",
+    ajuda:
+      "UASG-modalidade-número-ano, ex.: 981547-5-118-2026 (a UASG é obrigatória — o mesmo número de compra se repete em órgãos diferentes).",
     criar: (deps) => new ComprasNetConnector(undefined, deps),
   },
   mock: {
