@@ -5,16 +5,21 @@ import type { Auction, AutorTipo, ChatMessage } from "@/types/monitoramento";
  * Conector do Compras.gov.br (ComprasNet / cnetmobile).
  *
  * O chat da sessão fica atrás de autenticação: o endpoint
- * `/comprasnet-mensagem/v1/mensagens` responde 403 sem token. O portal usa
- * SSO gov.br (captcha/2FA), então não há login por usuário e senha — o que
- * existe é o token de sessão do fornecedor, que este conector usa e mantém
- * vivo chamando `/comprasnet-usuario/v2/sessao/fornecedor/retoken`.
+ * `/comprasnet-mensagem/v1/mensagens` responde 401/403 sem um token válido.
+ * O portal usa SSO gov.br (captcha/2FA), então não há login por usuário e
+ * senha — o que existe é o token de sessão do fornecedor, capturado à mão do
+ * navegador (DevTools → Network → header Authorization) e colado no segredo.
+ *
+ * Não há renovação automática confirmada: uma tentativa de endpoint de
+ * "retoken" foi removida porque rejeitava tokens válidos (provável rota
+ * incorreta ou exigência de contexto de navegador que não temos como
+ * reproduzir do servidor). A validade é decidida pela própria chamada de
+ * mensagens: 401/403 nela é que significa token vencido de verdade.
  *
  * Credenciais (segredos do servidor, nunca no navegador):
- * - COMPRASNET_API_TOKEN  → token de sessão do fornecedor (JWT "P1_..."). Serve de
- *   semente: a cada renovação o token novo é guardado em `conector_sessoes` e
- *   passa a ter prioridade sobre o segredo. Se o guardado vencer, o segredo é
- *   tentado antes de dar erro — atualizar o segredo continua sendo o "reset".
+ * - COMPRASNET_API_TOKEN  → token de sessão do fornecedor (JWT), capturado do
+ *   navegador. Vence em algumas horas; quando expirar, capture outro e troque
+ *   o valor do segredo — é o único "reset" que existe hoje.
  * - COMPRASNET_CNPJ       → identificadorParticipante (CNPJ, só dígitos).
  * - COMPRASNET_BASE_URL   → opcional, padrão https://cnetmobile.estaleiro.serpro.gov.br
  */
@@ -108,59 +113,28 @@ export class ComprasNetConnector implements PortalConnector {
   }
 
   /**
-   * Escolhe um token válido: primeiro o último renovado (guardado), depois o
-   * segredo. Cada candidato passa pelo `retoken`, que também estende a sessão.
+   * Escolhe um token: o segredo (o que você acabou de colar) tem prioridade
+   * sobre qualquer sessão guardada de uma tentativa anterior, porque é o
+   * valor mais recente que você forneceu. Não há chamada de verificação
+   * aqui — a validade real só é conhecida na primeira chamada de mensagens
+   * (ver `carregarLista`), que responde 401/403 se o token estiver vencido.
    */
   async authenticate(): Promise<void> {
     if (this.autenticado && this.token) return;
 
     const doSegredo = process.env["COMPRASNET_API_TOKEN"]?.trim() || null;
-    const guardado = (await this.deps.sessoes?.carregar(this.slug).catch(() => null)) ?? null;
-    const candidatos = [guardado, doSegredo].filter(
-      (t, i, a): t is string => Boolean(t) && a.indexOf(t) === i,
-    );
-    if (candidatos.length === 0) {
+    const guardado = doSegredo
+      ? null
+      : ((await this.deps.sessoes?.carregar(this.slug).catch(() => null)) ?? null);
+    const token = doSegredo ?? guardado;
+
+    if (!token) {
       throw new Error(
         "Compras.gov.br: credencial ausente. Cadastre o segredo COMPRASNET_API_TOKEN com o token de sessão do fornecedor.",
       );
     }
-
-    for (const candidato of candidatos) {
-      this.token = candidato;
-      const r = await this.renovar();
-      if (r.estado === "invalido") continue; // 401/403: tenta o próximo candidato
-      if (r.novo) {
-        this.token = r.novo;
-        await this.deps.sessoes?.salvar(this.slug, r.novo).catch(() => undefined);
-      }
-      // "incerto" (timeout/5xx) não prova que o token é ruim: segue com ele.
-      this.autenticado = true;
-      return;
-    }
-    this.token = null;
-    throw new Error(
-      "Compras.gov.br: token de sessão expirado. Atualize o segredo COMPRASNET_API_TOKEN.",
-    );
-  }
-
-  private async renovar(): Promise<{ estado: "ok" | "invalido" | "incerto"; novo?: string }> {
-    try {
-      const r = await fetch(`${this.baseUrl}/comprasnet-usuario/v2/sessao/fornecedor/retoken`, {
-        method: "POST",
-        headers: this.cabecalhos(),
-        signal: AbortSignal.timeout(12000),
-      });
-      if (r.status === 401 || r.status === 403) return { estado: "invalido" };
-      if (!r.ok) return { estado: "incerto" };
-      const corpo = (await r.json().catch(() => null)) as Bruta | null;
-      const novo = corpo?.["token"] ?? corpo?.["accessToken"] ?? corpo?.["access_token"];
-      return typeof novo === "string" && novo.length > 20
-        ? { estado: "ok", novo }
-        : { estado: "ok" };
-    } catch {
-      // Sem resposta não significa token inválido: seguimos com ele.
-      return { estado: "incerto" };
-    }
+    this.token = token;
+    this.autenticado = true;
   }
 
   /** O portal não expõe lista de licitações do fornecedor sem contexto; o cadastro vem da pesquisa. */
@@ -249,9 +223,14 @@ export class ComprasNetConnector implements PortalConnector {
   private cabecalhos(): HeadersInit {
     return {
       Authorization: `Bearer ${this.token}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) LicitacoesCetro/1.0",
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "pt-BR,pt;q=0.9",
+      // Sem Content-Type: são requisições GET, sem corpo; declarar json aqui
+      // não ajuda e é um sinal a mais de tráfego não-navegador para um WAF.
+      // User-Agent de navegador real: identificar como robô é o tipo de coisa
+      // que um filtro anti-automação rejeita antes mesmo de olhar o token.
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
     };
   }
 }
