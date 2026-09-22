@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { connectorExiste, connectorsDisponiveis } from "@/connectors";
+import { partesDaCompra } from "@/connectors/ComprasNetConnector";
 import { MonitoringService } from "./MonitoringService";
 
 /** Portais que já têm conector, com a orientação de como preencher o identificador da compra. */
@@ -27,6 +28,14 @@ export const configurarChat = createServerFn({ method: "POST" })
       }
       if (!data.id_externo) {
         throw new Error("Informe o identificador da compra no portal.");
+      }
+      // O Compras.gov.br reaproveita o mesmo número de compra em órgãos
+      // diferentes; sem a UASG, duas licitações distintas com número/ano
+      // iguais acabariam misturando o chat uma da outra.
+      if (data.conector === "comprasnet" && partesDaCompra(data.id_externo).uasg == null) {
+        throw new Error(
+          "Informe a UASG também: use o formato UASG-modalidade-número-ano (ex.: 981547-5-118-2026). Só número/ano não identifica a compra com segurança, porque o mesmo número se repete em órgãos diferentes.",
+        );
       }
     }
     const { data: linha, error } = await context.supabase
