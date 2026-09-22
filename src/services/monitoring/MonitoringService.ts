@@ -33,7 +33,7 @@ export type OpcoesSync = {
 };
 
 const CAMPOS =
-  "id, equipe_id, numero, orgao, status, data_sessao, created_at, chat_conector, chat_id_externo, chat_ultima_coleta, chat_ultima_msg_em, chat_erros_seguidos" as const;
+  "id, equipe_id, numero, orgao, status, data_sessao, created_at, chat_conector, chat_id_externo, chat_ultima_coleta, chat_ultima_msg_em, chat_erros_seguidos, chat_ligado_em" as const;
 
 /** Relemos um pouco antes da última mensagem: cobre atraso de publicação no portal. A unicidade evita duplicar. */
 const SOBREPOSICAO_MS = 5 * 60_000;
