@@ -20,6 +20,7 @@ import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
+import { Route as ApiPublicHooksComprasnetTokenRouteImport } from './routes/api/public/hooks/comprasnet-token'
 import { Route as ApiPublicHooksMonitorarChatsRouteImport } from './routes/api/public/hooks/monitorar-chats'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,12 @@ const LicitacoesIdRoute = LicitacoesIdRouteImport.update({
   path: '/licitacoes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksComprasnetTokenRoute =
+  ApiPublicHooksComprasnetTokenRouteImport.update({
+    id: '/api/public/hooks/comprasnet-token',
+    path: '/api/public/hooks/comprasnet-token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMonitorarChatsRoute =
   ApiPublicHooksMonitorarChatsRouteImport.update({
     id: '/api/public/hooks/monitorar-chats',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRoutesByTo {
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes': typeof LicitacoesIndexRoute
+  '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRoutesById {
@@ -125,6 +134,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRouteTypes {
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
+    | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes'
+    | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   id:
     | '__root__'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
+    | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   fileRoutesById: FileRoutesById
 }
@@ -184,6 +197,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
+  ApiPublicHooksComprasnetTokenRoute: typeof ApiPublicHooksComprasnetTokenRoute
   ApiPublicHooksMonitorarChatsRoute: typeof ApiPublicHooksMonitorarChatsRoute
 }
 
@@ -266,6 +280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LicitacoesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/comprasnet-token': {
+      id: '/api/public/hooks/comprasnet-token'
+      path: '/api/public/hooks/comprasnet-token'
+      fullPath: '/api/public/hooks/comprasnet-token'
+      preLoaderRoute: typeof ApiPublicHooksComprasnetTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/monitorar-chats': {
       id: '/api/public/hooks/monitorar-chats'
       path: '/api/public/hooks/monitorar-chats'
@@ -288,6 +309,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
+  ApiPublicHooksComprasnetTokenRoute: ApiPublicHooksComprasnetTokenRoute,
   ApiPublicHooksMonitorarChatsRoute: ApiPublicHooksMonitorarChatsRoute,
 }
 export const routeTree = rootRouteImport
