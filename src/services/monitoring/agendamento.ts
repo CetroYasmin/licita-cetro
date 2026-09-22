@@ -15,6 +15,7 @@ export type LicitacaoMonitorada = Pick<
   | "chat_ultima_coleta"
   | "chat_ultima_msg_em"
   | "chat_erros_seguidos"
+  | "chat_ligado_em"
 >;
 
 export type Decisao =
@@ -77,13 +78,15 @@ export function decidir(lic: LicitacaoMonitorada, agora: number, forcar = false)
   if (STATUS_FINAIS.includes(lic.status)) {
     return { acao: "encerrar", motivo: `situação da licitação: ${lic.status}` };
   }
-  // Só entra em jogo depois de já termos tentado ao menos uma vez — do
-  // contrário, ligar o monitoramento pela primeira vez numa licitação cuja
-  // sessão já passou há mais de 30 dias (um teste retroativo, por exemplo)
-  // desligaria sozinho antes mesmo da primeira coleta.
-  const jaTentou = tempo(lic.chat_ultima_coleta) != null;
-  const referencia = Math.max(tempo(lic.chat_ultima_msg_em) ?? 0, tempo(lic.data_sessao) ?? 0);
-  if (jaTentou && referencia > 0 && agora - referencia > SEM_MENSAGENS_PARA_ENCERRAR) {
+  // A contagem de "muito tempo sem mensagens" começa de quando o
+  // monitoramento foi LIGADO (chat_ligado_em), não da data da sessão: uma
+  // licitação de sessão antiga configurada só agora merece os mesmos 30
+  // dias de chance que qualquer outra, em vez de já nascer "vencida".
+  // chat_ligado_em pode faltar em configurações feitas antes desse campo
+  // existir; nesse caso, cai de volta na data da sessão (comportamento antigo).
+  const baseSemMensagem = tempo(lic.chat_ligado_em) ?? tempo(lic.data_sessao) ?? 0;
+  const referencia = Math.max(tempo(lic.chat_ultima_msg_em) ?? 0, baseSemMensagem);
+  if (referencia > 0 && agora - referencia > SEM_MENSAGENS_PARA_ENCERRAR) {
     return { acao: "encerrar", motivo: "mais de 30 dias sem mensagens" };
   }
   if (forcar) return { acao: "coletar" };
