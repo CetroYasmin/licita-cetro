@@ -10,18 +10,25 @@ import type { Auction, AutorTipo, ChatMessage } from "@/types/monitoramento";
  * senha — o que existe é o token de sessão do fornecedor, capturado à mão do
  * navegador (DevTools → Network → header Authorization) e colado no segredo.
  *
- * Não há renovação automática confirmada: uma tentativa de endpoint de
- * "retoken" foi removida porque rejeitava tokens válidos (provável rota
+ * Não há renovação automática do lado do servidor: uma tentativa de endpoint
+ * de "retoken" foi removida porque rejeitava tokens válidos (provável rota
  * incorreta ou exigência de contexto de navegador que não temos como
  * reproduzir do servidor). A validade é decidida pela própria chamada de
  * mensagens: 401/403 nela é que significa token vencido de verdade.
  *
+ * O token é mantido vivo de fora: um userscript (Tampermonkey) roda no
+ * navegador de quem já usa o Compras.gov.br normalmente, captura o token de
+ * cada sessão e manda para `/api/public/hooks/comprasnet-token`, que grava em
+ * `conector_sessoes`. Sem o script rodando em nenhum navegador, o token para
+ * de se renovar sozinho e volta a exigir a atualização manual do segredo.
+ *
  * Credenciais (segredos do servidor, nunca no navegador):
- * - COMPRASNET_API_TOKEN  → token de sessão do fornecedor (JWT), capturado do
- *   navegador. Vence em algumas horas; quando expirar, capture outro e troque
- *   o valor do segredo — é o único "reset" que existe hoje.
- * - COMPRASNET_CNPJ       → identificadorParticipante (CNPJ, só dígitos).
- * - COMPRASNET_BASE_URL   → opcional, padrão https://cnetmobile.estaleiro.serpro.gov.br
+ * - COMPRASNET_API_TOKEN            → substituto/ponto de partida: token colado
+ *   à mão. Só é usado se não houver nada mais recente guardado pelo script.
+ * - COMPRASNET_TOKEN_INGEST_SECRET  → segredo que autoriza o userscript a
+ *   gravar um token novo (não é o token em si).
+ * - COMPRASNET_CNPJ                 → identificadorParticipante (CNPJ, só dígitos).
+ * - COMPRASNET_BASE_URL             → opcional, padrão https://cnetmobile.estaleiro.serpro.gov.br
  */
 
 const BASE_PADRAO = "https://cnetmobile.estaleiro.serpro.gov.br";
@@ -118,20 +125,20 @@ export class ComprasNetConnector implements PortalConnector {
   }
 
   /**
-   * Escolhe um token: o segredo (o que você acabou de colar) tem prioridade
-   * sobre qualquer sessão guardada de uma tentativa anterior, porque é o
-   * valor mais recente que você forneceu. Não há chamada de verificação
-   * aqui — a validade real só é conhecida na primeira chamada de mensagens
-   * (ver `carregarLista`), que responde 401/403 se o token estiver vencido.
+   * Escolhe um token: o guardado (gravado por `/api/public/hooks/comprasnet-token`,
+   * que o userscript do navegador mantém atualizado sozinho) tem prioridade,
+   * por ser o mais recente na prática. O segredo COMPRASNET_API_TOKEN é o
+   * substituto — usado só quando ainda não há nada guardado (primeira vez)
+   * ou quando o script não está rodando em nenhum navegador. Não há chamada
+   * de verificação aqui — a validade real só é conhecida na primeira chamada
+   * de mensagens (ver `carregarLista`), que responde 401/403 se vencido.
    */
   async authenticate(): Promise<void> {
     if (this.autenticado && this.token) return;
 
+    const guardado = (await this.deps.sessoes?.carregar(this.slug).catch(() => null)) ?? null;
     const doSegredo = process.env["COMPRASNET_API_TOKEN"]?.trim() || null;
-    const guardado = doSegredo
-      ? null
-      : ((await this.deps.sessoes?.carregar(this.slug).catch(() => null)) ?? null);
-    const token = doSegredo ?? guardado;
+    const token = guardado ?? doSegredo;
 
     if (!token) {
       throw new Error(
