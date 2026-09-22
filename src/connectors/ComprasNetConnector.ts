@@ -26,19 +26,24 @@ import type { Auction, AutorTipo, ChatMessage } from "@/types/monitoramento";
 
 const BASE_PADRAO = "https://cnetmobile.estaleiro.serpro.gov.br";
 
-/** tipoRemetente do ComprasNet → papel do autor no nosso modelo. */
-export function papelCompras(tipoRemetente: unknown): AutorTipo {
-  const t = String(tipoRemetente ?? "").trim();
-  if (t === "3") return "pregoeiro";
-  if (t === "0" || t === "1") return "sistema";
-  return "licitante";
+/**
+ * A resposta real não tem um campo de "tipo de remetente" — o que existe é
+ * `remetente`, vazio nos avisos do órgão contratante (mensagens gerais,
+ * "Sr. Fornecedor... você foi convocado...") e, presumivelmente, preenchido
+ * quando quem escreve é um licitante identificado. Ainda não vimos um
+ * exemplo desse segundo caso; se a Cetro notar mensagens de outros
+ * licitantes classificadas como "Pregoeiro", é sinal de que o real precisa
+ * de ajuste aqui.
+ */
+export function papelCompras(remetente: unknown): AutorTipo {
+  const r = typeof remetente === "string" ? remetente.trim() : "";
+  return r ? "licitante" : "pregoeiro";
 }
 
 export function autorCompras(papel: AutorTipo, bruta: Record<string, unknown>): string {
   if (papel === "pregoeiro") return "Pregoeiro";
-  if (papel === "sistema") return "Sistema";
-  const id = bruta["identificadorRemetente"] ?? bruta["cnpjRemetente"];
-  return id ? `Licitante ${id}` : "Licitante";
+  const remetente = bruta["remetente"];
+  return typeof remetente === "string" && remetente ? `Licitante ${remetente}` : "Licitante";
 }
 
 /** "2026-09-01 11:19:10.361" chega em horário de Brasília. */
@@ -163,7 +168,10 @@ export class ComprasNetConnector implements PortalConnector {
     const params = new URLSearchParams({
       size: "200",
       page: "0",
-      incluirMensagensCompra: "false",
+      // "false" (o padrão que a tela usa) parece trazer só os avisos gerais
+      // do agente de contratação; testando com "true" para ver se também
+      // inclui as mensagens trocadas dentro da compra (de licitantes).
+      incluirMensagensCompra: "true",
     });
     if (this.cnpj) params.set("identificadorParticipante", this.cnpj);
 
@@ -193,30 +201,33 @@ export class ComprasNetConnector implements PortalConnector {
     return dados;
   }
 
+  /**
+   * Campos reais, planos (confirmados numa resposta de verdade em 22/09):
+   * numeroCompra, anoCompra, numeroUasg — chegam como texto, não número.
+   * Sem uma identificação parseável (alvo.numero/ano nulos), não há como
+   * garantir que a mensagem é da compra certa: por segurança, não a inclui.
+   */
   private mesmaCompra(bruta: Bruta, alvo: ReturnType<typeof partesDaCompra>): boolean {
-    if (alvo.numero == null || alvo.ano == null) return true;
-    const chave = bruta["chaveCompra"] as Bruta | undefined;
-    if (!chave) return true;
-    if (Number(chave["numero"]) !== alvo.numero || Number(chave["ano"]) !== alvo.ano) return false;
+    if (alvo.numero == null || alvo.ano == null) return false;
+    if (Number(bruta["numeroCompra"]) !== alvo.numero) return false;
+    if (Number(bruta["anoCompra"]) !== alvo.ano) return false;
     if (alvo.uasg != null) {
-      const uasg = Number(chave["numeroUasg"] ?? chave["idUasgIdentificacao"]);
+      const uasg = Number(bruta["numeroUasg"]);
       if (Number.isFinite(uasg) && uasg !== alvo.uasg) return false;
     }
     return true;
   }
 
   private normalizar(bruta: Bruta): ChatMessage {
-    const papel = papelCompras(bruta["tipoRemetente"]);
+    const papel = papelCompras(bruta["remetente"]);
     const item = bruta["identificadorItem"];
     const texto = String(bruta["texto"] ?? bruta["mensagem"] ?? "").trim();
     return {
-      external_message_id: bruta["chaveMensagemNaOrigem"]
-        ? String(bruta["chaveMensagemNaOrigem"])
-        : null,
+      external_message_id: bruta["id"] != null ? String(bruta["id"]) : null,
       author: autorCompras(papel, bruta),
       author_type: papel,
       message: item ? `[Item ${item}] ${texto}` : texto,
-      message_timestamp: dataCompras(bruta["dataHora"] ?? bruta["dataHoraMensagem"]),
+      message_timestamp: dataCompras(bruta["dataHoraPublicacao"]),
     };
   }
 
