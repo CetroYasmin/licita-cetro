@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pbyvrswvzyrskcqhygmn.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "licita-cetro",
+      "version": "0.1.0",
+      "title": "Licita Cetro"
+    },
+    "tools": [
+      {
+        "name": "listar_licitacoes",
+        "title": "Listar licitações",
+        "description": "Lista as licitações acompanhadas pela equipe, com filtro opcional por texto e situação.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "busca": {
+              "description": "Texto no objeto ou órgão.",
+              "type": "string",
+              "maxLength": 200
+            },
+            "status": {
+              "description": "Situação, ex.: em_andamento, declinada.",
+              "type": "string",
+              "maxLength": 40
+            },
+            "limite": {
+              "default": 30,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "detalhar_licitacao",
+        "title": "Detalhar licitação",
+        "description": "Mostra os dados completos de uma licitação acompanhada, incluindo itens e prazos.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "ID da licitação."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "atualizar_qualificacao_tecnica",
+        "title": "Atualizar qualificação técnica",
+        "description": "Grava o texto da qualificação técnica exigida pelo edital em uma licitação.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "ID da licitação."
+            },
+            "texto": {
+              "type": "string",
+              "maxLength": 5000,
+              "description": "Qualificação técnica exigida."
+            }
+          },
+          "required": [
+            "id",
+            "texto"
+          ],
+          "additionalProperties": false
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

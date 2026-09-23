@@ -25,17 +25,30 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { next?: string | undefined } => ({
+    next: typeof s['next'] === "string" && s['next'].startsWith("/") && !s['next'].startsWith("//") ? s['next'] : undefined,
+  }),
   component: AuthPage,
 });
+
+function destino(next?: string) {
+  return next ?? "/";
+}
 
 function AuthPage() {
   const navigate = useNavigate();
   const { session, aprovado } = useAuth();
   const [enviando, setEnviando] = useState(false);
+  const { next } = Route.useSearch();
+  const irDestino = () => {
+    if (next) window.location.href = next;
+    else void navigate({ to: "/" });
+  };
 
   useEffect(() => {
-    if (session && aprovado) void navigate({ to: "/" });
-  }, [session, aprovado, navigate]);
+    if (session && aprovado) irDestino();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, aprovado]);
 
   async function entrar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,7 +62,7 @@ function AuthPage() {
     if (error) toast.error(error.message);
     else {
       toast.success("Bem-vindo de volta!");
-      void navigate({ to: "/" });
+      irDestino();
     }
   }
 
@@ -61,7 +74,7 @@ function AuthPage() {
       email: String(form.get("email")),
       password: String(form.get("senha")),
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}${destino(next)}`,
         data: {
           nome: String(form.get("nome") ?? ""),
           empresa_nome: String(form.get("empresa") ?? ""),
@@ -80,14 +93,14 @@ function AuthPage() {
 
   async function google() {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${destino(next)}`,
     });
     if (result.error) {
       toast.error("Não foi possível entrar com o Google.");
       return;
     }
     if (result.redirected) return;
-    void navigate({ to: "/" });
+    irDestino();
   }
 
   return (
