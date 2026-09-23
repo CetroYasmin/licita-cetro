@@ -16,8 +16,10 @@ import { Route as AprovacaoRouteImport } from './routes/aprovacao'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as EmAndamentoRouteImport } from './routes/em-andamento'
 import { Route as EquipeRouteImport } from './routes/equipe'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -59,6 +61,11 @@ const EquipeRoute = EquipeRouteImport.update({
   path: '/equipe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PesquisaRoute = PesquisaRouteImport.update({
   id: '/pesquisa',
   path: '/pesquisa',
@@ -69,6 +76,12 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LicitacoesIndexRoute = LicitacoesIndexRouteImport.update({
   id: '/licitacoes/',
   path: '/licitacoes/',
@@ -105,8 +118,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
+  '/mcp': typeof McpRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -121,8 +136,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
+  '/mcp': typeof McpRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes': typeof LicitacoesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -138,8 +155,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
+  '/mcp': typeof McpRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -156,8 +175,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/em-andamento'
     | '/equipe'
+    | '/mcp'
     | '/pesquisa'
     | '/relatorios'
+    | '/.well-known/oauth-protected-resource'
     | '/licitacoes/$id'
     | '/licitacoes/'
     | '/.lovable/oauth/consent'
@@ -172,8 +193,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/em-andamento'
     | '/equipe'
+    | '/mcp'
     | '/pesquisa'
     | '/relatorios'
+    | '/.well-known/oauth-protected-resource'
     | '/licitacoes/$id'
     | '/licitacoes'
     | '/.lovable/oauth/consent'
@@ -188,8 +211,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/em-andamento'
     | '/equipe'
+    | '/mcp'
     | '/pesquisa'
     | '/relatorios'
+    | '/.well-known/oauth-protected-resource'
     | '/licitacoes/$id'
     | '/licitacoes/'
     | '/.lovable/oauth/consent'
@@ -205,8 +230,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   EmAndamentoRoute: typeof EmAndamentoRoute
   EquipeRoute: typeof EquipeRoute
+  McpRoute: typeof McpRoute
   PesquisaRoute: typeof PesquisaRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -265,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EquipeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pesquisa': {
       id: '/pesquisa'
       path: '/pesquisa'
@@ -277,6 +311,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/licitacoes/': {
@@ -325,8 +366,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   EmAndamentoRoute: EmAndamentoRoute,
   EquipeRoute: EquipeRoute,
+  McpRoute: McpRoute,
   PesquisaRoute: PesquisaRoute,
   RelatoriosRoute: RelatoriosRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
