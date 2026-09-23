@@ -102,7 +102,6 @@ function ListaLicitacoes() {
       ).data ?? [],
   });
 
-
   const { data: licitacoes, isLoading } = useQuery({
     queryKey: ["licitacoes", equipeId],
     enabled: Boolean(equipeId),
@@ -175,8 +174,11 @@ function ListaLicitacoes() {
   });
 
   const vistaPor = (id: string) =>
-    (vistas ?? []).filter((v: any) => v.licitacao_id === id).map((v: any) => v.user_nome ?? "membro");
-  const euVi = (id: string) => (vistas ?? []).some((v: any) => v.licitacao_id === id && v.user_id === user?.id);
+    (vistas ?? [])
+      .filter((v: any) => v.licitacao_id === id)
+      .map((v: any) => v.user_nome ?? "membro");
+  const euVi = (id: string) =>
+    (vistas ?? []).some((v: any) => v.licitacao_id === id && v.user_id === user?.id);
 
   const filtradas = useMemo(() => {
     const lista = (licitacoes ?? []).filter((l: any) => {
@@ -194,7 +196,10 @@ function ListaLicitacoes() {
       if (somenteParticipando && l.valor_ofertado == null) return false;
       if (somenteFavoritos && !l.favorito) return false;
       if (sessaoJaOcorreu(l)) return false;
-      if (ocultarVistas && (vistas ?? []).some((v: any) => v.licitacao_id === l.id && v.user_id === user?.id))
+      if (
+        ocultarVistas &&
+        (vistas ?? []).some((v: any) => v.licitacao_id === l.id && v.user_id === user?.id)
+      )
         return false;
       return true;
     });
@@ -282,7 +287,11 @@ function ListaLicitacoes() {
         <div className="surface-panel grid gap-3 p-4 md:grid-cols-3 xl:grid-cols-4">
           <div className="space-y-1 md:col-span-2 xl:col-span-2">
             <Label>Busca por número, órgão, objeto ou etiqueta</Label>
-            <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="ex.: pavimentação" />
+            <Input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="ex.: pavimentação"
+            />
             <p className="text-[11px] text-muted-foreground">
               Busca tolerante a acentos e erros; separe alternativas por vírgula e use aspas para
               frases exatas.
@@ -290,7 +299,9 @@ function ListaLicitacoes() {
           </div>
           <Campo label="Ordenar por">
             <Select value={ordenar} onValueChange={setOrdenar}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="sessao">Data da sessão (mais próxima)</SelectItem>
                 <SelectItem value="publicacao">Publicação (mais recente)</SelectItem>
@@ -307,55 +318,75 @@ function ListaLicitacoes() {
           </Campo>
           <Campo label="Status">
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 {STATUS_LICITACAO.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Campo>
           <Campo label="Modalidade">
             <Select value={modalidade} onValueChange={setModalidade}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
                 {MODALIDADES.map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Campo>
           <Campo label="Natureza">
             <Select value={natureza} onValueChange={setNatureza}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
                 {NATUREZAS.map((n) => (
-                  <SelectItem key={n} value={n}>{n}</SelectItem>
+                  <SelectItem key={n} value={n}>
+                    {n}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Campo>
           <Campo label="UF">
             <Select value={uf} onValueChange={setUf}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
                 {UFS.map((u) => (
-                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                  <SelectItem key={u} value={u}>
+                    {u}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Campo>
           <Campo label="Pasta/projeto">
             <Select value={pasta} onValueChange={setPasta}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
                 {(pastas ?? []).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -386,7 +417,10 @@ function ListaLicitacoes() {
               Favoritas
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={ocultarVistas} onCheckedChange={(v) => setOcultarVistas(Boolean(v))} />
+              <Checkbox
+                checked={ocultarVistas}
+                onCheckedChange={(v) => setOcultarVistas(Boolean(v))}
+              />
               Ocultar vistas
             </label>
           </div>
@@ -414,22 +448,26 @@ function ListaLicitacoes() {
                       >
                         {l.numero}
                       </Link>
-                      <Badge variant="outline" className={corDoStatus(l.status)}>{l.status}</Badge>
+                      <Badge variant="outline" className={corDoStatus(l.status)}>
+                        {l.status}
+                      </Badge>
                       {l.aprovacao_status === "aprovada" && (
                         <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
                           Diretoria: aprovada
                         </Badge>
                       )}
-                      {l.aprovacao_status === "reprovada" && (
-                        <Badge variant="destructive">Diretoria: reprovada</Badge>
-                      )}
+                      {/* "Diretoria: reprovada" foi removido: toda reprovação já grava
+                          status "declinada" (ver aprovacao.tsx), que o selo de status logo
+                          acima já mostra — manter os dois era repetir a mesma informação. */}
                       {l.aprovacao_resposta_solicitada && (
                         <Badge variant="secondary">Diretoria aguarda resposta</Badge>
                       )}
                       {l.modalidade && <Badge variant="secondary">{l.modalidade}</Badge>}
                       {l.natureza && <Badge variant="outline">{l.natureza}</Badge>}
                       {(l.tags ?? []).map((t: string) => (
-                        <Badge key={t} variant="outline">#{t}</Badge>
+                        <Badge key={t} variant="outline">
+                          #{t}
+                        </Badge>
                       ))}
                       {vistaPor(l.id).length > 0 && (
                         <Badge variant="outline" className="border-secondary/40 text-secondary">
@@ -439,16 +477,23 @@ function ListaLicitacoes() {
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.objeto}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicação: {fData(l.data_publicacao)} ·
-                      Sessão: {dataHora(l.proximo_evento_data ?? l.data_sessao)} · Portal:{" "}
-                      {l.portal ?? "—"}
+                      {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicação:{" "}
+                      {fData(l.data_publicacao)} · Sessão:{" "}
+                      {dataHora(l.proximo_evento_data ?? l.data_sessao)} · Portal: {l.portal ?? "—"}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs">
-                      <span>Estimado: <strong>{moeda(l.valor_estimado)}</strong></span>
-                      <span>Nossa proposta: <strong>{moeda(l.valor_ofertado)}</strong></span>
-                      <span>Melhor valor: <strong>{moeda(l.melhor_valor)}</strong></span>
                       <span>
-                        Posição: <strong>{l.posicao_empresa ? `${l.posicao_empresa}º` : "—"}</strong>
+                        Estimado: <strong>{moeda(l.valor_estimado)}</strong>
+                      </span>
+                      <span>
+                        Nossa proposta: <strong>{moeda(l.valor_ofertado)}</strong>
+                      </span>
+                      <span>
+                        Melhor valor: <strong>{moeda(l.melhor_valor)}</strong>
+                      </span>
+                      <span>
+                        Posição:{" "}
+                        <strong>{l.posicao_empresa ? `${l.posicao_empresa}º` : "—"}</strong>
                       </span>
                     </div>
                     <div className="mt-3 space-y-1">
@@ -507,28 +552,28 @@ function ListaLicitacoes() {
                       />
                     </Button>
                     {(isAdmin || l.created_by === user?.id) && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Excluir licitação">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir do acompanhamento?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            A licitação {l.numero} e todo o histórico, itens, documentos, prazos e chat
-                            serão removidos da equipe. Essa ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => excluir.mutate(l.id)}>
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Excluir licitação">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir do acompanhamento?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A licitação {l.numero} e todo o histórico, itens, documentos, prazos e
+                              chat serão removidos da equipe. Essa ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => excluir.mutate(l.id)}>
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                   </div>
                 </div>
