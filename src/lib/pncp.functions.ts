@@ -31,12 +31,14 @@ const MODALIDADE_CODIGOS: Record<string, number> = {
   Leilão: 1,
 };
 
-
 const PADRAO_OBRAS =
   /(obra|obras|constru|reforma|pavimenta|engenharia|edifica|drenagem|saneamento|terraplan|recapea|ampliação|reformas|infraestrutura|ponte|calçamen|urbaniza|revitaliza)/i;
-const PADRAO_TI = /(software|sistema|licença|licenca|tecnologia da informação|computador|notebook|servidor|link de internet|nuvem)/i;
-const PADRAO_SERVICO = /(serviço|servicos|serviços|prestação|manutenção|locação de mão|mão de obra|limpeza|vigilância|transporte|consultoria)/i;
-const PADRAO_COMPRA = /(aquisição|aquisicao|compra|fornecimento|material|materiais|equipament|gênero|medicament|combustível)/i;
+const PADRAO_TI =
+  /(software|sistema|licença|licenca|tecnologia da informação|computador|notebook|servidor|link de internet|nuvem)/i;
+const PADRAO_SERVICO =
+  /(serviço|servicos|serviços|prestação|manutenção|locação de mão|mão de obra|limpeza|vigilância|transporte|consultoria)/i;
+const PADRAO_COMPRA =
+  /(aquisição|aquisicao|compra|fornecimento|material|materiais|equipament|gênero|medicament|combustível)/i;
 
 export function classificarNatureza(objeto: string): string {
   if (PADRAO_OBRAS.test(objeto)) return "Obras e engenharia";
@@ -45,7 +47,6 @@ export function classificarNatureza(objeto: string): string {
   if (PADRAO_COMPRA.test(objeto)) return "Compras/materiais";
   return "Outros";
 }
-
 
 export type LicitacaoPncp = {
   fonte_id: string;
@@ -98,17 +99,28 @@ export const PORTAIS = [
 function nomePortal(link?: string | null): string {
   if (!link) return "Não informado";
   const l = link.toLowerCase();
-  if (l.includes("comprasnet") || l.includes("gov.br/compras") || l.includes("cnetmobile") || l.includes("compras.gov.br"))
+  if (
+    l.includes("comprasnet") ||
+    l.includes("gov.br/compras") ||
+    l.includes("cnetmobile") ||
+    l.includes("compras.gov.br")
+  )
     return "Compras.gov.br (ComprasNet)";
   if (l.includes("licitacoes-e") || l.includes("licitacoes-e.com.br") || l.includes("bb.com.br"))
     return "Licitações-e (Banco do Brasil)";
-  if (l.includes("bllcompras") || l.includes("bll.org.br") || l.includes("bllcompras.com")) return "BLL Compras";
-  if (l.includes("bnc.org.br") || l.includes("bncompras") || /\bbnc\b/.test(l)) return "BNC — Bolsa Nacional de Compras";
+  if (l.includes("bllcompras") || l.includes("bll.org.br") || l.includes("bllcompras.com"))
+    return "BLL Compras";
+  if (l.includes("bnc.org.br") || l.includes("bncompras") || /\bbnc\b/.test(l))
+    return "BNC — Bolsa Nacional de Compras";
   if (l.includes("bbmnet") || l.includes("bbmnetlicitacoes")) return "BBMNET Licitações";
   if (l.includes("portaldecompraspublicas")) return "Portal de Compras Públicas";
   if (l.includes("licitanet")) return "Licitanet";
   if (l.includes("licitardigital")) return "Licitar Digital";
-  if (l.includes("m2atecnologia") || l.includes("gestaodecompras") || l.includes("gestao-de-compras"))
+  if (
+    l.includes("m2atecnologia") ||
+    l.includes("gestaodecompras") ||
+    l.includes("gestao-de-compras")
+  )
     return "Gestão de Compras (M2A Tecnologia)";
   if (l.includes("s2gpr") || l.includes("seplag.ce.gov.br") || l.includes("licitacoes.ce.gov.br"))
     return "S2GPR (Governo do Ceará)";
@@ -134,7 +146,10 @@ function mapear(c: any): LicitacaoPncp {
   const sequencial = Number(c.numero_sequencial ?? 0);
   return {
     fonte_id: String(c.numero_controle_pncp ?? `${cnpj}-${ano}-${sequencial}`),
-    numero: String(c.numero ?? c.title ?? c.numero_controle_pncp ?? "—").replace(/^Edital nº\s*/i, ""),
+    numero: String(c.numero ?? c.title ?? c.numero_controle_pncp ?? "—").replace(
+      /^Edital nº\s*/i,
+      "",
+    ),
     modalidade: String(c.modalidade_licitacao_nome ?? "—").replace(" - ", " "),
     orgao: String(c.orgao_nome ?? c.unidade_nome ?? "—"),
     orgao_cnpj: cnpj,
@@ -215,8 +230,6 @@ async function buscarPagina(
   return null;
 }
 
-
-
 const ORDENACOES = {
   relevancia: (a: LicitacaoPncp, b: LicitacaoPncp) => b.relevancia - a.relevancia,
   sessao: (a: LicitacaoPncp, b: LicitacaoPncp) =>
@@ -242,7 +255,33 @@ const ORDENACOES = {
 export type Ordenacao = keyof typeof ORDENACOES;
 
 const UFS_TODAS = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
 ] as const;
 
 /** Documentos de contratação publicados no PNCP (edital cobre pregões/concorrências). */
@@ -310,7 +349,11 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       }
       if (data.natureza && l.natureza !== data.natureza) return;
       if (data.valorMinimo != null && (l.valor_estimado ?? 0) < data.valorMinimo) return;
-      if (data.valorMaximo != null && (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo) return;
+      if (
+        data.valorMaximo != null &&
+        (l.valor_estimado ?? Number.MAX_SAFE_INTEGER) > data.valorMaximo
+      )
+        return;
       l.relevancia = pontos;
       const existente = encontradas.get(l.fonte_id);
       if (!existente || existente.relevancia < pontos) encontradas.set(l.fonte_id, l);
@@ -324,11 +367,16 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
      *  2) consultas com o termo direto no PNCP, incluindo cada alternativa
      *     separada por vírgula, para alcançar editais mais antigos/profundos.
      */
-    const consultas: Array<{ params: URLSearchParams; filtrarLocal: boolean; maxPaginas: number }> = [];
+    const consultas: Array<{ params: URLSearchParams; filtrarLocal: boolean; maxPaginas: number }> =
+      [];
 
     const TAMANHO_PAGINA = 50;
     const montar = (extras: Record<string, string>, ufs: string[]) => {
-      const p = new URLSearchParams({ ordenacao: "-data", tam_pagina: String(TAMANHO_PAGINA), ...extras });
+      const p = new URLSearchParams({
+        ordenacao: "-data",
+        tam_pagina: String(TAMANHO_PAGINA),
+        ...extras,
+      });
       for (const tipo of TIPOS_DOCUMENTO) p.append("tipos_documento", tipo);
       for (const uf of ufs) p.append("ufs", uf);
       for (const codigo of codigos) p.append("modalidades", String(codigo));
@@ -343,9 +391,8 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
         .map((p) => p.trim())
         .filter((p) => p.length >= 5);
       const frases = termo.split(/[,;:]|\s+ou\s+/i).map((t) => t.trim());
-      const janelas = palavras.length >= 2
-        ? [palavras.slice(0, 4).join(" "), palavras.slice(-4).join(" ")]
-        : [];
+      const janelas =
+        palavras.length >= 2 ? [palavras.slice(0, 4).join(" "), palavras.slice(-4).join(" ")] : [];
       const identificadores = termo.match(/\b\d{3,}(?:\/\d{2,4})?(?:-[\p{L}\d]+)?\b/gu) ?? [];
       const raras = [...palavras].sort((a, b) => b.length - a.length).slice(0, 4);
       const partes = [termo, ...frases, ...janelas, ...identificadores, ...raras].filter(
@@ -365,7 +412,11 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
     const ufsAlvo = data.ufs.length > 0 ? data.ufs : [...UFS_TODAS];
     const paginasVarredura = 6;
     for (const uf of ufsAlvo) {
-      consultas.push({ params: montar({ status }, [uf]), filtrarLocal: true, maxPaginas: paginasVarredura });
+      consultas.push({
+        params: montar({ status }, [uf]),
+        filtrarLocal: true,
+        maxPaginas: paginasVarredura,
+      });
     }
 
     /** Busca um lote de páginas em paralelo controlado (o PNCP cai com excesso). */
@@ -415,7 +466,8 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       );
     }
 
-    const ordenador = ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
+    const ordenador =
+      ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
     const lista = [...encontradas.values()].sort(ordenador);
 
     return {
@@ -504,7 +556,6 @@ async function valorDaContratacao(
     }
   }
 
-
   if (valor != null) cacheValores.set(chave, { em: Date.now(), valor });
   return valor;
 }
@@ -564,7 +615,6 @@ export type DetalhePncp = {
   informacao_complementar: string | null;
   qtd_itens: number | null;
 };
-
 
 const cacheDetalhes = new Map<string, { em: number; valor: DetalhePncp }>();
 
@@ -646,7 +696,6 @@ async function detalheDaContratacao(
   return detalhe;
 }
 
-
 /**
  * Enriquece os resultados da pesquisa com valor estimado, portal de origem e as
  * datas reais de proposta, em lotes pequenos para não derrubar o PNCP.
@@ -685,7 +734,6 @@ export const buscarDetalhesPncp = createServerFn({ method: "POST" })
     return { detalhes, encontrados: Object.keys(detalhes).length };
   });
 
-
 export const buscarItensPncp = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z.object({ cnpj: z.string(), ano: z.number(), sequencial: z.number() }).parse(data),
@@ -705,7 +753,8 @@ export const buscarItensPncp = createServerFn({ method: "POST" })
           descricao: String(i.descricao ?? i.materialOuServicoNome ?? ""),
           quantidade: i.quantidade != null ? Number(i.quantidade) : null,
           unidade: i.unidadeMedida ?? null,
-          valor_unitario_estimado: i.valorUnitarioEstimado != null ? Number(i.valorUnitarioEstimado) : null,
+          valor_unitario_estimado:
+            i.valorUnitarioEstimado != null ? Number(i.valorUnitarioEstimado) : null,
           valor_total_estimado: i.valorTotal != null ? Number(i.valorTotal) : null,
           lote: i.numeroGrupo != null ? String(i.numeroGrupo) : null,
         })),
@@ -731,9 +780,25 @@ export const sincronizarLicitacaoPncp = createServerFn({ method: "POST" })
       );
       if (!res.ok) return { ok: false as const, licitacao: null };
       const payload = (await res.json()) as unknown;
-      const bruto = (Array.isArray(payload) ? payload[0] : ((payload as any)?.data ?? payload)) as any;
+      const bruto = (
+        Array.isArray(payload) ? payload[0] : ((payload as any)?.data ?? payload)
+      ) as any;
       if (!bruto) return { ok: false as const, licitacao: null };
-      return { ok: true as const, licitacao: mapear(bruto) };
+      // mapear() foi escrito para o formato do ÍNDICE de busca (snake_case) e não
+      // enxerga linkSistemaOrigem, que só existe neste endpoint de detalhe — por
+      // isso "Verificar atualizações" nunca corrigia o portal sozinho. Mesma lógica
+      // já usada (e comprovada) em detalheDaContratacao(), acima.
+      const link = bruto?.linkSistemaOrigem ? String(bruto.linkSistemaOrigem) : null;
+      const portalReal = nomePortal(link);
+      return {
+        ok: true as const,
+        licitacao: {
+          ...mapear(bruto),
+          ...(link
+            ? { portal: portalReal === "Não informado" ? "PNCP" : portalReal, site_url: link }
+            : {}),
+        },
+      };
     } catch {
       return { ok: false as const, licitacao: null };
     }
