@@ -33,7 +33,6 @@ import {
 import {
   STATUS_LICITACAO,
   aoDigitarMoeda,
-
   contagemRegressiva,
   corDoStatus,
   data as fData,
@@ -134,7 +133,12 @@ function Detalhes() {
         .update({ ...campos, ultima_atualizacao: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
-      await registrarMovimentacao(ctx, id, "atualização", `${log} — por ${ctx.autorNome ?? "usuário"}`);
+      await registrarMovimentacao(
+        ctx,
+        id,
+        "atualização",
+        `${log} — por ${ctx.autorNome ?? "usuário"}`,
+      );
     },
     onSuccess: () => {
       toast.success("Licitação atualizada.");
@@ -181,9 +185,21 @@ function Detalhes() {
         }
       };
 
-      comparar("Data de abertura", "data_abertura", licAtual.data_abertura, novo.data_abertura, fData);
+      comparar(
+        "Data de abertura",
+        "data_abertura",
+        licAtual.data_abertura,
+        novo.data_abertura,
+        fData,
+      );
       comparar("Data da sessão", "data_sessao", licAtual.data_sessao, novo.data_sessao, dataHora);
-      comparar("Publicação", "data_publicacao", licAtual.data_publicacao, novo.data_publicacao, fData);
+      comparar(
+        "Publicação",
+        "data_publicacao",
+        licAtual.data_publicacao,
+        novo.data_publicacao,
+        fData,
+      );
       comparar(
         "Valor estimado",
         "valor_estimado",
@@ -199,6 +215,13 @@ function Detalhes() {
         (v) => String(v),
       );
       if (novo.site_url && novo.site_url !== licAtual.site_url) campos["site_url"] = novo.site_url;
+      // "Verificar atualizações" corrigia data/valor mas nunca o portal — mesmo
+      // quando o PNCP já revelava o sistema real (ComprasNet, BLL...), a coluna
+      // ficava presa em "PNCP" para sempre.
+      if (novo.portal && novo.portal !== licAtual.portal) {
+        mudancas.push(`Portal: ${licAtual.portal ?? "—"} → ${novo.portal}`);
+        campos["portal"] = novo.portal;
+      }
 
       if (mudancas.length === 0) {
         await supabase
@@ -321,13 +344,16 @@ function Detalhes() {
       }
     >
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className={corDoStatus(lic.status)}>{lic.status}</Badge>
+        <Badge variant="outline" className={corDoStatus(lic.status)}>
+          {lic.status}
+        </Badge>
         {lic.modalidade && <Badge variant="secondary">{lic.modalidade}</Badge>}
         {lic.natureza && <Badge variant="outline">{lic.natureza}</Badge>}
         {lic.proximo_evento && (
           <span className="text-xs text-muted-foreground">
-            Próximo evento: <strong>{lic.proximo_evento}</strong> ({dataHora(lic.proximo_evento_data)} ·
-            faltam {contagemRegressiva(lic.proximo_evento_data)})
+            Próximo evento: <strong>{lic.proximo_evento}</strong> (
+            {dataHora(lic.proximo_evento_data)} · faltam{" "}
+            {contagemRegressiva(lic.proximo_evento_data)})
           </span>
         )}
       </div>
@@ -359,9 +385,15 @@ function Detalhes() {
             <Info label="Portal da disputa" valor={lic.portal} destaque />
             <Info label="Modo/local da disputa" valor={lic.plataforma} />
             <Info label="Valor estimado" valor={moeda(lic.valor_estimado)} />
-            <Info label="Quantidade de itens" valor={fNumero(lic.qtd_itens ?? data?.itens.length ?? 0)} />
+            <Info
+              label="Quantidade de itens"
+              valor={fNumero(lic.qtd_itens ?? data?.itens.length ?? 0)}
+            />
             <Info label="Quantidade de lotes" valor={fNumero(lic.qtd_lotes ?? 0)} />
-            <Info label="Concorrentes" valor={fNumero(lic.qtd_concorrentes ?? data?.conc.length ?? 0)} />
+            <Info
+              label="Concorrentes"
+              valor={fNumero(lic.qtd_concorrentes ?? data?.conc.length ?? 0)}
+            />
             <div className="md:col-span-3">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Objeto</p>
               <p className="mt-1 text-sm">{lic.objeto}</p>
@@ -384,7 +416,10 @@ function Detalhes() {
             )}
           </div>
 
-          <FormularioDados lic={lic} onSalvar={(campos, log) => atualizar.mutate({ campos, log })} />
+          <FormularioDados
+            lic={lic}
+            onSalvar={(campos, log) => atualizar.mutate({ campos, log })}
+          />
 
           <div className="surface-panel space-y-3 p-5">
             <h3 className="text-sm font-semibold">Organização interna</h3>
@@ -400,11 +435,15 @@ function Detalhes() {
                     })
                   }
                 >
-                  <SelectTrigger><SelectValue placeholder="Definir responsável" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Definir responsável" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="nenhum">Sem responsável</SelectItem>
                     {(data?.membros ?? []).map((m: any) => (
-                      <SelectItem key={m.id} value={m.id}>{m.nome ?? m.email}</SelectItem>
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.nome ?? m.email}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -461,10 +500,14 @@ function Detalhes() {
                   );
                 }}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {STATUS_LICITACAO.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -527,7 +570,9 @@ function Detalhes() {
                 </li>
               ))}
               {(data?.movs ?? []).length === 0 && (
-                <li className="p-4 text-sm text-muted-foreground">Nenhuma movimentação registrada.</li>
+                <li className="p-4 text-sm text-muted-foreground">
+                  Nenhuma movimentação registrada.
+                </li>
               )}
             </ol>
           </div>
@@ -536,7 +581,10 @@ function Detalhes() {
         {/* MINHA EMPRESA */}
         <TabsContent value="empresa" className="mt-4 space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
-            <Cartao titulo="Posição da empresa" valor={lic.posicao_empresa ? `${lic.posicao_empresa}º` : "—"} />
+            <Cartao
+              titulo="Posição da empresa"
+              valor={lic.posicao_empresa ? `${lic.posicao_empresa}º` : "—"}
+            />
             <Cartao titulo="Valor ofertado" valor={moeda(lic.valor_ofertado)} />
             <Cartao titulo="Melhor valor atual" valor={moeda(lic.melhor_valor)} />
             <Cartao
@@ -545,7 +593,10 @@ function Detalhes() {
             />
           </div>
 
-          <FormularioEmpresa lic={lic} onSalvar={(campos, log) => atualizar.mutate({ campos, log })} />
+          <FormularioEmpresa
+            lic={lic}
+            onSalvar={(campos, log) => atualizar.mutate({ campos, log })}
+          />
 
           <div className="surface-panel">
             <div className="flex items-center justify-between border-b p-4">
@@ -573,7 +624,8 @@ function Detalhes() {
               {(data?.lances ?? []).map((l: any) => (
                 <li key={l.id} className="flex items-center justify-between p-3 text-sm">
                   <span>
-                    {l.empresa} {l.minha_empresa && <Badge variant="secondary">nossa empresa</Badge>}
+                    {l.empresa}{" "}
+                    {l.minha_empresa && <Badge variant="secondary">nossa empresa</Badge>}
                   </span>
                   <span className="font-medium">{moeda(l.valor)}</span>
                   <span className="text-xs text-muted-foreground">{dataHora(l.registrado_em)}</span>
@@ -798,7 +850,9 @@ function Detalhes() {
         <TabsContent value="documentos" className="mt-4 space-y-4">
           <FormularioDocumento
             onEnviar={async (doc) => {
-              await supabase.from("documentos").insert({ ...doc, licitacao_id: id, equipe_id: equipeId! });
+              await supabase
+                .from("documentos")
+                .insert({ ...doc, licitacao_id: id, equipe_id: equipeId! });
               await registrarMovimentacao(
                 ctx,
                 id,
@@ -855,7 +909,9 @@ function Detalhes() {
         <TabsContent value="prazos" className="mt-4 space-y-4">
           <FormularioPrazo
             onEnviar={async (p) => {
-              await supabase.from("prazos").insert({ ...p, licitacao_id: id, equipe_id: equipeId! });
+              await supabase
+                .from("prazos")
+                .insert({ ...p, licitacao_id: id, equipe_id: equipeId! });
               recarregar();
             }}
           />
@@ -876,7 +932,10 @@ function Detalhes() {
                   variant="outline"
                   size="sm"
                   onClick={async () => {
-                    await supabase.from("prazos").update({ concluido: !p.concluido }).eq("id", p.id);
+                    await supabase
+                      .from("prazos")
+                      .update({ concluido: !p.concluido })
+                      .eq("id", p.id);
                     recarregar();
                   }}
                 >
@@ -891,7 +950,12 @@ function Detalhes() {
             onEnviar={async (t) => {
               await supabase
                 .from("tarefas")
-                .insert({ ...t, licitacao_id: id, equipe_id: equipeId!, created_by: user?.id ?? null });
+                .insert({
+                  ...t,
+                  licitacao_id: id,
+                  equipe_id: equipeId!,
+                  created_by: user?.id ?? null,
+                });
               recarregar();
             }}
           />
@@ -899,7 +963,9 @@ function Detalhes() {
             {(data?.tarefas ?? []).map((t: any) => (
               <div key={t.id} className="flex items-center justify-between gap-3 p-4">
                 <div>
-                  <p className={`text-sm ${t.concluida ? "line-through text-muted-foreground" : ""}`}>
+                  <p
+                    className={`text-sm ${t.concluida ? "line-through text-muted-foreground" : ""}`}
+                  >
                     {t.titulo}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -912,7 +978,10 @@ function Detalhes() {
                   variant="outline"
                   size="sm"
                   onClick={async () => {
-                    await supabase.from("tarefas").update({ concluida: !t.concluida }).eq("id", t.id);
+                    await supabase
+                      .from("tarefas")
+                      .update({ concluida: !t.concluida })
+                      .eq("id", t.id);
                     recarregar();
                   }}
                 >
@@ -957,7 +1026,10 @@ function Detalhes() {
                           ? "ml-auto bg-primary/10 border-primary/30"
                           : "bg-card border-border";
                   return (
-                    <div key={m.id} className={`max-w-[85%] rounded-lg border p-3 text-sm ${estilo}`}>
+                    <div
+                      key={m.id}
+                      className={`max-w-[85%] rounded-lg border p-3 text-sm ${estilo}`}
+                    >
                       <p className="text-xs font-semibold">
                         {m.autor}{" "}
                         <span className="font-normal uppercase tracking-wide text-muted-foreground">
@@ -965,7 +1037,9 @@ function Detalhes() {
                         </span>
                       </p>
                       <p className="mt-1 whitespace-pre-wrap">{m.mensagem}</p>
-                      <p className="mt-1 text-[11px] text-muted-foreground">{dataHora(m.enviada_em)}</p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {dataHora(m.enviada_em)}
+                      </p>
                     </div>
                   );
                 })}
@@ -1009,97 +1083,117 @@ function Detalhes() {
                   <option value="sistema">Sistema</option>
                   <option value="equipe">Nota interna</option>
                 </select>
-                <Input name="mensagem" placeholder="Mensagem reproduzida do chat…" className="min-w-40 flex-1" />
+                <Input
+                  name="mensagem"
+                  placeholder="Mensagem reproduzida do chat…"
+                  className="min-w-40 flex-1"
+                />
                 <Button type="submit">Registrar</Button>
               </form>
             </div>
 
             <div className="space-y-4">
-            {data?.lic && <MonitorChatPainel licitacao={data.lic} />}
-            <div className="surface-panel p-4">
-              <h3 className="text-sm font-semibold">Importar chat do portal</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Copie o chat/ata da sessão no portal e cole abaixo. Cada linha é reproduzida como
-                mensagem; formatos aceitos: <code>[10:32] Pregoeiro: texto</code> ou{" "}
-                <code>10:32 - Licitante 12: texto</code>.
-              </p>
-              <form
-                className="mt-3 space-y-3"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const form = e.currentTarget;
-                  const bruto = String(new FormData(form).get("transcricao") ?? "");
-                  const base = data?.lic?.data_sessao
-                    ? new Date(data.lic.data_sessao)
-                    : new Date();
-                  const linhas = bruto
-                    .split("\n")
-                    .map((l) => l.trim())
-                    .filter(Boolean);
-                  const registros = linhas.map((linha) => {
-                    const hora = linha.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-                    const semHora = linha.replace(/^[\[\(]?\s*\d{1,2}:\d{2}(?::\d{2})?\s*[\]\)]?\s*[-–]?\s*/, "");
-                    const divisor = semHora.indexOf(":");
-                    const autor = divisor > 0 && divisor < 60 ? semHora.slice(0, divisor).trim() : "Portal";
-                    const mensagem = divisor > 0 && divisor < 60 ? semHora.slice(divisor + 1).trim() : semHora;
-                    const autorNorm = autor.toLowerCase();
-                    const papel = /pregoeir|agente de contrata|presidente|comiss/.test(autorNorm)
-                      ? "pregoeiro"
-                      : /sistema|portal|automat/.test(autorNorm)
-                        ? "sistema"
-                        : "licitante";
-                    const enviada = new Date(base);
-                    if (hora) {
-                      enviada.setHours(Number(hora[1]), Number(hora[2]), Number(hora[3] ?? 0), 0);
+              {data?.lic && <MonitorChatPainel licitacao={data.lic} />}
+              <div className="surface-panel p-4">
+                <h3 className="text-sm font-semibold">Importar chat do portal</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Copie o chat/ata da sessão no portal e cole abaixo. Cada linha é reproduzida como
+                  mensagem; formatos aceitos: <code>[10:32] Pregoeiro: texto</code> ou{" "}
+                  <code>10:32 - Licitante 12: texto</code>.
+                </p>
+                <form
+                  className="mt-3 space-y-3"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget;
+                    const bruto = String(new FormData(form).get("transcricao") ?? "");
+                    const base = data?.lic?.data_sessao
+                      ? new Date(data.lic.data_sessao)
+                      : new Date();
+                    const linhas = bruto
+                      .split("\n")
+                      .map((l) => l.trim())
+                      .filter(Boolean);
+                    const registros = linhas.map((linha) => {
+                      const hora = linha.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+                      const semHora = linha.replace(
+                        /^[\[\(]?\s*\d{1,2}:\d{2}(?::\d{2})?\s*[\]\)]?\s*[-–]?\s*/,
+                        "",
+                      );
+                      const divisor = semHora.indexOf(":");
+                      const autor =
+                        divisor > 0 && divisor < 60 ? semHora.slice(0, divisor).trim() : "Portal";
+                      const mensagem =
+                        divisor > 0 && divisor < 60 ? semHora.slice(divisor + 1).trim() : semHora;
+                      const autorNorm = autor.toLowerCase();
+                      const papel = /pregoeir|agente de contrata|presidente|comiss/.test(autorNorm)
+                        ? "pregoeiro"
+                        : /sistema|portal|automat/.test(autorNorm)
+                          ? "sistema"
+                          : "licitante";
+                      const enviada = new Date(base);
+                      if (hora) {
+                        enviada.setHours(Number(hora[1]), Number(hora[2]), Number(hora[3] ?? 0), 0);
+                      }
+                      return {
+                        licitacao_id: id,
+                        equipe_id: equipeId!,
+                        autor,
+                        papel,
+                        origem: "portal",
+                        mensagem,
+                        enviada_em: enviada.toISOString(),
+                      };
+                    });
+                    if (registros.length === 0) {
+                      toast.error("Cole ao menos uma linha do chat do portal.");
+                      return;
                     }
-                    return {
-                      licitacao_id: id,
-                      equipe_id: equipeId!,
-                      autor,
-                      papel,
-                      origem: "portal",
-                      mensagem,
-                      enviada_em: enviada.toISOString(),
-                    };
-                  });
-                  if (registros.length === 0) {
-                    toast.error("Cole ao menos uma linha do chat do portal.");
-                    return;
-                  }
-                  const { error } = await supabase.from("chat_mensagens").insert(registros);
-                  if (error) {
-                    toast.error("Não foi possível importar o chat.");
-                    return;
-                  }
-                  toast.success(`${registros.length} mensagem(ns) reproduzida(s) do portal.`);
-                  form.reset();
-                  recarregar();
-                }}
-              >
-                <Textarea
-                  name="transcricao"
-                  rows={14}
-                  placeholder={"[09:02] Sistema: Sessão pública aberta\n[09:05] Pregoeiro: Boa tarde, senhores licitantes\n[09:07] Licitante 3: Solicito esclarecimento do item 4"}
-                />
-                <Button type="submit" className="w-full">
-                  Reproduzir chat na plataforma
-                </Button>
-              </form>
-            </div>
+                    const { error } = await supabase.from("chat_mensagens").insert(registros);
+                    if (error) {
+                      toast.error("Não foi possível importar o chat.");
+                      return;
+                    }
+                    toast.success(`${registros.length} mensagem(ns) reproduzida(s) do portal.`);
+                    form.reset();
+                    recarregar();
+                  }}
+                >
+                  <Textarea
+                    name="transcricao"
+                    rows={14}
+                    placeholder={
+                      "[09:02] Sistema: Sessão pública aberta\n[09:05] Pregoeiro: Boa tarde, senhores licitantes\n[09:07] Licitante 3: Solicito esclarecimento do item 4"
+                    }
+                  />
+                  <Button type="submit" className="w-full">
+                    Reproduzir chat na plataforma
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
         </TabsContent>
-
       </Tabs>
     </AppLayout>
   );
 }
 
-function Info({ label, valor, destaque }: { label: string; valor?: string | null; destaque?: boolean }) {
+function Info({
+  label,
+  valor,
+  destaque,
+}: {
+  label: string;
+  valor?: string | null;
+  destaque?: boolean;
+}) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-sm ${destaque ? "font-semibold text-secondary" : ""}`}>{valor || "—"}</p>
+      <p className={`mt-1 text-sm ${destaque ? "font-semibold text-secondary" : ""}`}>
+        {valor || "—"}
+      </p>
     </div>
   );
 }
@@ -1200,14 +1294,18 @@ function FormularioEmpresa({
         <Input
           defaultValue={lic.situacao_empresa ?? ""}
           placeholder="classificada, habilitada…"
-          onBlur={(e) => onSalvar({ situacao_empresa: e.target.value }, "Situação da empresa atualizada")}
+          onBlur={(e) =>
+            onSalvar({ situacao_empresa: e.target.value }, "Situação da empresa atualizada")
+          }
         />
       </div>
       <div className="space-y-1">
         <Label>Situação da proposta</Label>
         <Input
           defaultValue={lic.situacao_proposta ?? ""}
-          onBlur={(e) => onSalvar({ situacao_proposta: e.target.value }, "Situação da proposta atualizada")}
+          onBlur={(e) =>
+            onSalvar({ situacao_proposta: e.target.value }, "Situação da proposta atualizada")
+          }
         />
       </div>
       <div className="space-y-1">
@@ -1227,9 +1325,7 @@ function FormularioEmpresa({
         <Label>Motivo de desclassificação/inabilitação</Label>
         <Input
           defaultValue={lic.motivo_desclassificacao ?? ""}
-          onBlur={(e) =>
-            onSalvar({ motivo_desclassificacao: e.target.value }, "Motivo registrado")
-          }
+          onBlur={(e) => onSalvar({ motivo_desclassificacao: e.target.value }, "Motivo registrado")}
         />
       </div>
       <div className="space-y-1">
@@ -1237,7 +1333,9 @@ function FormularioEmpresa({
         <Input
           defaultValue={lic.resultado_final ?? ""}
           placeholder="vencedora, perdida…"
-          onBlur={(e) => onSalvar({ resultado_final: e.target.value }, "Resultado final registrado")}
+          onBlur={(e) =>
+            onSalvar({ resultado_final: e.target.value }, "Resultado final registrado")
+          }
         />
       </div>
     </div>
@@ -1265,13 +1363,23 @@ function FormularioMovimentacao({
       <div className="space-y-1">
         <Label>Tipo</Label>
         <Select value={tipo} onValueChange={setTipo}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {["evento", "sessão", "recurso", "julgamento", "homologação", "retificação", "suspensão"].map(
-              (t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ),
-            )}
+            {[
+              "evento",
+              "sessão",
+              "recurso",
+              "julgamento",
+              "homologação",
+              "retificação",
+              "suspensão",
+            ].map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -1317,7 +1425,6 @@ function FormularioLance({
             e.currentTarget.value = aoDigitarMoeda(e.currentTarget.value);
           }}
         />
-
       </div>
       <Button type="submit">Registrar lance</Button>
     </form>
@@ -1354,10 +1461,29 @@ function FormularioConcorrente({
         form.reset();
       }}
     >
-      <div className="space-y-1"><Label>Empresa</Label><Input name="nome" /></div>
-      <div className="space-y-1"><Label>CNPJ</Label><Input name="cnpj" /></div>
-      <div className="space-y-1"><Label>Posição</Label><Input name="posicao" type="number" className="w-24" /></div>
-      <div className="space-y-1"><Label>Valor ofertado</Label><Input name="valor" inputMode="numeric" placeholder="R$ 0,00" onInput={(e) => { e.currentTarget.value = aoDigitarMoeda(e.currentTarget.value); }} /></div>
+      <div className="space-y-1">
+        <Label>Empresa</Label>
+        <Input name="nome" />
+      </div>
+      <div className="space-y-1">
+        <Label>CNPJ</Label>
+        <Input name="cnpj" />
+      </div>
+      <div className="space-y-1">
+        <Label>Posição</Label>
+        <Input name="posicao" type="number" className="w-24" />
+      </div>
+      <div className="space-y-1">
+        <Label>Valor ofertado</Label>
+        <Input
+          name="valor"
+          inputMode="numeric"
+          placeholder="R$ 0,00"
+          onInput={(e) => {
+            e.currentTarget.value = aoDigitarMoeda(e.currentTarget.value);
+          }}
+        />
+      </div>
       <label className="flex items-center gap-2 pb-2 text-sm">
         <input type="checkbox" name="vencedor" /> vencedora
       </label>
@@ -1388,7 +1514,9 @@ function FormularioDocumento({
       <div className="space-y-1">
         <Label>Tipo</Label>
         <Select value={tipo} onValueChange={setTipo}>
-          <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-52">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {[
               "edital",
@@ -1404,13 +1532,21 @@ function FormularioDocumento({
               "homologação",
               "contrato",
             ].map((t) => (
-              <SelectItem key={t} value={t}>{t}</SelectItem>
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="min-w-56 flex-1 space-y-1"><Label>Nome do documento</Label><Input name="nome" /></div>
-      <div className="min-w-56 flex-1 space-y-1"><Label>Link</Label><Input name="url" placeholder="https://" /></div>
+      <div className="min-w-56 flex-1 space-y-1">
+        <Label>Nome do documento</Label>
+        <Input name="nome" />
+      </div>
+      <div className="min-w-56 flex-1 space-y-1">
+        <Label>Link</Label>
+        <Input name="url" placeholder="https://" />
+      </div>
       <Button type="submit">Adicionar</Button>
     </form>
   );
@@ -1439,9 +1575,18 @@ function FormularioPrazo({
         form.reset();
       }}
     >
-      <div className="space-y-1"><Label>Tipo do prazo</Label><Input name="tipo" placeholder="Recurso, documentação…" /></div>
-      <div className="min-w-56 flex-1 space-y-1"><Label>Descrição</Label><Input name="descricao" /></div>
-      <div className="space-y-1"><Label>Data limite</Label><Input name="data" type="datetime-local" /></div>
+      <div className="space-y-1">
+        <Label>Tipo do prazo</Label>
+        <Input name="tipo" placeholder="Recurso, documentação…" />
+      </div>
+      <div className="min-w-56 flex-1 space-y-1">
+        <Label>Descrição</Label>
+        <Input name="descricao" />
+      </div>
+      <div className="space-y-1">
+        <Label>Data limite</Label>
+        <Input name="data" type="datetime-local" />
+      </div>
       <Button type="submit">Adicionar prazo</Button>
     </form>
   );
@@ -1452,7 +1597,11 @@ function FormularioTarefa({
   onEnviar,
 }: {
   membros: any[];
-  onEnviar: (t: { titulo: string; responsavel_id: string | null; prazo: string | null }) => Promise<void>;
+  onEnviar: (t: {
+    titulo: string;
+    responsavel_id: string | null;
+    prazo: string | null;
+  }) => Promise<void>;
 }) {
   const [responsavel, setResponsavel] = useState("nenhum");
   return (
@@ -1472,20 +1621,30 @@ function FormularioTarefa({
         form.reset();
       }}
     >
-      <div className="min-w-56 flex-1 space-y-1"><Label>Nova tarefa</Label><Input name="titulo" /></div>
+      <div className="min-w-56 flex-1 space-y-1">
+        <Label>Nova tarefa</Label>
+        <Input name="titulo" />
+      </div>
       <div className="space-y-1">
         <Label>Responsável</Label>
         <Select value={responsavel} onValueChange={setResponsavel}>
-          <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-52">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="nenhum">Sem responsável</SelectItem>
             {membros.map((m) => (
-              <SelectItem key={m.id} value={m.id}>{m.nome ?? m.email}</SelectItem>
+              <SelectItem key={m.id} value={m.id}>
+                {m.nome ?? m.email}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-1"><Label>Prazo</Label><Input name="prazo" type="datetime-local" /></div>
+      <div className="space-y-1">
+        <Label>Prazo</Label>
+        <Input name="prazo" type="datetime-local" />
+      </div>
       <Button type="submit">Adicionar tarefa</Button>
     </form>
   );
