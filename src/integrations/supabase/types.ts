@@ -809,6 +809,27 @@ export type Database = {
           },
         ];
       };
+      orgaos_portais: {
+        Row: {
+          atualizado_em: string;
+          cnpj: string;
+          orgao_referencia: string | null;
+          portal: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cnpj: string;
+          orgao_referencia?: string | null;
+          portal: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          cnpj?: string;
+          orgao_referencia?: string | null;
+          portal?: string;
+        };
+        Relationships: [];
+      };
       palavras_chave: {
         Row: {
           ativo: boolean;
