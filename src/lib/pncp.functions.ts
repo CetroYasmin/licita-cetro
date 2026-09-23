@@ -168,6 +168,7 @@ function nomePortal(link?: string | null): string {
   if (l.includes("comprasbr")) return "ComprasBR";
   if (l.includes("publinexo")) return "Publinexo";
   if (l.includes("effecti")) return "Effecti";
+  if (l.includes("startgov")) return "Compras MA (SIGA)";
   if (l.includes("pncp.gov.br")) return "PNCP";
   try {
     return `${new URL(link.startsWith("http") ? link : `https://${link}`).hostname.replace("www.", "")}`;
