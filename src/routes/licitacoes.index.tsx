@@ -463,6 +463,11 @@ function ListaLicitacoes() {
                         <Badge variant="secondary">Diretoria aguarda resposta</Badge>
                       )}
                       {l.modalidade && <Badge variant="secondary">{l.modalidade}</Badge>}
+                      {l.portal && (
+                        <Badge variant="outline" className="border-primary/40 text-primary">
+                          {l.portal}
+                        </Badge>
+                      )}
                       {l.natureza && <Badge variant="outline">{l.natureza}</Badge>}
                       {(l.tags ?? []).map((t: string) => (
                         <Badge key={t} variant="outline">
@@ -479,7 +484,7 @@ function ListaLicitacoes() {
                     <p className="mt-2 text-xs text-muted-foreground">
                       {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicação:{" "}
                       {fData(l.data_publicacao)} · Sessão:{" "}
-                      {dataHora(l.proximo_evento_data ?? l.data_sessao)} · Portal: {l.portal ?? "—"}
+                      {dataHora(l.proximo_evento_data ?? l.data_sessao)}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs">
                       <span>
