@@ -96,6 +96,44 @@ export const PORTAIS = [
   "Não informado",
 ] as const;
 
+/**
+ * O PNCP não expõe de forma consistente qual campo indica o sistema real de
+ * origem — varia conforme o órgão e a integração usada. Tentamos, em ordem,
+ * os nomes de campo mais prováveis e, por fim, procuramos uma URL reconhecível
+ * dentro do texto de "informação complementar", onde já vimos (em páginas
+ * reais do PNCP) o link do sistema externo aparecer mesmo com os campos
+ * dedicados vazios. Retorna o portal só quando algo além de PNCP for achado —
+ * não sobrescreve com "PNCP" um valor que já possa estar mais específico.
+ */
+function linkEPortalReais(bruto: any): { link: string | null; portal: string | null } {
+  const candidatosDeLink = [
+    bruto?.linkSistemaOrigem,
+    bruto?.linkOrigem,
+    bruto?.linkProcessoEletronico,
+  ].filter((v) => typeof v === "string" && v.trim());
+
+  const candidatosDeNome = [bruto?.usuarioNome, bruto?.nomeSistemaOrigem, bruto?.fonte].filter(
+    (v) => typeof v === "string" && v.trim(),
+  );
+
+  for (const candidato of [...candidatosDeLink, ...candidatosDeNome]) {
+    const nome = nomePortal(String(candidato));
+    if (nome !== "Não informado" && nome !== "PNCP") {
+      const link = candidatosDeLink.includes(candidato) ? String(candidato) : null;
+      return { link, portal: nome };
+    }
+  }
+
+  const complementar = String(bruto?.informacaoComplementar ?? "");
+  const url = complementar.match(/https?:\/\/[^\s)"'<>]+/)?.[0] ?? null;
+  if (url) {
+    const nome = nomePortal(url);
+    if (nome !== "Não informado" && nome !== "PNCP") return { link: url, portal: nome };
+  }
+
+  return { link: null, portal: null };
+}
+
 function nomePortal(link?: string | null): string {
   if (!link) return "Não informado";
   const l = link.toLowerCase();
@@ -785,18 +823,14 @@ export const sincronizarLicitacaoPncp = createServerFn({ method: "POST" })
       ) as any;
       if (!bruto) return { ok: false as const, licitacao: null };
       // mapear() foi escrito para o formato do ÍNDICE de busca (snake_case) e não
-      // enxerga linkSistemaOrigem, que só existe neste endpoint de detalhe — por
-      // isso "Verificar atualizações" nunca corrigia o portal sozinho. Mesma lógica
-      // já usada (e comprovada) em detalheDaContratacao(), acima.
-      const link = bruto?.linkSistemaOrigem ? String(bruto.linkSistemaOrigem) : null;
-      const portalReal = nomePortal(link);
+      // enxerga estes campos, que só existem neste endpoint de detalhe.
+      const { link, portal } = linkEPortalReais(bruto);
       return {
         ok: true as const,
         licitacao: {
           ...mapear(bruto),
-          ...(link
-            ? { portal: portalReal === "Não informado" ? "PNCP" : portalReal, site_url: link }
-            : {}),
+          ...(portal ? { portal } : {}),
+          ...(link ? { site_url: link } : {}),
         },
       };
     } catch {
