@@ -519,6 +519,33 @@ export const buscarLicitacoesPncp = createServerFn({ method: "POST" })
       ORDENACOES[(data.ordenar as Ordenacao) ?? "relevancia"] ?? ORDENACOES.relevancia;
     const lista = [...encontradas.values()].sort(ordenador);
 
+    // "PNCP" é só a regra padrão de quando ainda não sabemos o portal de
+    // disputa de um órgão — não uma afirmação de que a disputa ocorre no
+    // próprio PNCP. Um órgão que já apareceu antes (a UASG ou o CNPJ) já
+    // nasce com o portal certo, sem precisar de "Verificar atualizações".
+    try {
+      const cnpjs = [...new Set(lista.map((l) => l.orgao_cnpj).filter(Boolean))];
+      if (cnpjs.length > 0) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: conhecidos } = await supabaseAdmin
+          .from("orgaos_portais")
+          .select("cnpj, portal")
+          .in("cnpj", cnpjs);
+        const porCnpj = new Map((conhecidos ?? []).map((c) => [c.cnpj, c.portal]));
+        for (const l of lista) {
+          const portal = porCnpj.get(l.orgao_cnpj);
+          if (portal) l.portal = portal;
+        }
+      }
+    } catch (e) {
+      // Uma falha aqui não pode derrubar a pesquisa inteira — na pior das
+      // hipóteses, o portal continua "PNCP" até a próxima tentativa.
+      console.error(
+        "[pncp] falha ao consultar orgaos_portais:",
+        e instanceof Error ? e.message : e,
+      );
+    }
+
     return {
       licitacoes: lista.slice(0, 1000),
       total: lista.length,
