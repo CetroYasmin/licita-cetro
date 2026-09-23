@@ -20,6 +20,7 @@ import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksComprasnetTokenRouteImport } from './routes/api/public/hooks/comprasnet-token'
 import { Route as ApiPublicHooksMonitorarChatsRouteImport } from './routes/api/public/hooks/monitorar-chats'
 
@@ -78,6 +79,11 @@ const LicitacoesIdRoute = LicitacoesIdRouteImport.update({
   path: '/licitacoes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksComprasnetTokenRoute =
   ApiPublicHooksComprasnetTokenRouteImport.update({
     id: '/api/public/hooks/comprasnet-token',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes': typeof LicitacoesIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
+    | '/.lovable/oauth/consent'
     | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   fileRoutesByTo: FileRoutesByTo
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes'
+    | '/.lovable/oauth/consent'
     | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   id:
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/licitacoes/$id'
     | '/licitacoes/'
+    | '/.lovable/oauth/consent'
     | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   fileRoutesById: FileRoutesById
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicHooksComprasnetTokenRoute: typeof ApiPublicHooksComprasnetTokenRoute
   ApiPublicHooksMonitorarChatsRoute: typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LicitacoesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/comprasnet-token': {
       id: '/api/public/hooks/comprasnet-token'
       path: '/api/public/hooks/comprasnet-token'
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   LicitacoesIdRoute: LicitacoesIdRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicHooksComprasnetTokenRoute: ApiPublicHooksComprasnetTokenRoute,
   ApiPublicHooksMonitorarChatsRoute: ApiPublicHooksMonitorarChatsRoute,
 }
