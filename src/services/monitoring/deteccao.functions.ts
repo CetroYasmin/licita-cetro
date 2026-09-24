@@ -6,13 +6,14 @@ import { linkEPortalReais, partesDoFonteId } from "@/lib/pncp.functions";
 import {
   PORTAL_COMPRASNET,
   idCompraComprasNet,
+  idLicitacaoBll,
   nomePortal,
   portalDisputaDe,
   type StatusChat,
 } from "@/lib/portalDisputa";
 
 const CAMPOS =
-  "id, portal, portal_manual, site_url, fonte, fonte_id, chat_monitorar, chat_conector, chat_id_externo, chat_config_manual, chat_status" as const;
+  "id, numero, portal, portal_manual, site_url, fonte, fonte_id, chat_monitorar, chat_conector, chat_id_externo, chat_config_manual, chat_status" as const;
 
 /** Estados em que a detecção automática ainda pode mexer no chat. */
 const PENDENTES = new Set<string | null>([
@@ -47,7 +48,7 @@ export async function detectarPortaisPendentes(
 ) {
     let q = db.from("licitacoes").select(CAMPOS).limit(200);
     if (ids?.length) q = q.in("id", ids);
-    else q = q.or("chat_status.is.null,chat_status.in.(portal_desconhecido,sem_id,aguardando_credencial)");
+    else q = q.or("chat_status.is.null,chat_status.in.(portal_desconhecido,sem_id,aguardando_credencial,coleta_indisponivel)");
     const { data: linhas, error } = await q;
     if (error) throw error;
 
@@ -113,6 +114,19 @@ export async function detectarPortaisPendentes(
               status = "aguardando_credencial";
               motivo = "Compra identificada, mas o acesso de fornecedor ao Compras.gov.br não está configurado.";
             }
+          }
+        } else if (/bll/i.test(portal) || /bllcompras\.com/i.test(link ?? "")) {
+          const id = idLicitacaoBll(l.numero);
+          if (!id) {
+            status = "sem_id";
+            motivo = "BLL Compras identificado, mas falta o número/ano da licitação para vincular o chat.";
+          } else {
+            upd["chat_conector"] = "bll";
+            upd["chat_id_externo"] = id;
+            upd["chat_monitorar"] = true;
+            upd["chat_ligado_em"] = new Date().toISOString();
+            status = "monitorando";
+            motivo = "Aguardando o chat BLL aberto no navegador com Tampermonkey.";
           }
         } else {
           status = "coleta_indisponivel";
