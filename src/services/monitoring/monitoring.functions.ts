@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { connectorExiste, connectorsDisponiveis } from "@/connectors";
 import { partesDaCompra } from "@/connectors/ComprasNetConnector";
+import { idLicitacaoBll } from "@/lib/portalDisputa";
 import { MonitoringService } from "./MonitoringService";
 
 /** Portais que já têm conector, com a orientação de como preencher o identificador da compra. */
@@ -37,6 +38,18 @@ export const configurarChat = createServerFn({ method: "POST" })
           "Informe a UASG também: use o formato UASG-modalidade-número-ano (ex.: 981547-5-118-2026). Só número/ano não identifica a compra com segurança, porque o mesmo número se repete em órgãos diferentes.",
         );
       }
+      if (data.conector === "bll") {
+        const { data: lic, error: erroLic } = await context.supabase
+          .from("licitacoes").select("numero, portal, site_url").eq("id", data.licitacao_id).maybeSingle();
+        if (erroLic || !lic) throw new Error("Licitação não encontrada.");
+        const id = idLicitacaoBll(data.id_externo);
+        if (!id || id !== idLicitacaoBll(lic.numero)) {
+          throw new Error("Use o número/ano desta licitação no BLL, por exemplo 10.015/2026. Não use UASG.");
+        }
+        if (!/bll/i.test(lic.portal ?? "") && !/bllcompras\.com/i.test(lic.site_url ?? "")) {
+          throw new Error("Identifique primeiro o portal da disputa desta licitação como BLL Compras.");
+        }
+      }
     }
     const { data: linha, error } = await context.supabase
       .from("licitacoes")
@@ -47,7 +60,9 @@ export const configurarChat = createServerFn({ method: "POST" })
         chat_erros_seguidos: 0,
         chat_config_manual: true,
         chat_status: data.monitorar ? "monitorando" : "manual",
-        chat_status_motivo: data.monitorar ? "Ligado manualmente." : "Desligado manualmente.",
+        chat_status_motivo: data.monitorar
+          ? data.conector === "bll" ? "Aguardando o chat BLL aberto no navegador com Tampermonkey." : "Ligado manualmente."
+          : "Desligado manualmente.",
         // Ligou agora → a válvula de "muito tempo sem mensagens" conta a
         // partir daqui, não da data (possivelmente antiga) da sessão.
         ...(data.monitorar ? { chat_ligado_em: new Date().toISOString() } : {}),
