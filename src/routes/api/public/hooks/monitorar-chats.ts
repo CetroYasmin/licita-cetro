@@ -15,11 +15,19 @@ export const Route = createFileRoute("/api/public/hooks/monitorar-chats")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { MonitoringService } = await import("@/services/monitoring/MonitoringService");
+        const { detectarPortaisPendentes } = await import("@/services/monitoring/deteccao.functions");
         const { sessaoStore } = await import("@/services/monitoring/sessoes");
         const { canalTelegram } = await import("@/services/notifications/notifier");
 
         const telegram = canalTelegram();
         try {
+          // Cadastro por outras rotas e credenciais adicionadas depois também entram
+          // no monitoramento sem depender de alguém abrir a página do chat.
+          try {
+            await detectarPortaisPendentes(supabaseAdmin);
+          } catch (e) {
+            console.error("[monitoramento] falha ao identificar portais:", e instanceof Error ? e.message : e);
+          }
           const service = new MonitoringService(supabaseAdmin, {
             conectores: { sessoes: sessaoStore(supabaseAdmin) },
             canais: telegram ? [telegram] : [],
