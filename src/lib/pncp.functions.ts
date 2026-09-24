@@ -1,3 +1,4 @@
+import { nomePortal } from "@/lib/portalDisputa";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { normalizar, relevancia } from "@/lib/busca";
@@ -105,7 +106,7 @@ export const PORTAIS = [
  * dedicados vazios. Retorna o portal só quando algo além de PNCP for achado —
  * não sobrescreve com "PNCP" um valor que já possa estar mais específico.
  */
-function linkEPortalReais(bruto: any): { link: string | null; portal: string | null } {
+export function linkEPortalReais(bruto: any): { link: string | null; portal: string | null } {
   const candidatosDeLink = [
     bruto?.linkSistemaOrigem,
     bruto?.linkOrigem,
@@ -132,59 +133,6 @@ function linkEPortalReais(bruto: any): { link: string | null; portal: string | n
   }
 
   return { link: null, portal: null };
-}
-
-function nomePortal(link?: string | null): string {
-  if (!link) return "Não informado";
-  // O PNCP às vezes devolve texto em português puro (o nome da empresa por
-  // trás do sistema, ex. "Licitações-E BB", "ECustomize..."), não uma URL —
-  // sem tirar acento e espaço, "licitações-e" nunca bateria com "licitacoes-e",
-  // nem "BLL Compras" com "bllcompras". Comparamos sempre sem acento e sem
-  // espaço dos dois lados, para não depender de prever cada variação de grafia.
-  const normalizar = (v: string) =>
-    v
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "");
-  const l = normalizar(link);
-  const bate = (...termos: string[]) => termos.some((t) => l.includes(normalizar(t)));
-
-  if (bate("comprasnet", "gov.br/compras", "cnetmobile", "compras.gov.br"))
-    return "Compras.gov.br (ComprasNet)";
-  if (bate("licitacoes-e", "licitacoes-e.com.br", "bb.com.br"))
-    return "Licitações-e (Banco do Brasil)";
-  if (bate("bllcompras", "bll.org.br", "bll compras")) return "BLL Compras";
-  if (bate("bnc.org.br", "bncompras") || /\bbnc\b/.test(l))
-    return "BNC — Bolsa Nacional de Compras";
-  if (bate("bbmnet", "bbmnet licitacoes")) return "BBMNET Licitações";
-  if (bate("portaldecompraspublicas", "portal de compras publicas"))
-    return "Portal de Compras Públicas";
-  if (bate("licitanet")) return "Licitanet";
-  if (bate("licitardigital", "licitar digital")) return "Licitar Digital";
-  if (bate("m2atecnologia", "m2a tecnologia", "gestaodecompras", "gestao de compras"))
-    return "Gestão de Compras (M2A Tecnologia)";
-  if (bate("s2gpr", "seplag.ce.gov.br", "licitacoes.ce.gov.br")) return "S2GPR (Governo do Ceará)";
-  if (bate("bec.sp.gov.br")) return "BEC/SP";
-  if (bate("compras.rs", "cel.rs")) return "Compras RS";
-  if (bate("centraldecompras.pb.gov.br", "central de compras pb")) return "Central de Compras PB";
-  if (bate("comprasbr")) return "ComprasBR";
-  if (bate("publinexo")) return "Publinexo";
-  if (bate("effecti")) return "Effecti";
-  if (bate("startgov")) return "Compras MA (SIGA)";
-  // Empresa por trás do Portal de Compras Públicas — o "Fonte:" do PNCP
-  // mostra a razão social, não a marca (vistos em 23/09: Coordenadoria de
-  // Fomento a Irrigação-PI, Mossoró-RN, Serrinha-RN, Timon-MA).
-  if (bate("ecustomize")) return "Portal de Compras Públicas";
-  // Vistos em 23/09: Caucaia-CE (Licita + Brasil) e Natal-RN (BR Conectado).
-  if (bate("licita + brasil", "licitamaisbrasil")) return "Licita Mais Brasil";
-  if (bate("br conectado", "brconectado")) return "BR Conectado";
-  if (bate("pncp.gov.br")) return "PNCP";
-  try {
-    return `${new URL(link.startsWith("http") ? link : `https://${link}`).hostname.replace("www.", "")}`;
-  } catch {
-    return "Não informado";
-  }
 }
 
 /** Converte um item da API de pesquisa do PNCP no formato usado pelo app. */

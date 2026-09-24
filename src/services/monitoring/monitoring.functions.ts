@@ -45,6 +45,9 @@ export const configurarChat = createServerFn({ method: "POST" })
         chat_conector: data.conector,
         chat_id_externo: data.id_externo,
         chat_erros_seguidos: 0,
+        chat_config_manual: true,
+        chat_status: data.monitorar ? "monitorando" : "manual",
+        chat_status_motivo: data.monitorar ? "Ligado manualmente." : "Desligado manualmente.",
         // Ligou agora → a válvula de "muito tempo sem mensagens" conta a
         // partir daqui, não da data (possivelmente antiga) da sessão.
         ...(data.monitorar ? { chat_ligado_em: new Date().toISOString() } : {}),

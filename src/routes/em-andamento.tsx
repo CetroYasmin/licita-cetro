@@ -1,3 +1,4 @@
+import { portalDisputaDe } from "@/lib/portalDisputa";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -143,7 +144,7 @@ function EmAndamento() {
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.objeto}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Sessão realizada:{" "}
-                      {dataHora(sessaoDeLicitacao(l))} · Portal: {l.portal ?? "—"}
+                      {dataHora(sessaoDeLicitacao(l))} · Portal: {portalDisputaDe(l) ?? "a identificar"}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs">
                       <span>Estimado: <strong>{moeda(l.valor_estimado)}</strong></span>

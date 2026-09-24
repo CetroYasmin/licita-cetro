@@ -1,3 +1,4 @@
+import { portalDisputaDe } from "@/lib/portalDisputa";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -218,7 +219,7 @@ function Detalhes() {
       // "Verificar atualizações" corrigia data/valor mas nunca o portal — mesmo
       // quando o PNCP já revelava o sistema real (ComprasNet, BLL...), a coluna
       // ficava presa em "PNCP" para sempre.
-      if (novo.portal && novo.portal !== licAtual.portal) {
+      if (novo.portal && novo.portal !== licAtual.portal && !licAtual.portal_manual && novo.portal !== "PNCP") {
         mudancas.push(`Portal: ${licAtual.portal ?? "—"} → ${novo.portal}`);
         campos["portal"] = novo.portal;
       }
@@ -382,7 +383,7 @@ function Detalhes() {
             <Info label="Data de publicação" valor={fData(lic.data_publicacao)} />
             <Info label="Data de abertura" valor={fData(lic.data_abertura)} />
             <Info label="Data e horário da sessão" valor={dataHora(lic.data_sessao)} />
-            <Info label="Portal da disputa" valor={lic.portal} destaque />
+            <Info label="Portal da disputa" valor={portalDisputaDe(lic) ?? "a identificar"} destaque />
             <Info label="Modo/local da disputa" valor={lic.plataforma} />
             <Info label="Valor estimado" valor={moeda(lic.valor_estimado)} />
             <Info
@@ -409,7 +410,7 @@ function Detalhes() {
                   rel="noreferrer"
                   className="mt-1 inline-flex items-center gap-1 text-sm text-secondary hover:underline"
                 >
-                  Abrir processo em {lic.portal ?? "portal de origem"}
+                  Abrir processo em {portalDisputaDe(lic) ?? "portal de origem"}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
@@ -1222,7 +1223,7 @@ function FormularioDados({
         <Input
           defaultValue={lic.portal ?? ""}
           placeholder="ex.: Compras.gov.br, BLL, Licitar Digital"
-          onBlur={(e) => onSalvar({ portal: e.target.value }, "Portal da disputa atualizado")}
+          onBlur={(e) => onSalvar({ portal: e.target.value.trim() || null, portal_manual: !!e.target.value.trim() }, "Portal da disputa atualizado")}
         />
       </div>
       <div className="space-y-1">

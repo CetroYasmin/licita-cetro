@@ -254,7 +254,7 @@ export class MonitoringService {
   }
 
   private async encerrar(lic: LicitacaoMonitorada, motivo: string, eventos: AlertaEvento[]) {
-    await this.db.from("licitacoes").update({ chat_monitorar: false }).eq("id", lic.id);
+    await this.db.from("licitacoes").update({ chat_monitorar: false, chat_status: "encerrado", chat_status_motivo: motivo }).eq("id", lic.id);
     eventos.push({
       equipe_id: lic.equipe_id,
       licitacao_id: lic.id,

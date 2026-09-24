@@ -6,7 +6,7 @@ const TODAS = [
   "/em-andamento",
   "/pesquisa",
   "/agenda",
-  
+  "/monitorar-chat",
   "/alertas",
   "/relatorios",
   "/aprovacao",

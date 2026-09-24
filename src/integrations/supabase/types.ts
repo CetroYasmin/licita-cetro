@@ -106,6 +106,54 @@ export type Database = {
           },
         ]
       }
+      chat_leituras: {
+        Row: {
+          arquivada: boolean
+          equipe_id: string
+          id: string
+          importante: boolean
+          licitacao_id: string
+          lida_ate: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          arquivada?: boolean
+          equipe_id: string
+          id?: string
+          importante?: boolean
+          licitacao_id: string
+          lida_ate?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          arquivada?: boolean
+          equipe_id?: string
+          id?: string
+          importante?: boolean
+          licitacao_id?: string
+          lida_ate?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_leituras_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_leituras_licitacao_id_fkey"
+            columns: ["licitacao_id"]
+            isOneToOne: false
+            referencedRelation: "licitacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_mensagens: {
         Row: {
           autor: string
@@ -490,10 +538,13 @@ export type Database = {
           aprovacao_resposta_solicitada: boolean
           aprovacao_status: string
           chat_conector: string | null
+          chat_config_manual: boolean
           chat_erros_seguidos: number
           chat_id_externo: string | null
           chat_ligado_em: string | null
           chat_monitorar: boolean
+          chat_status: string | null
+          chat_status_motivo: string | null
           chat_ultima_coleta: string | null
           chat_ultima_msg_em: string | null
           chat_ultimo_erro: string | null
@@ -520,6 +571,7 @@ export type Database = {
           pasta_id: string | null
           plataforma: string | null
           portal: string | null
+          portal_manual: boolean
           posicao_empresa: number | null
           processo_administrativo: string | null
           proximo_evento: string | null
@@ -552,10 +604,13 @@ export type Database = {
           aprovacao_resposta_solicitada?: boolean
           aprovacao_status?: string
           chat_conector?: string | null
+          chat_config_manual?: boolean
           chat_erros_seguidos?: number
           chat_id_externo?: string | null
           chat_ligado_em?: string | null
           chat_monitorar?: boolean
+          chat_status?: string | null
+          chat_status_motivo?: string | null
           chat_ultima_coleta?: string | null
           chat_ultima_msg_em?: string | null
           chat_ultimo_erro?: string | null
@@ -582,6 +637,7 @@ export type Database = {
           pasta_id?: string | null
           plataforma?: string | null
           portal?: string | null
+          portal_manual?: boolean
           posicao_empresa?: number | null
           processo_administrativo?: string | null
           proximo_evento?: string | null
@@ -614,10 +670,13 @@ export type Database = {
           aprovacao_resposta_solicitada?: boolean
           aprovacao_status?: string
           chat_conector?: string | null
+          chat_config_manual?: boolean
           chat_erros_seguidos?: number
           chat_id_externo?: string | null
           chat_ligado_em?: string | null
           chat_monitorar?: boolean
+          chat_status?: string | null
+          chat_status_motivo?: string | null
           chat_ultima_coleta?: string | null
           chat_ultima_msg_em?: string | null
           chat_ultimo_erro?: string | null
@@ -644,6 +703,7 @@ export type Database = {
           pasta_id?: string | null
           plataforma?: string | null
           portal?: string | null
+          portal_manual?: boolean
           posicao_empresa?: number | null
           processo_administrativo?: string | null
           proximo_evento?: string | null

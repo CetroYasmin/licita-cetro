@@ -1,3 +1,5 @@
+import { detectarPortais } from "@/services/monitoring/deteccao.functions";
+import { portalDisputaDe } from "@/lib/portalDisputa";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -211,6 +213,7 @@ function Pesquisa() {
     onError: () => toast.error("Não foi possível consultar os portais agora. Tente novamente."),
   });
 
+  const detectar = useServerFn(detectarPortais);
   const importar = useMutation({
     mutationFn: async (l: LicitacaoPncp) => {
       if (!equipeId) throw new Error("Equipe não definida");
@@ -233,8 +236,9 @@ function Pesquisa() {
           data_abertura: l.data_abertura ? l.data_abertura.slice(0, 10) : null,
           data_sessao: l.data_abertura,
           plataforma: l.plataforma,
-          portal: l.portal,
-          site_url: l.site_url,
+          // Portal da DISPUTA: só o que o detalhe do PNCP comprova; PNCP é a fonte, não a sessão.
+          portal: portalDisputaDe({ portal: portalDe(l) }),
+          site_url: linkOrigemDe(l) ?? l.site_url,
           processo_administrativo: l.processo_administrativo,
           valor_estimado: valorDe(l),
           cidade: l.cidade,
@@ -335,6 +339,7 @@ function Pesquisa() {
         `Nova licitação importada: ${l.numero}`,
         `${l.orgao} — ${l.objeto?.slice(0, 140)}`,
       );
+      await detectar({ data: { ids: [lic.id] } }).catch(() => null);
       return l.fonte_id;
     },
     onSuccess: (fonteId) => {
