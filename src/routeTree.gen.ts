@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as EmAndamentoRouteImport } from './routes/em-andamento'
 import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MonitorarChatRouteImport } from './routes/monitorar-chat'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -64,6 +65,11 @@ const EquipeRoute = EquipeRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitorarChatRoute = MonitorarChatRouteImport.update({
+  id: '/monitorar-chat',
+  path: '/monitorar-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PesquisaRoute = PesquisaRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/mcp': typeof McpRoute
+  '/monitorar-chat': typeof MonitorarChatRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/mcp': typeof McpRoute
+  '/monitorar-chat': typeof MonitorarChatRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/em-andamento': typeof EmAndamentoRoute
   '/equipe': typeof EquipeRoute
   '/mcp': typeof McpRoute
+  '/monitorar-chat': typeof MonitorarChatRoute
   '/pesquisa': typeof PesquisaRoute
   '/relatorios': typeof RelatoriosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/em-andamento'
     | '/equipe'
     | '/mcp'
+    | '/monitorar-chat'
     | '/pesquisa'
     | '/relatorios'
     | '/.well-known/oauth-protected-resource'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/em-andamento'
     | '/equipe'
     | '/mcp'
+    | '/monitorar-chat'
     | '/pesquisa'
     | '/relatorios'
     | '/.well-known/oauth-protected-resource'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/em-andamento'
     | '/equipe'
     | '/mcp'
+    | '/monitorar-chat'
     | '/pesquisa'
     | '/relatorios'
     | '/.well-known/oauth-protected-resource'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   EmAndamentoRoute: typeof EmAndamentoRoute
   EquipeRoute: typeof EquipeRoute
   McpRoute: typeof McpRoute
+  MonitorarChatRoute: typeof MonitorarChatRoute
   PesquisaRoute: typeof PesquisaRoute
   RelatoriosRoute: typeof RelatoriosRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitorar-chat': {
+      id: '/monitorar-chat'
+      path: '/monitorar-chat'
+      fullPath: '/monitorar-chat'
+      preLoaderRoute: typeof MonitorarChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pesquisa': {
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmAndamentoRoute: EmAndamentoRoute,
   EquipeRoute: EquipeRoute,
   McpRoute: McpRoute,
+  MonitorarChatRoute: MonitorarChatRoute,
   PesquisaRoute: PesquisaRoute,
   RelatoriosRoute: RelatoriosRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
