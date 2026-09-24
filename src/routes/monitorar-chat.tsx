@@ -219,8 +219,8 @@ function MonitorarChat() {
 
   return (
     <AppLayout titulo="Monitorar Chat" descricao="Mensagens dos chats das sessões acompanhadas pela equipe">
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-        <aside className={cn("surface-panel flex min-h-[60vh] flex-col p-3", sel && "hidden lg:flex")}>
+      <div className="grid min-w-0 gap-4 lg:h-[calc(100dvh-8rem)] lg:min-h-[24rem] lg:grid-cols-[380px_minmax(0,1fr)] lg:overflow-hidden">
+        <aside className={cn("surface-panel flex min-h-[60vh] min-w-0 flex-col p-3 lg:h-full lg:min-h-0 lg:overflow-hidden", sel && "hidden lg:flex")}>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input className="pl-8" placeholder="Buscar pregão, órgão ou portal" value={busca} onChange={(e) => setBusca(e.target.value)} />
@@ -239,7 +239,7 @@ function MonitorarChat() {
               {rodarDeteccao.isPending ? "Identificando…" : "Identificar portais"}
             </Button>
           </div>
-          <div className="mt-2 flex-1 space-y-1 overflow-y-auto">
+          <div className="mt-2 flex-1 space-y-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
             {licitacoes.isLoading && <p className="p-4 text-sm text-muted-foreground">Carregando…</p>}
             {licitacoes.error && <p className="p-4 text-sm text-destructive">Não foi possível carregar as licitações.</p>}
             {!licitacoes.isLoading && lista.length === 0 && (
@@ -281,7 +281,7 @@ function MonitorarChat() {
           </div>
         </aside>
 
-        <section className={cn("surface-panel flex min-h-[60vh] flex-col", !sel && "hidden lg:flex")}>
+        <section className={cn("surface-panel flex min-h-[60vh] min-w-0 flex-col lg:h-full lg:min-h-0 lg:overflow-hidden", !sel && "hidden lg:flex")}>
           {!atual ? (
             <div className="m-auto p-8 text-center text-sm text-muted-foreground">
               <MessagesSquare className="mx-auto mb-2 h-8 w-8" />
@@ -341,7 +341,7 @@ function MonitorarChat() {
                 {atual.chat_ultimo_erro && <p className="mt-2 text-xs text-destructive">Último erro: {atual.chat_ultimo_erro}</p>}
                 <Input className="mt-3 h-8" placeholder="Buscar nas mensagens" value={buscaMsg} onChange={(e) => setBuscaMsg(e.target.value)} />
               </header>
-              <div className="flex-1 space-y-2 overflow-y-auto p-4" style={{ maxHeight: "65vh" }}>
+              <div className="space-y-2 p-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain">
                 {mensagens.isLoading && <p className="text-sm text-muted-foreground">Carregando mensagens…</p>}
                 {mensagens.error && <p className="text-sm text-destructive">Não foi possível carregar as mensagens.</p>}
                 {!mensagens.isLoading && msgs.length === 0 && (
