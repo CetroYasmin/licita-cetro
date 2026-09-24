@@ -73,7 +73,7 @@ export const detectarPortais = createServerFn({ method: "POST" })
     let consultasPncp = 0;
     let atualizadas = 0;
     for (const l of linhas ?? []) {
-      const upd: Database["public"]["Tables"]["licitacoes"]["Update"] & Record<string, any> = {};
+      const upd: Database["public"]["Tables"]["licitacoes"]["Update"] = {};
       let portal = portalDisputaDe(l);
       let link = l.site_url && !/pncp\.gov\.br/i.test(l.site_url) ? l.site_url : null;
 
