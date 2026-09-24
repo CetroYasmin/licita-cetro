@@ -40,20 +40,13 @@ async function linkRealDoPncp(fonteId: string): Promise<{ link: string | null; p
   }
 }
 
-/**
- * Detecta o portal da disputa e o ID da compra das licitações da equipe e
- * liga o chat só quando há conector real + ID confiável + credencial.
- * Nunca sobrescreve portal ou configuração de chat escolhidos à mão.
- */
-export const detectarPortais = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) =>
-    z.object({ ids: z.array(z.string().uuid()).max(200).optional() }).parse(i ?? {}),
-  )
-  .handler(async ({ data, context }) => {
-    const db = context.supabase;
+/** Também é usado pelo worker, para não depender da abertura da página de chat. */
+export async function detectarPortaisPendentes(
+  db: import("@supabase/supabase-js").SupabaseClient<Database>,
+  ids?: string[],
+) {
     let q = db.from("licitacoes").select(CAMPOS).limit(200);
-    if (data.ids?.length) q = q.in("id", data.ids);
+    if (ids?.length) q = q.in("id", ids);
     else q = q.or("chat_status.is.null,chat_status.in.(portal_desconhecido,sem_id,aguardando_credencial)");
     const { data: linhas, error } = await q;
     if (error) throw error;
@@ -82,7 +75,8 @@ export const detectarPortais = createServerFn({ method: "POST" })
           const n = nomePortal(link);
           if (n !== "PNCP" && n !== "Não informado") portal = n;
         }
-        if ((!portal || !link) && l.fonte === "PNCP" && l.fonte_id && consultasPncp < 25) {
+        // A rodada do cron precisa terminar antes da próxima execução.
+        if ((!portal || !link) && l.fonte === "PNCP" && l.fonte_id && consultasPncp < (ids?.length ? 25 : 2)) {
           consultasPncp++;
           const real = await linkRealDoPncp(l.fonte_id);
           if (!portal && real.portal) portal = real.portal;
@@ -136,4 +130,18 @@ export const detectarPortais = createServerFn({ method: "POST" })
       }
     }
     return { analisadas: linhas?.length ?? 0, atualizadas };
+}
+
+/**
+ * Detecta o portal da disputa e o ID da compra das licitações da equipe e
+ * liga o chat só quando há conector real + ID confiável + credencial.
+ * Nunca sobrescreve portal ou configuração de chat escolhidos à mão.
+ */
+export const detectarPortais = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ ids: z.array(z.string().uuid()).max(200).optional() }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    return detectarPortaisPendentes(context.supabase, data.ids);
   });
