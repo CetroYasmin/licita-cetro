@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { linkEPortalReais, partesDoFonteId } from "@/lib/pncp.functions";
 import {
@@ -72,7 +73,7 @@ export const detectarPortais = createServerFn({ method: "POST" })
     let consultasPncp = 0;
     let atualizadas = 0;
     for (const l of linhas ?? []) {
-      const upd: Record<string, unknown> = {};
+      const upd: Database["public"]["Tables"]["licitacoes"]["Update"] & Record<string, any> = {};
       let portal = portalDisputaDe(l);
       let link = l.site_url && !/pncp\.gov\.br/i.test(l.site_url) ? l.site_url : null;
 
