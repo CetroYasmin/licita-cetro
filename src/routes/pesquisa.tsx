@@ -661,6 +661,7 @@ function Pesquisa() {
                       <button
                         type="button"
                         title="Marcar como vista"
+                        aria-label="Marcar como vista"
                         onClick={() => marcarVista.mutate({ fonteId: l.fonte_id, remover: false })}
                         className="rounded p-1 opacity-80 transition-opacity hover:bg-white/10 hover:opacity-100"
                       >

@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Licitações Cetro" },
+      { title: "Licitações Cetro — Acompanhamento de licitações públicas" },
       {
         name: "description",
         content:
           "Plataforma de acompanhamento de licitações públicas: prazos, itens, concorrentes e alertas.",
       },
-      { property: "og:title", content: "Licitações Cetro" },
+      { property: "og:title", content: "Licitações Cetro — Acompanhamento de licitações públicas" },
       { property: "og:description", content: "Acompanhamento de licitações públicas em tempo real." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

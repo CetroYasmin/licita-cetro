@@ -113,9 +113,9 @@ function AuthPage() {
           <span className="font-display text-lg font-semibold">Licitações Cetro</span>
         </div>
         <div className="max-w-md space-y-4">
-          <h2 className="font-display text-3xl font-semibold leading-tight">
+          <h1 className="font-display text-3xl font-semibold leading-tight">
             Todo o andamento das suas licitações em um só painel.
-          </h2>
+          </h1>
           <p className="text-sm text-sidebar-foreground/75">
             Importação automática de editais, prazos com contagem regressiva, posição da sua empresa,
             concorrentes e alertas em tempo real.

@@ -202,6 +202,7 @@ function CalendarioLicitacoes({ licitacoes }: { licitacoes: Lic[] }) {
           <Button
             variant="outline"
             size="icon"
+            aria-label="Mês anterior"
             onClick={() => setRef(new Date(ref.getFullYear(), ref.getMonth() - 1, 1))}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -220,6 +221,7 @@ function CalendarioLicitacoes({ licitacoes }: { licitacoes: Lic[] }) {
           <Button
             variant="outline"
             size="icon"
+            aria-label="Próximo mês"
             onClick={() => setRef(new Date(ref.getFullYear(), ref.getMonth() + 1, 1))}
           >
             <ChevronRight className="h-4 w-4" />
