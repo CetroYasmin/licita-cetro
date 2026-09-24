@@ -148,7 +148,7 @@ function Relatorios() {
       <div className="surface-panel mt-5 overflow-x-auto">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
           <div>
-            <h3 className="text-sm font-semibold">Planilha de acompanhamento</h3>
+            <h2 className="text-sm font-semibold">Planilha de acompanhamento</h2>
             <p className="text-xs text-muted-foreground">
               Órgão, modalidade/nº, objeto com a qualificação técnica exigida, município, valor
               global estimado e data/hora da sessão.
@@ -239,7 +239,7 @@ function Relatorios() {
       </div>
 
       <div className="surface-panel mt-5 overflow-x-auto">
-        <h3 className="border-b p-4 text-sm font-semibold">Desempenho por órgão</h3>
+        <h2 className="border-b p-4 text-sm font-semibold">Desempenho por órgão</h2>
         <table className="w-full text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
             <tr>

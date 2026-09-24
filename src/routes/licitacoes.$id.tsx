@@ -422,7 +422,7 @@ function Detalhes() {
           />
 
           <div className="surface-panel space-y-3 p-5">
-            <h3 className="text-sm font-semibold">Organização interna</h3>
+            <h2 className="text-sm font-semibold">Organização interna</h2>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1">
                 <Label>Responsável</Label>
@@ -555,7 +555,7 @@ function Detalhes() {
           />
 
           <div className="surface-panel">
-            <h3 className="border-b p-4 text-sm font-semibold">Histórico de movimentações</h3>
+            <h2 className="border-b p-4 text-sm font-semibold">Histórico de movimentações</h2>
             <ol className="divide-y">
               {(data?.movs ?? []).map((m: any) => (
                 <li key={m.id} className="p-4">
@@ -600,7 +600,7 @@ function Detalhes() {
 
           <div className="surface-panel">
             <div className="flex items-center justify-between border-b p-4">
-              <h3 className="text-sm font-semibold">Histórico de lances da empresa</h3>
+              <h2 className="text-sm font-semibold">Histórico de lances da empresa</h2>
             </div>
             <FormularioLance
               onEnviar={async (valor, minha, empresa) => {
@@ -638,7 +638,7 @@ function Detalhes() {
           </div>
 
           <div className="surface-panel p-5">
-            <h3 className="text-sm font-semibold">Itens/lotes em que a empresa participa</h3>
+            <h2 className="text-sm font-semibold">Itens/lotes em que a empresa participa</h2>
             <ul className="mt-3 space-y-2 text-sm">
               {(data?.itens ?? [])
                 .filter((i: any) => i.participando)
@@ -1001,7 +1001,7 @@ function Detalhes() {
             <div className="surface-panel flex h-[560px] flex-col">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
                 <div>
-                  <h3 className="text-sm font-semibold">Chat original da licitação</h3>
+                  <h2 className="text-sm font-semibold">Chat original da licitação</h2>
                   <p className="text-xs text-muted-foreground">
                     Reprodução das mensagens da sessão no portal — pregoeiro, sistema e licitantes.
                   </p>
@@ -1095,7 +1095,7 @@ function Detalhes() {
             <div className="space-y-4">
               {data?.lic && <MonitorChatPainel licitacao={data.lic} />}
               <div className="surface-panel p-4">
-                <h3 className="text-sm font-semibold">Importar chat do portal</h3>
+                <h2 className="text-sm font-semibold">Importar chat do portal</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Copie o chat/ata da sessão no portal e cole abaixo. Cada linha é reproduzida como
                   mensagem; formatos aceitos: <code>[10:32] Pregoeiro: texto</code> ou{" "}
@@ -1216,7 +1216,7 @@ function FormularioDados({
 }) {
   return (
     <div className="surface-panel grid gap-3 p-5 md:grid-cols-3">
-      <h3 className="md:col-span-3 text-sm font-semibold">Editar dados do edital</h3>
+      <h2 className="md:col-span-3 text-sm font-semibold">Editar dados do edital</h2>
       <div className="space-y-1">
         <Label>Portal da disputa</Label>
         <Input
@@ -1258,7 +1258,7 @@ function FormularioEmpresa({
 }) {
   return (
     <div className="surface-panel grid gap-3 p-5 md:grid-cols-3">
-      <h3 className="md:col-span-3 text-sm font-semibold">Situação da nossa empresa</h3>
+      <h2 className="md:col-span-3 text-sm font-semibold">Situação da nossa empresa</h2>
       <div className="space-y-1">
         <Label>Posição</Label>
         <Input

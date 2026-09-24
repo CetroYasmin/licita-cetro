@@ -112,9 +112,9 @@ function Equipe() {
       )}
 
       <div className="surface-panel mb-5">
-        <h3 className="border-b p-4 text-sm font-semibold">
+        <h2 className="border-b p-4 text-sm font-semibold">
           Aguardando aprovação ({pendentes.length})
-        </h3>
+        </h2>
         <div className="divide-y">
           {pendentes.map((p) => (
             <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -156,7 +156,7 @@ function Equipe() {
       </div>
 
       <div className="surface-panel">
-        <h3 className="border-b p-4 text-sm font-semibold">Membros da equipe</h3>
+        <h2 className="border-b p-4 text-sm font-semibold">Membros da equipe</h2>
         <div className="divide-y">
           {membros.map((m) => (
             <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
