@@ -193,8 +193,9 @@ export function MonitorChatPainel({ licitacao }: { licitacao: LicitacaoChat }) {
             {comFalha && <Badge variant="destructive">com falha</Badge>}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            O sistema lê o chat do portal sozinho e avisa a equipe quando aparecer uma
-            palavra-chave.
+            {conector === "bll"
+              ? "No BLL, as mensagens chegam pelo Tampermonkey enquanto o chat estiver aberto no navegador."
+              : "O sistema lê o chat do portal sozinho e avisa a equipe quando aparecer uma palavra-chave."}
           </p>
         </div>
         <Switch
@@ -208,7 +209,10 @@ export function MonitorChatPainel({ licitacao }: { licitacao: LicitacaoChat }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
           <Label>Portal</Label>
-          <Select value={conector} onValueChange={setConector} disabled={ligado}>
+          <Select value={conector} onValueChange={(valor) => {
+            setConector(valor);
+            if (valor === "bll") setIdExterno(licitacao.numero);
+          }} disabled={ligado}>
             <SelectTrigger>
               <SelectValue placeholder="Escolha o portal" />
             </SelectTrigger>
@@ -222,12 +226,12 @@ export function MonitorChatPainel({ licitacao }: { licitacao: LicitacaoChat }) {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label>Identificador da compra</Label>
+          <Label>{conector === "bll" ? "Número da licitação no BLL" : "Identificador da compra"}</Label>
           <Input
             value={idExterno}
             disabled={ligado}
             onChange={(e) => setIdExterno(e.target.value)}
-            placeholder="Ex.: 981547-5-118-2026"
+            placeholder={conector === "bll" ? "Ex.: 10.015/2026" : "Ex.: 981547-5-118-2026"}
           />
         </div>
       </div>
@@ -246,7 +250,8 @@ export function MonitorChatPainel({ licitacao }: { licitacao: LicitacaoChat }) {
           <Button
             size="sm"
             variant="outline"
-            disabled={agora.isPending}
+            disabled={agora.isPending || conector === "bll"}
+            title={conector === "bll" ? "Abra o chat no BLL para receber mensagens pelo Tampermonkey" : undefined}
             onClick={() => agora.mutate()}
           >
             <RefreshCw className={`mr-2 h-3.5 w-3.5 ${agora.isPending ? "animate-spin" : ""}`} />
