@@ -255,6 +255,16 @@ function Pesquisa() {
         .single();
       if (error) throw error;
 
+      // Identifica portal/ID e liga o conector disponível imediatamente após
+      // colocar a licitação em acompanhamento, antes das tarefas auxiliares.
+      // Uma indisponibilidade do PNCP não desfaz o cadastro: o worker tentará
+      // novamente nas próximas rodadas.
+      try {
+        await detectar({ data: { ids: [lic.id] } });
+      } catch {
+        toast.warning("Licitação cadastrada. A identificação do portal será tentada novamente automaticamente.");
+      }
+
       const { itens } = await itensDe({
         data: { cnpj: l.orgao_cnpj, ano: l.ano, sequencial: l.sequencial },
       });
@@ -339,7 +349,6 @@ function Pesquisa() {
         `Nova licitação importada: ${l.numero}`,
         `${l.orgao} — ${l.objeto?.slice(0, 140)}`,
       );
-      await detectar({ data: { ids: [lic.id] } }).catch(() => null);
       return l.fonte_id;
     },
     onSuccess: (fonteId) => {
