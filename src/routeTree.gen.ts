@@ -24,6 +24,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
 import { Route as LicitacoesIdRouteImport } from './routes/licitacoes.$id'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicHooksBllChatRouteImport } from './routes/api/public/hooks/bll-chat'
 import { Route as ApiPublicHooksComprasnetTokenRouteImport } from './routes/api/public/hooks/comprasnet-token'
 import { Route as ApiPublicHooksMonitorarChatsRouteImport } from './routes/api/public/hooks/monitorar-chats'
 
@@ -103,6 +104,11 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksBllChatRoute = ApiPublicHooksBllChatRouteImport.update({
+  id: '/api/public/hooks/bll-chat',
+  path: '/api/public/hooks/bll-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksComprasnetTokenRoute =
   ApiPublicHooksComprasnetTokenRouteImport.update({
     id: '/api/public/hooks/comprasnet-token',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/hooks/bll-chat': typeof ApiPublicHooksBllChatRoute
   '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes': typeof LicitacoesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/hooks/bll-chat': typeof ApiPublicHooksBllChatRoute
   '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/licitacoes/$id': typeof LicitacoesIdRoute
   '/licitacoes/': typeof LicitacoesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/hooks/bll-chat': typeof ApiPublicHooksBllChatRoute
   '/api/public/hooks/comprasnet-token': typeof ApiPublicHooksComprasnetTokenRoute
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/licitacoes/$id'
     | '/licitacoes/'
     | '/.lovable/oauth/consent'
+    | '/api/public/hooks/bll-chat'
     | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   fileRoutesByTo: FileRoutesByTo
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/licitacoes/$id'
     | '/licitacoes'
     | '/.lovable/oauth/consent'
+    | '/api/public/hooks/bll-chat'
     | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   id:
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/licitacoes/$id'
     | '/licitacoes/'
     | '/.lovable/oauth/consent'
+    | '/api/public/hooks/bll-chat'
     | '/api/public/hooks/comprasnet-token'
     | '/api/public/hooks/monitorar-chats'
   fileRoutesById: FileRoutesById
@@ -250,6 +262,7 @@ export interface RootRouteChildren {
   LicitacoesIdRoute: typeof LicitacoesIdRoute
   LicitacoesIndexRoute: typeof LicitacoesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicHooksBllChatRoute: typeof ApiPublicHooksBllChatRoute
   ApiPublicHooksComprasnetTokenRoute: typeof ApiPublicHooksComprasnetTokenRoute
   ApiPublicHooksMonitorarChatsRoute: typeof ApiPublicHooksMonitorarChatsRoute
 }
@@ -361,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/bll-chat': {
+      id: '/api/public/hooks/bll-chat'
+      path: '/api/public/hooks/bll-chat'
+      fullPath: '/api/public/hooks/bll-chat'
+      preLoaderRoute: typeof ApiPublicHooksBllChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/comprasnet-token': {
       id: '/api/public/hooks/comprasnet-token'
       path: '/api/public/hooks/comprasnet-token'
@@ -395,6 +415,7 @@ const rootRouteChildren: RootRouteChildren = {
   LicitacoesIdRoute: LicitacoesIdRoute,
   LicitacoesIndexRoute: LicitacoesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicHooksBllChatRoute: ApiPublicHooksBllChatRoute,
   ApiPublicHooksComprasnetTokenRoute: ApiPublicHooksComprasnetTokenRoute,
   ApiPublicHooksMonitorarChatsRoute: ApiPublicHooksMonitorarChatsRoute,
 }
