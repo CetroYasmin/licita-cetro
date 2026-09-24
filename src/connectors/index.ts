@@ -25,7 +25,6 @@ const REGISTRO: Record<string, Registro> = {
     ajuda: "Qualquer texto — gera mensagens de teste.",
     criar: () => new MockConnector(),
   },
-  // bll: { nome: "BLL Compras", ajuda: "...", criar: (deps) => new BLLConnector(deps) },
   // licitanet, bbmnet, portal-de-compras-publicas, licitacoes-e, pe-integrado...
 };
 
@@ -35,11 +34,14 @@ export function resolverConnector(slug: string, deps: ConnectorDeps = {}): Porta
 }
 
 export function connectorsDisponiveis(): Array<{ slug: string; nome: string; ajuda: string }> {
-  return Object.entries(REGISTRO).map(([slug, r]) => ({ slug, nome: r.nome, ajuda: r.ajuda }));
+  return [
+    ...Object.entries(REGISTRO).map(([slug, r]) => ({ slug, nome: r.nome, ajuda: r.ajuda })),
+    { slug: "bll", nome: "BLL Compras", ajuda: "Use o número da licitação no BLL (ex.: 10.015/2026). A coleta ocorre pelo Tampermonkey enquanto o chat estiver aberto." },
+  ];
 }
 
 export function connectorExiste(slug: string): boolean {
-  return slug in REGISTRO;
+  return slug === "bll" || slug in REGISTRO;
 }
 
 export type { PortalConnector } from "./PortalConnector";
