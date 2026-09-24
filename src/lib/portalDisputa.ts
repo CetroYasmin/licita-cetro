@@ -8,6 +8,12 @@ export const NAO_E_PORTAL = new Set(["", "pncp", "não informado", "nao informad
 
 export const PORTAL_COMPRASNET = "Compras.gov.br (ComprasNet)";
 
+/** Identificador legível da licitação BLL: número/ano, sem UASG. */
+export function idLicitacaoBll(numero?: string | null): string | null {
+  const m = /^(\d{1,8})\s*\/\s*(20\d\d)$/.exec((numero ?? "").replace(/[.\s]/g, ""));
+  return m ? `${Number(m[1])}/${m[2]}` : null;
+}
+
 export function nomePortal(link?: string | null): string {
   if (!link) return "Não informado";
   // O PNCP às vezes devolve texto em português puro (o nome da empresa por
