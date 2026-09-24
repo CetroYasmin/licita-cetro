@@ -1,3 +1,4 @@
+import { portalDisputaDe, rotuloPortal } from "@/lib/portalDisputa";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -463,11 +464,13 @@ function ListaLicitacoes() {
                         <Badge variant="secondary">Diretoria aguarda resposta</Badge>
                       )}
                       {l.modalidade && <Badge variant="secondary">{l.modalidade}</Badge>}
-                      {l.portal && (
-                        <Badge variant="outline" className="border-primary/40 text-primary">
-                          {l.portal}
-                        </Badge>
-                      )}
+                      <Badge
+                        variant="outline"
+                        className={portalDisputaDe(l) ? "border-primary/50 bg-primary/10 font-semibold text-primary" : "border-dashed text-muted-foreground"}
+                        title="Portal onde acontece a sessão de disputa"
+                      >
+                        {rotuloPortal(l)}
+                      </Badge>
                       {l.natureza && <Badge variant="outline">{l.natureza}</Badge>}
                       {(l.tags ?? []).map((t: string) => (
                         <Badge key={t} variant="outline">
