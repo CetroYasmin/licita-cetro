@@ -37,7 +37,7 @@ export const Route = createFileRoute("/monitorar-chat")({
 type Filtro = "todos" | "nao_lidos" | "importantes" | "arquivados";
 
 const CAMPOS =
-  "id, numero, orgao, objeto, status, portal, portal_manual, data_sessao, proximo_evento_data, chat_monitorar, chat_status, chat_status_motivo, chat_ultima_coleta, chat_ultimo_erro, chat_ultima_msg_em";
+  "id, numero, orgao, objeto, status, portal, portal_manual, data_sessao, proximo_evento_data, chat_monitorar, chat_conector, chat_status, chat_status_motivo, chat_ultima_coleta, chat_ultimo_erro, chat_ultima_msg_em";
 
 function statusDe(l: any): StatusChat {
   if (l.chat_monitorar) return "monitorando";
@@ -320,9 +320,9 @@ function MonitorarChat() {
                     </Button>
                     <Button
                       size="sm"
-                      disabled={!atual.chat_monitorar || sync.isPending}
+                      disabled={!atual.chat_monitorar || atual.chat_conector === "bll" || sync.isPending}
                       onClick={() => sync.mutate(atual.id)}
-                      title={atual.chat_monitorar ? "Consultar o portal agora" : "Coleta automática não disponível para esta licitação"}
+                      title={atual.chat_conector === "bll" ? "Abra o chat no BLL para receber mensagens pelo Tampermonkey" : atual.chat_monitorar ? "Consultar o portal agora" : "Coleta automática não disponível para esta licitação"}
                     >
                       <RefreshCw className={cn("mr-1 h-4 w-4", sync.isPending && "animate-spin")} /> Atualizar
                     </Button>
@@ -335,7 +335,7 @@ function MonitorarChat() {
                   </Badge>
                   {atual.chat_ultima_coleta && <span className="text-muted-foreground">Última coleta: {dataHora(atual.chat_ultima_coleta)}</span>}
                 </div>
-                {!atual.chat_monitorar && atual.chat_status_motivo && (
+                {atual.chat_status_motivo && (atual.chat_conector === "bll" || !atual.chat_monitorar) && (
                   <p className="mt-2 text-xs text-muted-foreground">{atual.chat_status_motivo}</p>
                 )}
                 {atual.chat_ultimo_erro && <p className="mt-2 text-xs text-destructive">Último erro: {atual.chat_ultimo_erro}</p>}
