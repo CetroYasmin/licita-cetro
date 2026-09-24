@@ -488,6 +488,7 @@ function ListaLicitacoes() {
                       {l.orgao} · {l.cidade ?? "—"}/{l.uf ?? "—"} · Publicação:{" "}
                       {fData(l.data_publicacao)} · Sessão:{" "}
                       {dataHora(l.proximo_evento_data ?? l.data_sessao)}
+                      {l.fonte ? ` · Publicado via ${l.fonte}` : ""}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs">
                       <span>
