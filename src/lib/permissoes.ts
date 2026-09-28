@@ -7,13 +7,14 @@ const TODAS = [
   "/pesquisa",
   "/agenda",
   "/monitorar-chat",
+  "/portais",
   "/alertas",
   "/relatorios",
   "/aprovacao",
   "/equipe",
 ] as const;
 
-const DIRETOR = ["/", "/em-andamento", "/pesquisa", "/agenda", "/alertas", "/relatorios", "/aprovacao"];
+const DIRETOR = ["/", "/em-andamento", "/pesquisa", "/agenda", "/portais", "/alertas", "/relatorios", "/aprovacao"];
 
 const MEMBRO = TODAS.filter((r) => r !== "/aprovacao" && r !== "/equipe");
 
