@@ -19,6 +19,7 @@ import { Route as EquipeRouteImport } from './routes/equipe'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MonitorarChatRouteImport } from './routes/monitorar-chat'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
+import { Route as PortaisRouteImport } from './routes/portais'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as LicitacoesIndexRouteImport } from './routes/licitacoes.index'
@@ -78,6 +79,11 @@ const PesquisaRoute = PesquisaRouteImport.update({
   path: '/pesquisa',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortaisRoute = PortaisRouteImport.update({
+  id: '/portais',
+  path: '/portais',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/monitorar-chat': typeof MonitorarChatRoute
   '/pesquisa': typeof PesquisaRoute
+  '/portais': typeof PortaisRoute
   '/relatorios': typeof RelatoriosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/monitorar-chat': typeof MonitorarChatRoute
   '/pesquisa': typeof PesquisaRoute
+  '/portais': typeof PortaisRoute
   '/relatorios': typeof RelatoriosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/monitorar-chat': typeof MonitorarChatRoute
   '/pesquisa': typeof PesquisaRoute
+  '/portais': typeof PortaisRoute
   '/relatorios': typeof RelatoriosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/licitacoes/$id': typeof LicitacoesIdRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/monitorar-chat'
     | '/pesquisa'
+    | '/portais'
     | '/relatorios'
     | '/.well-known/oauth-protected-resource'
     | '/licitacoes/$id'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/monitorar-chat'
     | '/pesquisa'
+    | '/portais'
     | '/relatorios'
     | '/.well-known/oauth-protected-resource'
     | '/licitacoes/$id'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/monitorar-chat'
     | '/pesquisa'
+    | '/portais'
     | '/relatorios'
     | '/.well-known/oauth-protected-resource'
     | '/licitacoes/$id'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   MonitorarChatRoute: typeof MonitorarChatRoute
   PesquisaRoute: typeof PesquisaRoute
+  PortaisRoute: typeof PortaisRoute
   RelatoriosRoute: typeof RelatoriosRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   LicitacoesIdRoute: typeof LicitacoesIdRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PesquisaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portais': {
+      id: '/portais'
+      path: '/portais'
+      fullPath: '/portais'
+      preLoaderRoute: typeof PortaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   MonitorarChatRoute: MonitorarChatRoute,
   PesquisaRoute: PesquisaRoute,
+  PortaisRoute: PortaisRoute,
   RelatoriosRoute: RelatoriosRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
