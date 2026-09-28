@@ -986,11 +986,14 @@ export type Database = {
         Row: {
           cpf: string | null
           created_at: string
+          created_by: string | null
+          criado_por_nome: string | null
           equipe_id: string
           id: string
           login: string | null
           nome: string
           senha: string | null
+          tem_senha: boolean
           tipo: string
           updated_at: string
           url: string | null
@@ -999,11 +1002,14 @@ export type Database = {
         Insert: {
           cpf?: string | null
           created_at?: string
+          created_by?: string | null
+          criado_por_nome?: string | null
           equipe_id: string
           id?: string
           login?: string | null
           nome: string
           senha?: string | null
+          tem_senha?: boolean
           tipo?: string
           updated_at?: string
           url?: string | null
@@ -1012,11 +1018,14 @@ export type Database = {
         Update: {
           cpf?: string | null
           created_at?: string
+          created_by?: string | null
+          criado_por_nome?: string | null
           equipe_id?: string
           id?: string
           login?: string | null
           nome?: string
           senha?: string | null
+          tem_senha?: boolean
           tipo?: string
           updated_at?: string
           url?: string | null
@@ -1028,6 +1037,44 @@ export type Database = {
             columns: ["equipe_id"]
             isOneToOne: false
             referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portais_acessos_auditoria: {
+        Row: {
+          acao: string
+          acesso_id: string | null
+          created_at: string
+          equipe_id: string
+          id: string
+          user_id: string
+          user_nome: string | null
+        }
+        Insert: {
+          acao: string
+          acesso_id?: string | null
+          created_at?: string
+          equipe_id: string
+          id?: string
+          user_id: string
+          user_nome?: string | null
+        }
+        Update: {
+          acao?: string
+          acesso_id?: string | null
+          created_at?: string
+          equipe_id?: string
+          id?: string
+          user_id?: string
+          user_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portais_acessos_auditoria_acesso_id_fkey"
+            columns: ["acesso_id"]
+            isOneToOne: false
+            referencedRelation: "portais_acessos"
             referencedColumns: ["id"]
           },
         ]
@@ -1063,6 +1110,35 @@ export type Database = {
             columns: ["equipe_id"]
             isOneToOne: false
             referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portais_credenciais: {
+        Row: {
+          acesso_id: string
+          atualizado_em: string
+          atualizado_por: string | null
+          senha_cifrada: string
+        }
+        Insert: {
+          acesso_id: string
+          atualizado_em?: string
+          atualizado_por?: string | null
+          senha_cifrada: string
+        }
+        Update: {
+          acesso_id?: string
+          atualizado_em?: string
+          atualizado_por?: string | null
+          senha_cifrada?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portais_credenciais_acesso_id_fkey"
+            columns: ["acesso_id"]
+            isOneToOne: true
+            referencedRelation: "portais_acessos"
             referencedColumns: ["id"]
           },
         ]
