@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AprovacaoRouteImport } from './routes/aprovacao'
@@ -28,11 +27,6 @@ import { Route as ApiPublicHooksBllChatRouteImport } from './routes/api/public/h
 import { Route as ApiPublicHooksComprasnetTokenRouteImport } from './routes/api/public/hooks/comprasnet-token'
 import { Route as ApiPublicHooksMonitorarChatsRouteImport } from './routes/api/public/hooks/monitorar-chats'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AgendaRoute = AgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -123,7 +117,6 @@ const ApiPublicHooksMonitorarChatsRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
   '/aprovacao': typeof AprovacaoRoute
@@ -143,7 +136,6 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/monitorar-chats': typeof ApiPublicHooksMonitorarChatsRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
   '/aprovacao': typeof AprovacaoRoute
@@ -164,7 +156,6 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
   '/aprovacao': typeof AprovacaoRoute
@@ -186,7 +177,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/agenda'
     | '/alertas'
     | '/aprovacao'
@@ -206,7 +196,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/monitorar-chats'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/agenda'
     | '/alertas'
     | '/aprovacao'
@@ -226,7 +215,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/monitorar-chats'
   id:
     | '__root__'
-    | '/'
     | '/agenda'
     | '/alertas'
     | '/aprovacao'
@@ -247,7 +235,6 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AgendaRoute: typeof AgendaRoute
   AlertasRoute: typeof AlertasRoute
   AprovacaoRoute: typeof AprovacaoRoute
@@ -269,13 +256,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/agenda': {
       id: '/agenda'
       path: '/agenda'
@@ -399,7 +379,6 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AgendaRoute: AgendaRoute,
   AlertasRoute: AlertasRoute,
   AprovacaoRoute: AprovacaoRoute,
